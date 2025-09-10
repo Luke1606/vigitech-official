@@ -1,0 +1,1 @@
+export { RootHome } from './RootHome.page';

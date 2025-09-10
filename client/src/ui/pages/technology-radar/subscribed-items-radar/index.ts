@@ -1,0 +1,1 @@
+export { SubscribedItemsRadar } from './SubscribedItemsRadar.page';
