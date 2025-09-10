@@ -1,0 +1,1 @@
+export { UnpaywallAPIFetcher } from './unpaywall-api-fetcher.client';

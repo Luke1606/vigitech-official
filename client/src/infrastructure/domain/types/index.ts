@@ -1,8 +1,5 @@
-export type { AnalysisMetricsDto } from './AnalysisMetrics.dto'
-export type { CrossRefResultDto } from './CrossRefRresult.dto'
-export type { GeneralSearchResultDto } from './GeneralSearchResult.dto'
-export type { LensResultDto } from './LensResult.dto'
-export type { OpenAlexResultDto } from './OpenAlexResult.dto'
-export type { SurveyItemDto } from './SurveyItem.dto'
-export type { SurveyItemAnalysisDto } from './SurveyItemAnalysis.dto'
-export type { UnpaywallResultDto } from './UnpaywallResult.dto'
+export * from './api-results';
+export type { RadarEntry } from './RadarEntry.dto';
+export type { SurveyItemDto } from './SurveyItem.dto';
+export type { AnalysisMetricsDto } from './AnalysisMetrics.dto';
+export type { SurveyItemAnalysisDto } from './SurveyItemAnalysis.dto';

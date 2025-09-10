@@ -1,0 +1,1 @@
+export { PortalHome } from './VigitechHome.page';

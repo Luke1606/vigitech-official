@@ -1,2 +1,2 @@
 export * from './technology-radar';
-export * from './root-portal';
+export * from './vigitech-portal';

@@ -1,4 +1,4 @@
-import { 
+import type { 
     AuthError,
     AuthResponse,
     AuthTokenResponsePassword,
@@ -6,7 +6,7 @@ import {
     SignUpWithPasswordCredentials, 
     SignInWithPasswordCredentials,
     SignInWithOAuthCredentials,
-} from '@supabase/auth-js';
+} from '@supabase/supabase-js';
 
 export interface AuthInterface {
     signInWithPassword: (

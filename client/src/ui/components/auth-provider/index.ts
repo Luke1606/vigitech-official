@@ -1,1 +1,1 @@
-export { AuthProvider, useAuthProvider } from './AuthProvider.component.jsx';
+export { AuthProvider, useAuthProvider } from './AuthProvider.component';

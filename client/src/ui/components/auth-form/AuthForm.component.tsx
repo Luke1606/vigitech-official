@@ -1,4 +1,4 @@
-import { FC, useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 enum AuthActions {
@@ -7,7 +7,7 @@ enum AuthActions {
   RESET_PASSWORD,
 }
 
-const AuthViewMap: Record<AuthActions, FC> = {
+const AuthViewMap: Record<AuthActions, React.FC> = {
   [AuthActions.SIGN_IN]: lazy(() =>
     import('./sign-in-form/index.js').then((module) => ({ default: module.SignInForm }))
   ),

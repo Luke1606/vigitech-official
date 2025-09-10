@@ -20,21 +20,6 @@ const items = [
         icon: Home,
     },
     {
-        title: "Inbox",
-        url: "#",
-        icon: Inbox,
-    },
-    {
-        title: "Calendar",
-        url: "#",
-        icon: Calendar,
-    },
-    {
-        title: "Search",
-        url: "#",
-        icon: Search,
-    },
-    {
         title: "Settings",
         url: "#",
         icon: Settings,
@@ -43,8 +28,6 @@ const items = [
 
 
 const AppSidebar: React.FC = () => {
-
-
     return (
         <>
             <Sidebar className="my-12">

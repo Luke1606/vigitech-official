@@ -1,1 +1,1 @@
-export { TechnologyRadarHome } from './RadarHome.page';
+export { TechnologyRadarHome } from './TechnologyRadarHome.page';

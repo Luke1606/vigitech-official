@@ -1,12 +1,15 @@
 
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { routes } from "./routes";
+import { createBrowserRouter, RouterProvider, type DataRouter } from "react-router-dom";
+import { routes } from "./routing";
+import { AuthProvider } from "./ui/components/auth-provider";
 
-const router = createBrowserRouter(routes);
+const router: DataRouter = createBrowserRouter(routes);
 
 function App() {
   return (
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   )
 }
 

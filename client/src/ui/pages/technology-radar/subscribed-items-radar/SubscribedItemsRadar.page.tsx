@@ -1,4 +1,5 @@
 import { Button } from "@/ui/components/shared/shadcn-ui/button"
+import { Radar } from './Radar';
 import {
     Dialog,
     DialogContent,
@@ -12,6 +13,7 @@ import {
 export const SubscribedItemsRadar: React.FC = () => {
     return (
         <main>
+            <Radar />
             <Dialog>
                 <DialogTrigger asChild>
                     <Button>Open</Button>

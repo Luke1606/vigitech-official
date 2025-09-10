@@ -5,17 +5,17 @@ import React, {
     useCallback, 
     useContext, 
     useEffect, 
-    useMemo, 
-    useState 
+    useMemo,
+    useState
 } from 'react';
-import { 
+import type { 
     SignUpWithPasswordCredentials, 
     SignInWithPasswordCredentials,
     SignInWithOAuthCredentials,
     User
 } from '@supabase/auth-js';
 
-import { AuthRepository, AuthInterface } from '../../../infrastructure';
+import { AuthRepository, type AuthInterface } from '@/infrastructure';
 
 export interface AuthRepositoryProviderProps extends AuthInterface {
     user: User | null;
@@ -29,8 +29,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const authRepositoryImpl = useMemo(() => new AuthRepository(), []);
 
     const fetchUser = useCallback(async () => {
-        const actualUser = await authRepositoryImpl.fetchCurrentUser();
-        setUser(actualUser);
+        const { data } = await authRepositoryImpl.fetchCurrentUser();
+        setUser(data.user);
     }, [authRepositoryImpl])
     
     useEffect(() => {

@@ -1,0 +1,168 @@
+generator client {
+	provider = "prisma-client-js"
+    output = "../../../../node_modules/.prisma/client"
+}
+
+datasource db {
+	provider  = "postgresql"
+	url       = env("DATABASE_URL")
+	directUrl = env("DIRECT_URL")
+}
+
+model User {
+	id                             String               @id @default(uuid())
+	email                          String               @unique
+	name                           String
+    
+    createdAt                      DateTime             @default(now())
+    updatedAt                      DateTime             @updatedAt
+    
+    lists                          UserItemList[]
+    preferences                    UserPreferences?
+    notifications                  Notification[]       @relation("UserNotifications")
+}
+
+
+enum NotificationChannel {
+    IN_APP
+    EMAIL
+    PUSH
+    SMS
+}
+
+model UserItemList {
+    id                             String               @id @default(uuid())    
+    name                           String
+    preferredNotificationChannel   NotificationChannel  @default(IN_APP)
+
+    createdAt                      DateTime             @default(now())
+    updatedAt                      DateTime             @updatedAt
+    
+    ownerId                        String
+    owner                          User                 @relation(fields: [ownerId], references: [id])
+    items                          SurveyItem[]         @relation("ListItems")
+}
+
+
+enum Theme {
+    DARK
+    LIGHT
+    SYSTEM
+}
+
+enum Language {
+    EN
+    ES
+}
+
+enum Frequency {
+    EVERY_10_MINUTES
+    EVERY_30_MINUTES
+    HOURLY
+    EVERY_6_HOURS
+    DAILY
+    EVERY_TWO_DAYS
+    EVERY_FOUR_DAYS
+    WEEKLY
+}
+
+model UserPreferences {
+    id                             String               @id @default(uuid())
+    theme                          Theme                @default(SYSTEM)
+    language                       Language             @default(ES)
+    defaultNotificationChannel     NotificationChannel  @default(IN_APP)
+    analysisFrequency              Frequency            @default(EVERY_6_HOURS)
+    recommendationsUpdateFrequency Frequency            @default(DAILY)
+
+    createdAt                      DateTime             @default(now())
+    updatedAt                      DateTime             @updatedAt
+
+	userId                         String               @unique
+    user                           User?                @relation(fields: [userId], references: [id])
+}
+
+
+enum NotificationState {
+    SENT
+    FAILED
+    SENDING
+}
+
+model Notification {
+  id                               String               @id @default(uuid())
+  title                            String
+  message                          String
+  read                             Boolean              @default(false)
+  channel                          NotificationChannel
+  sentState                        NotificationState    @default(SENDING)
+  
+  createdAt                        DateTime             @default(now())
+  updatedAt                        DateTime             @updatedAt
+                       
+  users                            User[]               @relation("UserNotifications")
+}
+
+
+enum RadarQuadrant {
+    BUSSINESS_INTEL
+    SCIENTIFIC_STAGE
+    SUPPORT_PLATTFORMS_AND_TECHNOLOGIES
+    LANGUAGES_AND_FRAMEWORKS
+    UNKNOWN
+}
+
+enum RadarRing {
+    ADOPT
+    TEST
+    SUSTAIN
+    HOLD
+    UNKNOWN
+}
+
+model SurveyItem {
+    id                             String               @id @default(uuid())
+    title                          String
+	summary                        String
+	source                         String
+    subscribed                     Boolean              @default(false)
+    active                         Boolean              @default(false)
+
+    radarQuadrant                  RadarQuadrant        @default(UNKNOWN)
+    radarRing                      RadarRing            @default(UNKNOWN)
+
+    createdAt                      DateTime             @default(now())
+    updatedAt                      DateTime             @updatedAt
+
+    analysisHistory                SubscribedItemAnalysis[]  
+    lists                          UserItemList[]       @relation("ListItems")
+    reports                        Report[]             @relation("ReportItems")
+}
+
+
+
+
+model SubscribedItemAnalysis {
+	id                             String               @id @default(uuid())
+	searchedData                   Json
+    obtainedMetrics                Json
+    
+    createdAt                      DateTime             @default(now())
+    updatedAt                      DateTime             @updatedAt
+
+	itemId                         String
+    item                           SurveyItem           @relation(fields: [itemId], references: [id])
+}
+
+
+model Report {
+    id                             String               @id @default(uuid())
+    startDate                      DateTime
+    endDate                        DateTime             @default(now())
+    
+    createdAt                      DateTime             @default(now())
+    updatedAt                      DateTime             @updatedAt
+
+    items                          SurveyItem[]         @relation("ReportItems")
+}
+
+
