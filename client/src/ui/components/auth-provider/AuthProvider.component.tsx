@@ -1,9 +1,7 @@
 import React, { 
     createContext, 
-    useCallback, 
     useContext, 
     useEffect, 
-    useMemo,
     useState
 } from 'react';
 import type { 
@@ -11,104 +9,102 @@ import type {
     SignInWithPasswordCredentials,
     SignInWithOAuthCredentials,
     User,
-    Subscription
 } from '@supabase/auth-js';
 
-import { AuthRepository, type AuthInterface } from '@/infrastructure';
+import { type AuthInterface, Supabase } from '@/infrastructure';
 
-interface AuthRepositoryProviderProps extends AuthInterface {
-    session: User | null;
-};
 
-const AuthContext = createContext<AuthRepositoryProviderProps | null>(null);
+const AuthContext = createContext<AuthInterface | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [ session, setSession ] = useState<User | null>(null);
-    
-    const authRepositoryImpl: AuthRepository = useMemo(() => new AuthRepository(), []);
+    const [ user, setUser ] = useState<User | null>(null);
+    const [ error, setError ] = useState<Error | null>(null);
 
-    const subscription: Subscription = useMemo(() => authRepositoryImpl.onAuthStateChange(setSession), [authRepositoryImpl]);
-
-    const fetchCurrentUser = useCallback(async () => {
-        try {
-            const user: User | null = await authRepositoryImpl.fetchCurrentUser();
-            console.log(user);
-            if (user)
-                setSession(user);
-        } catch (error) {
-            console.log(error);            
-        }
-    }, [authRepositoryImpl])
-    
     useEffect(() => {
-        fetchCurrentUser();
+        Supabase.auth.getSession().then(
+            ({ data: { session }, error }) => {
+                if (error)
+                    setError(error);
+                else
+                    setUser(session?.user ?? null);
+                console.log(session, error);
+            });
+        
+        const { data: { subscription } } = Supabase.auth.onAuthStateChange(
+            (_event, session) => setUser(session?.user ?? null)
+        )
 
         return () => subscription.unsubscribe();
-    }, [fetchCurrentUser, subscription]);
+    }, []);
 
-    const signUp = async (
+    useEffect(() => {
+        if (error)
+            console.error(error);
+    }, [error]);
+
+    const signUp = (
         credentials: SignUpWithPasswordCredentials
-    ): Promise<void> => {
-        try {
-            await authRepositoryImpl.signUp(credentials);
-        } catch (error) {
-            console.log(error);            
-        }
+    ):void => {
+        Supabase.auth.signUp(credentials).then(
+            ({ error }) => {
+                if (error) setError(error);
+            }
+        );
     };
     
-    const signInWithPassword = async (
+    const signInWithPassword = (
         credentials: SignInWithPasswordCredentials
-    ): Promise<void> => {
-        try {
-            await authRepositoryImpl.signInWithPassword(credentials);
-        } catch (error) {
-            console.log(error);
-        }
+    ):void => {
+        Supabase.auth.signInWithPassword(credentials).then(
+            ({ error }) => {
+                if (error) setError(error);
+            }
+        );
     };
 
-    const signInWithOAuth = async (
+    const signInWithOAuth = (
         credentials: SignInWithOAuthCredentials
-    ): Promise<void> => {
-        try {
-            await authRepositoryImpl.signInWithOAuth(credentials);
-        } catch (error) {
-            console.log(error);
-        }
+    ):void => {
+        Supabase.auth.signInWithOAuth(credentials).then(
+            ({ error }) => {
+                if (error) setError(error);
+            }
+        );
     };
 
-    const signInWithOtp = async (
+    const signInWithOtp = (
         email: string
-    ): Promise<void> => {
-        try {
-            await authRepositoryImpl.signInWithOtp(email);
-        } catch (error) {
-            console.log(error);
-        }
+    ):void => {
+        Supabase.auth.signInWithOtp({ email }).then(
+            ({ error }) => {
+                if (error) setError(error);
+            }
+        );
     };
 
-    const signOut = async (): Promise<void> => {
-        try {
-            await authRepositoryImpl.signOut();
-        } catch (error) {
-            console.log(error);
-        }
+    const signOut = ():void => {
+        Supabase.auth.signOut().then(
+            ({ error }) => {
+                if (error) setError(error);
+            }
+        );
     };
 
-    const resetPassword = async (
+    const resetPassword = (
         email: string
-    ): Promise<void> => {
-        try {
-            await authRepositoryImpl.resetPassword(email);
-        } catch (error) {
-            console.log(error);
-        }
+    ):void => {
+        Supabase.auth.resetPasswordForEmail(email).then(
+            ({ error }) => {
+                if (error) setError(error);
+            }
+        );
     };
 
     return (
         <AuthContext.Provider 
 			value={{
-				session,
-                fetchCurrentUser,
+				user,
+                error,
                 signUp,
 				signInWithPassword,
 				signInWithOAuth,
@@ -121,7 +117,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 };
 
-export const useAuthProvider = () => {
+// eslint-disable-next-line react-refresh/only-export-components
+export const useAuthProvider = (): AuthInterface => {
     const ctx = useContext(AuthContext);
     if (!ctx) throw new Error('useAuthProvider debe usarse dentro de AuthProvider');
     return ctx;

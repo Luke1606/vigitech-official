@@ -3,7 +3,6 @@ import { Layout, Error, ProtectedRoutes } from "@/ui/components";
 import { PathOption } from './Paths.enum';
 import { 
     AuthForm,
-    AuthCallback,
     PortalHome, 
     FAQ,
     About,
@@ -21,11 +20,7 @@ export const routes: RouteObject[] = [
         element: <Navigate to={PathOption.VIGITECH_PORTAL_HOME} replace />
     },
     {
-        path: PathOption.VIGITECH_CENTRALIZED_AUTH_CALLBACK,
-        element: <AuthCallback />
-    },
-    {
-        path: `${PathOption.VIGITECH_CENTRALIZED_AUTH}/:action`,
+        path: `${PathOption.VIGITECH_CENTRALIZED_AUTH}/:action?`,
         element: <AuthForm />
     },
     {

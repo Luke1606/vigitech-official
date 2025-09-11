@@ -7,14 +7,14 @@ export const NotificationCenter: React.FC = () => {
     const navigate = useNavigate();
     const appId: string = import.meta.env.VITE_NOVU_APPLICATION_ID as string;
 
-    const { session } = useAuthProvider();
+    const { user } = useAuthProvider();
     
-    if (!session) return null;
+    if (!user) return null;
 
     return (
         <Inbox
             applicationIdentifier={appId}
-            subscriber={session?.id}
+            subscriber={user?.id}
             routerPush={(path: string) => navigate(path)}
             appearance={{
                 variables: {

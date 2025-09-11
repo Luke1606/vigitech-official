@@ -1,24 +1,53 @@
-import React from "react";
+import React, { useState, type FormEvent } from "react";
 import { useAuthProvider } from "../../auth-provider";
-import { PathOption } from "@/routing";
 
 export const SignInForm: React.FC = () => {
-    const { signInWithOAuth } = useAuthProvider()
+    const { signInWithOAuth, signInWithOtp } = useAuthProvider()
 
-    const siteUrl: string = import.meta.env.VITE_SITE_BASE_URL as string;
-
+    const [loading, setLoading] = useState(false);
+        const [email, setEmail] = useState<string>('');
+    
+        const handleLoginWithOtp = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        setLoading(true)
+        signInWithOtp(email);
+        setLoading(false)
+    }
+    
     return <>
         <button 
             type="button"
             onClick={
-                async () => signInWithOAuth({
-                    provider: 'github',
-                    options: {
-				        redirectTo: `${siteUrl}${PathOption.VIGITECH_CENTRALIZED_AUTH_CALLBACK}`,
-			        }
-                })
+                () => signInWithOAuth({ provider: 'github' })
             }>
-            Sign In With GitHub
+            Sign in via GitHub
         </button>
+
+        <div className="row flex flex-center">
+            <div className="col-6 form-widget">
+                <p className="description">Sign in via magic link with your email below</p>
+                
+                <form className="form-widget" onSubmit={handleLoginWithOtp}>
+                    <input
+                        className="inputField"
+                        type="email"
+                        placeholder="Your email"
+                        value={email}
+                        required={true}
+                        onChange={(e) => setEmail(e.target.value)}
+                        />
+
+                    <button 
+                        type="button"
+                        className={'button block'} 
+                        disabled={loading}>
+                        {loading ? 
+                            <span>Loading</span>
+                            :
+                            <span>Send magic link</span>}
+                    </button>
+                </form>
+            </div>
+        </div>
     </>;
 };

@@ -6,27 +6,28 @@ import type {
 } from '@supabase/supabase-js';
 
 export interface AuthInterface {
+    user: User | null;
+    error: Error | null;
+
     signInWithPassword: (
         credentials: SignInWithPasswordCredentials
-    ) => Promise<void>;
+    ) => void;
 
     signInWithOAuth: (
         credentials: SignInWithOAuthCredentials
-    ) => Promise<void>;
+    ) => void;
 
     signInWithOtp: (
         email: string
-    ) => Promise<void> ;
+    ) => void ;
     
     signUp: (
         credentials: SignUpWithPasswordCredentials
-    ) => Promise<void>;
+    ) => void;
     
     resetPassword: (
         email: string
-    ) => Promise<void> ;
+    ) => void ;
     
-    signOut: () => Promise<void>;
-
-    fetchCurrentUser: () => Promise<User | null | void>;
+    signOut: () => void;
 }

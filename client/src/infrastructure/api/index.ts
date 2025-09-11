@@ -1,1 +1,0 @@
-export { AxiosConfiguredInstance } from './AxiosConfiguredInstance.module';

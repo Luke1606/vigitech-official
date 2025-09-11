@@ -1,31 +1,41 @@
 import React from 'react';
 import { User } from 'lucide-react';
-import styles from './Profile.styles.js';
-import { useAuthProvider } from '@/ui/components/auth-provider';
 import { Link } from 'react-router-dom';
-import { PathOption } from '@/routing/Paths.enum.js';
-import { AuthAction } from '@/infrastructure/index.js';
+
+import styles from './Profile.styles.js';
+import { useAuthProvider } from '@/ui/components';
+import { PathOption } from '@/routing';
+import { AuthAction } from '@/infrastructure';
 
 export const Profile: React.FC = () => {
-	const { session, signOut} = useAuthProvider();
+	const { user, signOut } = useAuthProvider();
 	
+	const displayName = user?.email || user?.user_metadata?.user_name;
+	const avatarImageUrl = user?.user_metadata?.avatar_url
+
 	return (
-		<div>
-            { session ?
-				<>
-					<figure className={styles.figure}>
-						<User className={styles.icon} />
-						<h2>{session?.email || session?.phone}</h2>
-					</figure>
+		<div className={styles.container}>
+            { user ?
+				<div className={styles.subcontainer}>
+					{  avatarImageUrl ?
+						<img
+							className={styles.icon} 
+							src={avatarImageUrl} 
+							alt="User Avatar" />
+						:
+						<User 
+							className={styles.icon} />
+					}
+					<h2>{ displayName }</h2>
 
 					<button
 						type='button'
 						onClick={signOut}>
 						Logout
 					</button>
-				</>
+				</div>
 				:
-				<>
+				<div className={styles.subcontainer}>
 					<Link 
 						to={`${PathOption.VIGITECH_CENTRALIZED_AUTH}/${AuthAction.SIGN_IN}`}>
 						Sign In
@@ -35,8 +45,7 @@ export const Profile: React.FC = () => {
 						to={`${PathOption.VIGITECH_CENTRALIZED_AUTH}/${AuthAction.SIGN_UP}`}>
 						Sign Up
 					</Link>
-				</>
-			}
+				</div> }
         </div>
 	);
 };

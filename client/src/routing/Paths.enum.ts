@@ -1,7 +1,6 @@
 export enum PathOption {
     VIGITECH_PORTAL_HOME = "/vigitech/portal",
     VIGITECH_CENTRALIZED_AUTH = "/vigitech/auth",
-    VIGITECH_CENTRALIZED_AUTH_CALLBACK = "/vigitech/auth-callback",
     VIGITECH_PORTAL_FAQ = "/vigitech/portal/faq",
     VIGITECH_PORTAL_ABOUT = "/vigitech/portal/about",
     VIGITECH_PORTAL_CTA = "/vigitech/portal/cta",
