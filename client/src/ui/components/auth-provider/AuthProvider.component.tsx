@@ -1,5 +1,3 @@
-'use client'
-
 import React, { 
     createContext, 
     useCallback, 
@@ -12,63 +10,109 @@ import type {
     SignUpWithPasswordCredentials, 
     SignInWithPasswordCredentials,
     SignInWithOAuthCredentials,
-    User
+    User,
+    Subscription
 } from '@supabase/auth-js';
 
 import { AuthRepository, type AuthInterface } from '@/infrastructure';
 
-export interface AuthRepositoryProviderProps extends AuthInterface {
-    user: User | null;
-}
+interface AuthRepositoryProviderProps extends AuthInterface {
+    session: User | null;
+};
 
 const AuthContext = createContext<AuthRepositoryProviderProps | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [ user, setUser ] = useState<User | null>(null);
+    const [ session, setSession ] = useState<User | null>(null);
     
-    const authRepositoryImpl = useMemo(() => new AuthRepository(), []);
+    const authRepositoryImpl: AuthRepository = useMemo(() => new AuthRepository(), []);
 
-    const fetchUser = useCallback(async () => {
-        const { data } = await authRepositoryImpl.fetchCurrentUser();
-        setUser(data.user);
+    const subscription: Subscription = useMemo(() => authRepositoryImpl.onAuthStateChange(setSession), [authRepositoryImpl]);
+
+    const fetchCurrentUser = useCallback(async () => {
+        try {
+            const user: User | null = await authRepositoryImpl.fetchCurrentUser();
+            console.log(user);
+            if (user)
+                setSession(user);
+        } catch (error) {
+            console.log(error);            
+        }
     }, [authRepositoryImpl])
     
     useEffect(() => {
-        fetchUser();
-    }, [fetchUser])
+        fetchCurrentUser();
 
-    const signUp = async (credentials: SignUpWithPasswordCredentials): Promise<void> => {
-        const { data, error } = await authRepositoryImpl.signUp(credentials);
-        console.log(data, error);
-    }
+        return () => subscription.unsubscribe();
+    }, [fetchCurrentUser, subscription]);
+
+    const signUp = async (
+        credentials: SignUpWithPasswordCredentials
+    ): Promise<void> => {
+        try {
+            await authRepositoryImpl.signUp(credentials);
+        } catch (error) {
+            console.log(error);            
+        }
+    };
     
-    const signInWithPassword = async (credentials: SignInWithPasswordCredentials): Promise<void> => {
-        const { data, error } = await authRepositoryImpl.signInWithPassword(credentials);
-        console.log(data, error);
+    const signInWithPassword = async (
+        credentials: SignInWithPasswordCredentials
+    ): Promise<void> => {
+        try {
+            await authRepositoryImpl.signInWithPassword(credentials);
+        } catch (error) {
+            console.log(error);
+        }
     };
 
-    const signInWithOAuth = async (credentials: SignInWithOAuthCredentials): Promise<void> => {
-        const { data, error } = await authRepositoryImpl.signInWithOAuth(credentials);
-        console.log(data, error);
+    const signInWithOAuth = async (
+        credentials: SignInWithOAuthCredentials
+    ): Promise<void> => {
+        try {
+            await authRepositoryImpl.signInWithOAuth(credentials);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const signInWithOtp = async (
+        email: string
+    ): Promise<void> => {
+        try {
+            await authRepositoryImpl.signInWithOtp(email);
+        } catch (error) {
+            console.log(error);
+        }
     };
 
     const signOut = async (): Promise<void> => {
-        const { error } = await authRepositoryImpl.signOut();
-        console.log(error);
+        try {
+            await authRepositoryImpl.signOut();
+        } catch (error) {
+            console.log(error);
+        }
     };
 
-    const resetPassword = async (email: string): Promise<void> => {
-        const {data, error } = await authRepositoryImpl.resetPassword(email);
-        console.log(data, error);
+    const resetPassword = async (
+        email: string
+    ): Promise<void> => {
+        try {
+            await authRepositoryImpl.resetPassword(email);
+        } catch (error) {
+            console.log(error);
+        }
     };
 
     return (
         <AuthContext.Provider 
 			value={{
-				user,
+				session,
+                fetchCurrentUser,
                 signUp,
 				signInWithPassword,
 				signInWithOAuth,
+                signInWithOtp,
 				signOut,
                 resetPassword
 			}}>

@@ -1,29 +1,32 @@
 import type { 
-    AuthError,
-    AuthResponse,
-    AuthTokenResponsePassword,
-    OAuthResponse,
     SignUpWithPasswordCredentials, 
     SignInWithPasswordCredentials,
     SignInWithOAuthCredentials,
+    User,
 } from '@supabase/supabase-js';
 
 export interface AuthInterface {
     signInWithPassword: (
         credentials: SignInWithPasswordCredentials
-    ) => Promise<AuthTokenResponsePassword | void>;
+    ) => Promise<void>;
 
     signInWithOAuth: (
         credentials: SignInWithOAuthCredentials
-    ) => Promise<OAuthResponse | void>;
+    ) => Promise<void>;
+
+    signInWithOtp: (
+        email: string
+    ) => Promise<void> ;
     
     signUp: (
         credentials: SignUpWithPasswordCredentials
-    ) => Promise<AuthResponse | void>;
+    ) => Promise<void>;
     
     resetPassword: (
         email: string
-    ) => Promise<{ data: object, error: null } | { data: null; error: AuthError } | void> ;
+    ) => Promise<void> ;
     
-    signOut: () => Promise<{ error: AuthError | null } | void>;
+    signOut: () => Promise<void>;
+
+    fetchCurrentUser: () => Promise<User | null | void>;
 }
