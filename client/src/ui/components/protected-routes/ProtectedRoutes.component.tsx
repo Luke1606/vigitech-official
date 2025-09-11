@@ -5,9 +5,9 @@ import { useAuthProvider } from "../auth-provider"
 import { PathOption } from "@/routing";
 
 export const ProtectedRoutes: React.FC = () => {
-    const { session } = useAuthProvider();
+    const { user } = useAuthProvider();
     
-    if (!session) {
+    if (!user) {
         return <Navigate to={PathOption.VIGITECH_CENTRALIZED_AUTH}/>
     }
 

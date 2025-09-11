@@ -1,7 +1,9 @@
 import type { UUID } from "crypto";
-import { AxiosConfiguredInstance } from "../../../api";
-import type { SurveyItemsInterface } from "../../interfaces";
-import type { SurveyItemDto } from "../../types";
+import { 
+    AxiosConfiguredInstance,
+    type SurveyItemsInterface,
+    type SurveyItemDto
+} from '@/infrastructure';
 
 export class SurveyItemsRepository implements SurveyItemsInterface {
     private readonly axios: AxiosConfiguredInstance = new AxiosConfiguredInstance(

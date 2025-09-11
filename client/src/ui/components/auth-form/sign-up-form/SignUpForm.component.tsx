@@ -1,6 +1,5 @@
 import React, { useState, type FormEvent } from "react";
 import { useAuthProvider } from "../../auth-provider";
-import { PathOption } from "@/routing";
 
 export const SignUpForm: React.FC = () => {
     const { signInWithOAuth, signInWithOtp } = useAuthProvider();
@@ -8,27 +7,20 @@ export const SignUpForm: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState<string>('');
 
-    const handleLoginWithOtp = async (event: FormEvent<HTMLFormElement>) => {
+    const handleLoginWithOtp = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
         setLoading(true)
-        await signInWithOtp(email);
+        signInWithOtp(email);
         setLoading(false)
     }
-    
-    const siteUrl: string = import.meta.env.VITE_SITE_BASE_URL as string;
     
     return <>
         <button 
             type="button"
             onClick={
-                async () => signInWithOAuth({
-                    provider: 'github',
-                    options: {
-                        redirectTo: `${siteUrl}${PathOption.VIGITECH_CENTRALIZED_AUTH_CALLBACK}`
-                    }
-                })
+                () => signInWithOAuth({ provider: 'github' })
             }>
-            Sign Up With GitHub
+            Sign up via GitHub
         </button>
 
         <div className="row flex flex-center">

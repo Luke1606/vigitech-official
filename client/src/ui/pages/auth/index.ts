@@ -1,2 +1,1 @@
-export * from './auth-callback';
-export * from './auth-form';
+export * from './AuthForm.page';

@@ -1,8 +1,8 @@
 import axios, {
     AxiosError, 
-    AxiosInstance, 
-    AxiosResponse, 
-    InternalAxiosRequestConfig 
+    type AxiosInstance, 
+    type AxiosResponse, 
+    type InternalAxiosRequestConfig 
 } from "axios";
 
 export class AxiosConfiguredInstance {
