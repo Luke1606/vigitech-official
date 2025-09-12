@@ -1,11 +1,11 @@
 import type { UUID } from "crypto";
-import { SurveyItemDto } from "../types";
+import type { SurveyItemDto } from "../types";
 
 export interface SurveyItemsInterface {
-    findAllRecommendations: () => Promise<SurveyItemDto[]>;
+    findAllRecommended: () => Promise<SurveyItemDto[]>;
     findAllSubscribed: () => Promise<SurveyItemDto[]>;
     findOne: (itemId: UUID) => Promise<SurveyItemDto>;
-    subscribe: (itemId: UUID) => Promise<void>;
-    unsubscribe: (itemId: UUID) => Promise<void>;
-    remove: (itemId: UUID) => Promise<void>;
+    subscribeOne: (itemId: UUID) => Promise<void>;
+    unsubscribeOne: (itemId: UUID) => Promise<void>;
+    removeOne: (itemId: UUID) => Promise<void>;
 }

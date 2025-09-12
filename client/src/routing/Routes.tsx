@@ -8,6 +8,8 @@ import {
     About,
     TechnologyRadarHome,
     SubscribedItemsRadar,
+    RecommendationsFeed,
+    ItemDetails
 } from "@/ui/pages";
 
 const vigitechGlobalPrefix: string = "/vigitech";
@@ -50,6 +52,14 @@ export const routes: RouteObject[] = [
                     {
                         path: `${technologyRadarGlobalPrefix}subscribed-items-radar`,
                         element: <SubscribedItemsRadar />
+                    },
+                    {
+                        path: `${technologyRadarGlobalPrefix}recommendations-feed`,
+                        element: <RecommendationsFeed />
+                    },
+                    {
+                        path: `${technologyRadarGlobalPrefix}item-details/:item`,
+                        element: <ItemDetails />
                     }
                 ]
             }

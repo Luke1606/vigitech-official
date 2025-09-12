@@ -1,1 +1,1 @@
-export { SurveyItemsRepository } from './SurveyItems.repository'
+export { surveyItemsRepository } from './SurveyItems.repository'

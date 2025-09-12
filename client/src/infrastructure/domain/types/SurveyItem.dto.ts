@@ -1,8 +1,9 @@
-import { RadarQuadrant, RadarRing } from "../enum/SurveyItemsOptions.enum";
-import { SurveyItemAnalysisDto } from "./SurveyItemAnalysis.dto";
+import type { UUID } from "crypto";
+import type { RadarQuadrant, RadarRing } from "../enums";
+import { type SurveyItemAnalysisDto } from "./SurveyItemAnalysis.dto";
 
 export type SurveyItemDto = {
-    id: string;
+    id: UUID;
     title: string;
     summary: string;
     radarQuadrant: RadarQuadrant;

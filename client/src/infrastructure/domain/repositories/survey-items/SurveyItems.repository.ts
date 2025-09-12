@@ -5,12 +5,12 @@ import {
     type SurveyItemDto
 } from '@/infrastructure';
 
-export class SurveyItemsRepository implements SurveyItemsInterface {
+class SurveyItemsRepository implements SurveyItemsInterface {
     private readonly axios: AxiosConfiguredInstance = new AxiosConfiguredInstance(
-        `${process.env.SERVER_BASE_URL}survey-items/`
+        `${process.env.VITE_SERVER_BASE_URL}/survey-items/`
     );
-    
-    async findAllRecommendations (): Promise<SurveyItemDto[]> {
+
+    async findAllRecommended (): Promise<SurveyItemDto[]> {
         return await this.axios.http.get('recommended');
     };
 
@@ -18,19 +18,47 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
         return await this.axios.http.get('subscribed');
     };
 
-    async findOne (itemId: UUID): Promise<SurveyItemDto> {
-        return await this.axios.http.get(`:${itemId}`);
+    async findOne (
+        itemId: UUID
+    ): Promise<SurveyItemDto> {
+        return await this.axios.http.get(`${itemId}`);
     };
 
-    async subscribe (itemId: UUID): Promise<void> {
-        return await this.axios.http.patch(`subscribe/:${itemId}`);
+    async subscribeOne (
+        itemId: UUID
+    ): Promise<void> {
+        return await this.axios.http.patch(`subscribe/${itemId}`);
     };
 
-    async unsubscribe (itemId: UUID): Promise<void> {
-        return await this.axios.http.patch(`unsubscribe/:${itemId}`);
+    async unsubscribeOne (
+        itemId: UUID
+    ): Promise<void> {
+        return await this.axios.http.patch(`unsubscribe/${itemId}`);
     };
 
-    async remove (itemId: UUID): Promise<void> {
-        return await this.axios.http.delete(`:${itemId}`);
+    async removeOne (
+        itemId: UUID
+    ): Promise<void> {
+        return await this.axios.http.delete(`${itemId}`);
+    };
+
+    async subscribeBatch (
+        itemIds: UUID[]
+    ): Promise<void> {
+        return await this.axios.http.patch(`subscribe/batch`, { itemIds });
+    };
+
+    async unsubscribeBatch (
+        itemIds: UUID[]
+    ): Promise<void> {
+        return await this.axios.http.patch(`unsubscribe/batch`, { itemIds });
+    };
+
+    async removeBatch (
+        itemIds: UUID[]
+    ): Promise<void> {
+        return await this.axios.http.delete(`batch`, { data: { itemIds } });
     };
 }
+
+export const surveyItemsRepository = new SurveyItemsRepository();
