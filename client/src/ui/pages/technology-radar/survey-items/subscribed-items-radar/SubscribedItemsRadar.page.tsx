@@ -1,12 +1,9 @@
-import type { UUID } from "crypto";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { InfoIcon } from "lucide-react";
 
-import { 
-    useSurveyItems, 
-    useSurveyItemsUI
-} from "@/infrastructure";
-
+import { PathOption } from "@/routing";
+import { useSurveyItemsUI, type SurveyItemDto } from "@/infrastructure";
 import { 
     Alert,
     AlertDescription,
@@ -18,30 +15,51 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
+    Button,
+    CardVariant,
+    SurveyItemCard
 } from "@/ui/components";
 
-import { SurveyItemCard } from "./SurveyItemCard.component";
-
-export const SubscribedRadar = () => {
+export const SubscribedItemsRadar = () => {
     const { 
         subscribed, 
-        unsubscribe, 
-        remove, 
-        isLoading 
-    } = useSurveyItems();
+        unsubscribeOne, 
+        isLoading,
+        selectedItems,
+        addToSelectedItems,
+        removeFromSelectedItems,
+        addPendingUnsubscribes,
+        addPendingRemoves
+    } = useSurveyItemsUI();
     
-    const { setSelectedItem } = useSurveyItemsUI();
-    const [itemToRemove, setItemToRemove] = useState<UUID | null>(null);
+    const [
+        isMultipleSelection, 
+        setMultipleSelection
+    ] = useState<boolean>(false);
+    
+    const [
+        hasItemsToRemove,
+        setHasItemsToRemove
+    ] = useState<boolean>(false);
 
-    const handleRemoveClick = (itemId: UUID) => {
-        setItemToRemove(itemId);
-    };
+    const unselectAll = useCallback(
+        () => {
+            if (selectedItems.length > 0)
+                removeFromSelectedItems(selectedItems)
+        }, [removeFromSelectedItems, selectedItems]
+    )
+    
+    useEffect(() => {
+        return () => unselectAll()
+    }, [unselectAll])
+
+    const navigate = useNavigate();
 
     const confirmRemove = () => {
-        if (itemToRemove) {
-        remove(itemToRemove);
-        setItemToRemove(null);
-        }
+        addPendingRemoves(selectedItems);
+        if (isMultipleSelection)
+            setMultipleSelection(true);
+        removeFromSelectedItems(selectedItems);
     };
 
     if (subscribed.isLoading) {
@@ -75,35 +93,91 @@ export const SubscribedRadar = () => {
     return (
         <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="">
+                    {/* Select and unselect*/}
+                    <Button
+                        type="button"
+                        onClick={() => {
+                            if (isMultipleSelection)
+                                setMultipleSelection(true);
+                            addToSelectedItems(subscribed.data);
+                        }}>
+                        { subscribed.data.every(
+                            (item: SurveyItemDto) => 
+                                selectedItems.includes(item)
+                        )? "Unselect all" : "Select all"
+                            }
+                    </Button>
+
+                    {/* Unsubscribe */}
+                    <Button
+                        type="button"
+                        onClick={() => {
+                            addPendingUnsubscribes(selectedItems);
+                            if (isMultipleSelection)
+                                setMultipleSelection(true);
+                            removeFromSelectedItems(selectedItems);
+                        }}>
+                        Unsubscribe all selected
+                    </Button> 
+
+                    {/* Remove */}
+                    <Button
+                        type="button"
+                        onClick={() => setHasItemsToRemove(true)}>
+                        Remove all selected
+                    </Button> 
+                </div>
+
                 { subscribed.data.map(
                     (item) => (
                         <SurveyItemCard
                             key={item.id}
                             item={item}
-                            variant="subscribed"
-                            onUnsubscribe={unsubscribe}
-                            onRemove={handleRemoveClick}
-                            onViewDetails={setSelectedItem}
-                            isLoading={isLoading.unsubscribe || isLoading.remove}
+                            variant={CardVariant.SUBSCRIBED}
+                            selected={selectedItems.includes(item)}
+                            onSelect={() => {
+                                if (!isMultipleSelection)
+                                    setMultipleSelection(true);
+                                addToSelectedItems([item]);
+                            }}
+                            onUnselect={() => {
+                                removeFromSelectedItems([item]);
+                            }}
+                            onUnsubscribe={unsubscribeOne}
+                            onRemove={() => setHasItemsToRemove(true)}
+                            onViewDetails={
+                                () => navigate(
+                                    `${PathOption.TECHNOLOGY_RADAR_ITEM_DETAILS}/${item.id}`
+                                )
+                            }
+                            isLoading={isLoading}
                             />
                     ))}
             </div>
 
-            <AlertDialog open={!!itemToRemove} onOpenChange={() => setItemToRemove(null)}>
+            <AlertDialog
+                open={hasItemsToRemove}
+                onOpenChange={() => setHasItemsToRemove(false)}>
                 <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete all data
-                    associated with this survey item from our servers.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={confirmRemove} className="bg-destructive text-destructive-foreground">
-                    Continue
-                    </AlertDialogAction>
-                </AlertDialogFooter>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+
+                        <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete all data
+                        associated with this survey item from our servers.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        
+                        <AlertDialogAction 
+                            className="bg-destructive text-destructive-foreground"
+                            onClick={confirmRemove}>
+                            Continue
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
         </>

@@ -1,62 +1,121 @@
-import { useSurveyItemsWithStore } from '@/hooks';
-import { Trash2, Plus } from 'lucide-react';
-import { 
-    Card, 
-    CardHeader, 
-    CardTitle, 
-    CardDescription, 
-    CardFooter 
-} from '@/ui/components/shared/shadcn-ui/card';
-import { Button } from '@/ui/components/shared/shadcn-ui/button';
+import { useSurveyItemsUI } from '@/infrastructure';
+import { useNavigate } from 'react-router-dom';
+import { Button, SurveyItemCard, CardVariant } from '@/ui/components';
 import type { SurveyItemDto } from '@/infrastructure';
+import { useCallback, useEffect, useState } from 'react';
+import { PathOption } from '@/routing';
 
 export const RecommendationsFeed: React.FC = () => {
     const { 
-        recommendations, 
-        subscribe, 
-        remove, 
+        recommended,
+        selectedItems,
+        addToSelectedItems,
+        removeFromSelectedItems,
+        addPendingSubscribes,
+        addPendingRemoves,
         isLoading 
-    } = useSurveyItemsWithStore();
+    } = useSurveyItemsUI();
 
-    if (recommendations.isLoading) {
+    const unselectAll = useCallback(
+        () => {
+            if (selectedItems.length > 0)
+                removeFromSelectedItems(selectedItems)
+        }, [removeFromSelectedItems, selectedItems]
+    )
+
+    useEffect(() => {
+        return () => unselectAll()
+    }, [unselectAll])
+
+    const [
+        isMultipleSelection, 
+        setMultipleSelection
+    ] = useState<boolean>(false);
+
+    const navigate = useNavigate();
+    
+    if (recommended.isLoading) {
         return <div>Loading recommendations...</div>;
     }
 
-    if (recommendations.error) {
-        return <div>Error loading recommendations: {recommendations.error.message}</div>;
+    if (recommended.error) {
+        return <div>Error loading recommendations: {recommended.error.message}</div>;
     }
 
     return (
         <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Recommendations</h2>
-        {recommendations.data?.length === 0 ? (
-            <p>No recommendations available.</p>
-        ) : (
-            recommendations.data?.map((item: SurveyItemDto) => (
-            <Card key={item.id}>
-                <CardHeader>
-                <CardTitle>{item.title}</CardTitle>
-                <CardDescription>{item.summary}</CardDescription>
-                </CardHeader>
-                <CardFooter>
+            <h2 className="text-2xl font-bold">Recommendations</h2>
+            
+            <div className="">
+                {/* Select and unselect*/}
                 <Button
-                    onClick={() => subscribe(item.id)}
-                    disabled={isLoading.subscribe}
-                    className="mr-2"
-                >
-                    <Plus className="w-4 h-4 mr-2" /> Subscribe
+                    type="button"
+                    onClick={() => {
+                        if (isMultipleSelection)
+                            setMultipleSelection(true);
+                        addToSelectedItems(recommended.data);
+                    }}>
+                    { recommended.data.every(
+                        (item: SurveyItemDto) => 
+                            selectedItems.includes(item)
+                    )? "Unselect all" : "Select all"
+                        }
                 </Button>
+
+                {/* Subscribe */}
                 <Button
-                    variant="destructive"
-                    onClick={() => remove(item.id)}
-                    disabled={isLoading.remove}
-                >
-                    <Trash2 className="w-4 h-4 mr-2" /> Remove
-                </Button>
-                </CardFooter>
-            </Card>
-            ))
-        )}
+                    type="button"
+                    onClick={() => {
+                        addPendingSubscribes(selectedItems);
+                        if (isMultipleSelection)
+                            setMultipleSelection(true);
+                        removeFromSelectedItems(selectedItems);
+                    }}>
+                    Subscribe all selected
+                </Button> 
+
+                {/* Remove */}
+                <Button
+                    type="button"
+                    onClick={() => {
+                        addPendingRemoves(selectedItems);
+                        if (isMultipleSelection)
+                            setMultipleSelection(true);
+                        removeFromSelectedItems(selectedItems);
+                    }}>
+                    Remove all selected
+                </Button> 
+            </div>
+            
+            { recommended.data.length === 0 ?
+                <p>No recommendations available.</p>
+                :
+                recommended.data.map((item: SurveyItemDto) => (
+                    <SurveyItemCard
+                        key={item.id}
+                        item={item}
+                        variant={CardVariant.RECOMMENDED}
+                        selected={selectedItems.includes(item)}
+                        onSelect={() => {
+                            if (!isMultipleSelection)
+                                setMultipleSelection(true);
+                            addToSelectedItems([item]);
+                        }}
+                        onUnselect={() => {
+                            removeFromSelectedItems([item]);
+                        }}
+                        onSubscribe={() => addPendingSubscribes([item])}
+                        onRemove={() => addPendingRemoves([item])}
+                        onViewDetails={
+                            () => navigate(
+                                `${PathOption.TECHNOLOGY_RADAR_ITEM_DETAILS}/${item.id}`
+                            )
+                        }
+                        isLoading={isLoading}
+                        />
+                    )
+                )
+            }
         </div>
     );
 };

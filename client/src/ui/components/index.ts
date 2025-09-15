@@ -5,3 +5,4 @@ export * from './layout';
 export * from './notification-center';
 export * from './protected-routes';
 export * from './shared';
+export * from './survey-items-card';

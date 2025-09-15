@@ -1,2 +1,2 @@
-export * from './middlewares';
-export * from './store';
+export * from './reducers';
+export { store } from './store';

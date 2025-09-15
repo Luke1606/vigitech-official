@@ -1,3 +1,2 @@
 export * from './shadcn';
-export { useSurveyItems } from './useSurveyItems.hook';
-export { useSurveyItemsUI } from './useSurveyItemsUI.hook';
+export * from './use-survey-items';
