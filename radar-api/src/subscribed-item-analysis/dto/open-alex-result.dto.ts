@@ -1,3 +1,1 @@
-export class OpenAlexResultDto {
-    
-};
+export class OpenAlexResultDto {}

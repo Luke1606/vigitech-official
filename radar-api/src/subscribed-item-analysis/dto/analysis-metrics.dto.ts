@@ -1,7 +1,7 @@
-import { IsEnum, IsNumber, IsPositive, IsString } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { IsEnum, IsNumber, IsPositive, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
-import { Trending, AccesibilityLevel } from "../enum/item-analysis-options";
+import { Trending, AccesibilityLevel } from '../enum/item-analysis-options';
 
 export class MetricsDto {
     @ApiProperty({ description: 'Cantidad promedio de citas' })
@@ -24,7 +24,9 @@ export class MetricsDto {
     @IsEnum(AccesibilityLevel)
     accesibilityLevel!: AccesibilityLevel;
 
-    @ApiProperty({ description: 'Tendencia (aumentar, disminuir, estable, inestable)' })
+    @ApiProperty({
+        description: 'Tendencia (aumentar, disminuir, estable, inestable)',
+    })
     @IsString()
     @IsEnum(Trending)
     trending!: Trending;

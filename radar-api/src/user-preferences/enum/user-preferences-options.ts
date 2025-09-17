@@ -6,5 +6,5 @@ export enum Theme {
 
 export enum Language {
     EN,
-    ES
+    ES,
 }

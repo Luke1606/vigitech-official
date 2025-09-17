@@ -5,20 +5,17 @@ import { Controller } from '@nestjs/common';
 
 @Controller()
 export class UserPreferencesController {
-	// constructor(private readonly userPreferencesService: UserPreferencesService) {}
-
-	// @MessagePattern('createDefaultUserPreferences')
-	// create () {
-	// 	return this.userPreferencesService.createDefault();
-	// }
-
-	// @MessagePattern('findActualUserPreferences')
-	// findActualUserPreferences () {
-	// 	return this.userPreferencesService.findActualUserPreferences();
-	// }
-
-	// @MessagePattern('updateUserPreference')
-	// update (@Payload() newPreferences: UpdateUserPreferenceDto) {
-	// 	return this.userPreferencesService.update(newPreferences);
-	// }
+    // constructor(private readonly userPreferencesService: UserPreferencesService) {}
+    // @MessagePattern('createDefaultUserPreferences')
+    // create () {
+    // 	return this.userPreferencesService.createDefault();
+    // }
+    // @MessagePattern('findActualUserPreferences')
+    // findActualUserPreferences () {
+    // 	return this.userPreferencesService.findActualUserPreferences();
+    // }
+    // @MessagePattern('updateUserPreference')
+    // update (@Payload() newPreferences: UpdateUserPreferenceDto) {
+    // 	return this.userPreferencesService.update(newPreferences);
+    // }
 }

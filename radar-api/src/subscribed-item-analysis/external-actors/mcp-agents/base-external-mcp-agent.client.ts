@@ -1,11 +1,11 @@
-import { 
-    create, 
-    AxiosInstance, 
-    InternalAxiosRequestConfig, 
-    AxiosResponse, 
-    AxiosError
-} from "axios";
-import { GeneralSearchResultDto } from "../../dto/general-search-result.dto";
+import {
+    create,
+    AxiosInstance,
+    InternalAxiosRequestConfig,
+    AxiosResponse,
+    AxiosError,
+} from 'axios';
+import { GeneralSearchResultDto } from '../../dto/general-search-result.dto';
 
 export abstract class BaseExternalMCPClient {
     protected http: AxiosInstance;
@@ -15,38 +15,42 @@ export abstract class BaseExternalMCPClient {
         apiKey?: string,
         axiosInstance?: AxiosInstance
     ) {
-        this.http = axiosInstance??
+        this.http =
+            axiosInstance ??
             create({
                 baseURL,
                 headers: {
-                    "Content-Type": "application/json",
-                }
+                    'Content-Type': 'application/json',
+                },
             });
-        
+
         if (apiKey) {
             this.http.interceptors.request.use(
                 (config: InternalAxiosRequestConfig) => {
-                    config.headers = config.headers?? {};
+                    config.headers = config.headers ?? {};
                     config.headers.Authorization = `Bearer ${apiKey}`;
                     return config;
                 }
-            )
-        };
+            );
+        }
 
         this.http.interceptors.response.use(
             (response: AxiosResponse) => response,
             (error: AxiosError) => {
                 return Promise.reject(
-                    error.response ?? error.message ?? 'Error desconocido de axios'
+                    error.response ??
+                        error.message ??
+                        'Error desconocido de axios'
                 );
             }
         );
-
     }
 
-    protected async generalAnalysis (): Promise<object[]> {
+    protected async generalAnalysis(): Promise<object[]> {
         return {} as object[];
-    };
+    }
 
-    protected abstract specificAnalysis (data: GeneralSearchResultDto): Promise<object>;
+    protected abstract specificAnalysis(
+        data: GeneralSearchResultDto
+    ): Promise<object>;
 }

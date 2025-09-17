@@ -6,5 +6,4 @@ import { UserPreferencesController } from './user-preferences.controller';
     controllers: [UserPreferencesController],
     providers: [UserPreferencesService],
 })
-
 export class UserPreferencesModule {}

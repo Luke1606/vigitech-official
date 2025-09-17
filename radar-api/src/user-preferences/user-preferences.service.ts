@@ -6,25 +6,21 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class UserPreferencesService {
     // async findActualUserPreferences () {
-	// 	const currentUser = await this.userService.getCurrentUser();
-	// 	if (!currentUser) return;
-
-    //     return this.preferencesRepository.findOne({ 
-	// 		where: { user: currentUser } 
-	// 	});
+    // 	const currentUser = await this.userService.getCurrentUser();
+    // 	if (!currentUser) return;
+    //     return this.preferencesRepository.findOne({
+    // 		where: { user: currentUser }
+    // 	});
     // }
-
-	// async createDefault () {
-	// 	const currentUser = await this.userService.getCurrentUser();
-	// 	if (!currentUser) return;
-
-	// 	const defaultPreferences: CreateDefaultUserPreferenceDto = { 
-	// 		user: currentUser
-	// 	}
-	// 	return this.preferencesRepository.create(defaultPreferences);
-	// }
-
-	// async update (newPreferences: UpdateUserPreferenceDto) {
+    // async createDefault () {
+    // 	const currentUser = await this.userService.getCurrentUser();
+    // 	if (!currentUser) return;
+    // 	const defaultPreferences: CreateDefaultUserPreferenceDto = {
+    // 		user: currentUser
+    // 	}
+    // 	return this.preferencesRepository.create(defaultPreferences);
+    // }
+    // async update (newPreferences: UpdateUserPreferenceDto) {
     //     return this.preferencesRepository.update(newPreferences.id, newPreferences);
     // }
 }

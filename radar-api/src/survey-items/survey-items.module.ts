@@ -6,5 +6,4 @@ import { SurveyItemsController } from './survey-items.controller';
     controllers: [SurveyItemsController],
     providers: [SurveyItemsService],
 })
-
 export class SurveyItemsModule {}

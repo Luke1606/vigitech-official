@@ -3,8 +3,7 @@ import { SubscribedItemAnalysisService } from './subscribed-item-analysis.servic
 import { SubscribedItemAnalysisController } from './subscribed-item-analysis.controller';
 
 @Module({
-	controllers: [SubscribedItemAnalysisController],
-	providers: [SubscribedItemAnalysisService],
+    controllers: [SubscribedItemAnalysisController],
+    providers: [SubscribedItemAnalysisService],
 })
-
 export class SubscribedItemAnalysisModule {}

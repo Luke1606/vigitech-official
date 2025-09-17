@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { SupabaseGuard } from './guards/supabase.guard';
+import { SupabaseGuard } from './guards/guard';
 
 @Module({
-  providers: [SupabaseGuard],
+    providers: [SupabaseGuard],
 })
 export class CommonModule {}

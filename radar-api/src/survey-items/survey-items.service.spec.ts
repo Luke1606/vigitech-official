@@ -5,16 +5,14 @@ describe('SurveyItemsService', () => {
     let service: SurveyItemsService;
 
     beforeEach(async () => {
-		const module: TestingModule = await Test.createTestingModule({
-			providers: [SurveyItemsService],
-		}).compile();
+        const module: TestingModule = await Test.createTestingModule({
+            providers: [SurveyItemsService],
+        }).compile();
 
-		service = module.get<SurveyItemsService>(
-			SurveyItemsService
-		);
+        service = module.get<SurveyItemsService>(SurveyItemsService);
     });
 
     it('should be defined', () => {
-      	expect(service).toBeDefined();
+        expect(service).toBeDefined();
     });
 });

@@ -1,3 +1,1 @@
-export class UnpaywallResultDto {
-    
-};
+export class UnpaywallResultDto {}

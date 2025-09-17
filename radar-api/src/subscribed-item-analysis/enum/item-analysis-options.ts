@@ -3,9 +3,9 @@ export enum Trending {
     DOWN,
     STABLE,
     UNSTABLE,
-};
+}
 
 export enum AccesibilityLevel {
     FREE,
-    PAID
-};
+    PAID,
+}

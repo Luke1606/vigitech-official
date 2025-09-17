@@ -1,3 +1,1 @@
-export class CrossRefResultDto {
-    
-};
+export class CrossRefResultDto {}

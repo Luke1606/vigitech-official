@@ -10,9 +10,9 @@ import {
 @Injectable()
 export class SupabaseGuard implements CanActivate {
     // constructor (private readonly supabase: SupabaseService) {}
-    
-    async canActivate (context: ExecutionContext): Promise<boolean> {
-        return context? true : false;
+
+    canActivate(context: ExecutionContext): boolean {
+        return context ? true : false;
     }
     // private extractToken (token: string) {
     //     return

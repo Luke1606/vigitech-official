@@ -1,3 +1,1 @@
-export class LensResultDto {
-    
-};
+export class LensResultDto {}

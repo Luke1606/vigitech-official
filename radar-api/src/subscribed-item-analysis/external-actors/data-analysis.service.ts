@@ -32,41 +32,32 @@ export class DataAnalysisService {
     //     // private readonly grokClient: GrokMCPClient,
     //     // private readonly perplexityClient: PerplexityMCPClient,
     // ) {}
-
     // async analizeAndSaveMetrics (): Promise<void> {
     //     const objectives = await this.followingItemsService.findAll();
-        
     //     let latestSearchData: GeneralSearchResultDto | null | undefined;
     //     let analysisMetrics: MetricsDto;
-
     //     objectives.forEach(async (item: FollowingItem) => {
     //         latestSearchData = await this.itemAnalysisService.findLastFromItem(item)
     //             .then((details: ItemAnalysis | null) => details?.searchedData);
-            
     //         if (!latestSearchData) return;
-
     //         analysisMetrics = await this.chatGPTClient.specificAnalysis(latestSearchData);
     //         this.updateUbicationFromMetrics(item.id, analysisMetrics);
     //     })
-        
     //     const emitter = new EventEmitter2();
     //     emitter.emit('objectives-analysis-completed');
     // }
-
     // private updateUbicationFromMetrics (id: UUID, metrics: MetricsDto) {
-    //     const quadrant = metrics? 
+    //     const quadrant = metrics?
     //         FollowingItemRadarQuadrant.BUSSINESS_INTEL
     //         :
     //         FollowingItemRadarQuadrant.LANGUAGES_AND_FRAMEWORKS;
-        
     //     const ring = metrics?
     //         FollowingItemRadarRing.ADOPT
     //         :
     //         FollowingItemRadarRing.HOLD;
-        
     //     this.followingItemsService.update({
-    //         id, 
-    //         ring, 
+    //         id,
+    //         ring,
     //         quadrant
     //     });
     // }

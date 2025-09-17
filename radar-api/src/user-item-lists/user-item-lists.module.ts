@@ -6,5 +6,4 @@ import { UserItemListsController } from './user-item-lists.controller';
     controllers: [UserItemListsController],
     providers: [UserItemListsService],
 })
-
 export class UserItemListsModule {}
