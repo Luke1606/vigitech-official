@@ -1,6 +1,16 @@
 import { UUID } from 'crypto';
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Prisma, PrismaClient, SubscribedItemAnalysis, SurveyItem } from '@prisma/client';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
+import {
+  Prisma,
+  PrismaClient,
+  SubscribedItemAnalysis,
+  SurveyItem,
+} from '@prisma/client';
 
 import { CreateItemAnalysisDto } from './dto/create-item-analysis.dto';
 import { GeneralSearchResultDto } from './dto/general-search-result.dto';
@@ -14,83 +24,91 @@ import { plainToInstance } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
 
 @Injectable()
-export class SubscribedItemAnalysisService extends PrismaClient implements OnModuleInit, OnModuleDestroy{
-	private readonly logger: Logger = new Logger('SubscribedItemAnalysisService');
+export class SubscribedItemAnalysisService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
+  private readonly logger: Logger = new Logger('SubscribedItemAnalysisService');
 
-	async onModuleInit() {
-		await this.$connect();
-		this.logger.log('Initialized and connected to database');
-	};
+  async onModuleInit() {
+    await this.$connect();
+    this.logger.log('Initialized and connected to database');
+  }
 
-	async analyzeAll () {
-		// obtiene todos los following items
-		// items.forEach((item) => this.analyzeOne(item))
-		return;
-	}
+  async analyzeAll() {
+    // obtiene todos los following items
+    // items.forEach((item) => this.analyzeOne(item))
+    return;
+  }
 
-	async analyzeOne (item: SurveyItem) {
-		// realiza busquedas a las apis
-		// obtiene metricas de los agentes
-		this.logger.log(item);
+  async analyzeOne(item: SurveyItem) {
+    // realiza busquedas a las apis
+    // obtiene metricas de los agentes
+    this.logger.log(item);
 
-		const searchedData: GeneralSearchResultDto = {
-			crossRefResults: {} as CrossRefResultDto,
-			openAlexResults: {} as OpenAlexResultDto,
-			unpaywallResults: {} as UnpaywallResultDto,
-			lensResults: {} as LensResultDto
-		} as GeneralSearchResultDto;
-		
-		const obtainedMetrics: MetricsDto = {
-			citations: 1,
-			downloads: 1,
-			relevance: 1,
-			accesibilityLevel: AccesibilityLevel.FREE,
-			trending: Trending.UNSTABLE,
-		} as MetricsDto;
+    const searchedData: GeneralSearchResultDto = {
+      crossRefResults: {} as CrossRefResultDto,
+      openAlexResults: {} as OpenAlexResultDto,
+      unpaywallResults: {} as UnpaywallResultDto,
+      lensResults: {} as LensResultDto,
+    } as GeneralSearchResultDto;
 
-		const raw = {
-		    searchedData,
-    		obtainedMetrics,
-    		itemId: item.id,
-  		};
+    const obtainedMetrics: MetricsDto = {
+      citations: 1,
+      downloads: 1,
+      relevance: 1,
+      accesibilityLevel: AccesibilityLevel.FREE,
+      trending: Trending.UNSTABLE,
+    } as MetricsDto;
 
-		const dto = plainToInstance(CreateItemAnalysisDto, raw);
+    const raw = {
+      searchedData,
+      obtainedMetrics,
+      itemId: item.id,
+    };
 
-  		await validateOrReject(dto);
+    const dto = plainToInstance(CreateItemAnalysisDto, raw);
 
-	    const searchedJson = JSON.parse(JSON.stringify(searchedData));
-	    const metricsJson = JSON.parse(JSON.stringify(obtainedMetrics));
+    await validateOrReject(dto);
 
-		const data: Prisma.SubscribedItemAnalysisCreateInput = {
-      		searchedData: searchedJson as Prisma.InputJsonValue,
-      		obtainedMetrics: metricsJson as Prisma.InputJsonValue,
-			item: item,
-    	};
-		return this.subscribedItemAnalysis.create({ data });
-	}
+    const searchedJson = JSON.parse(JSON.stringify(searchedData));
+    const metricsJson = JSON.parse(JSON.stringify(obtainedMetrics));
 
-	async findAllInsideIntervalFromObjective(itemId: UUID, startDate: Date, endDate: Date) {
-		return await this.subscribedItemAnalysis
-			.findMany({
-				where: { itemId },
-				orderBy: { createdAt: 'asc' }
-			})
-			.then(
-				(analysisFromItem: SubscribedItemAnalysis[]) => 
-					analysisFromItem.filter((analysis) => 
-						analysis.createdAt > startDate && analysis.createdAt < endDate)
-			);
-	}
+    const data: Prisma.SubscribedItemAnalysisCreateInput = {
+      searchedData: searchedJson as Prisma.InputJsonValue,
+      obtainedMetrics: metricsJson as Prisma.InputJsonValue,
+      item: item,
+    };
+    return this.subscribedItemAnalysis.create({ data });
+  }
 
-	async findLastFromItem (itemId: UUID) {
-		return await this.subscribedItemAnalysis.findFirstOrThrow({
-			where: { itemId },
-			orderBy: { searchedData: 'desc' }
-		});
-	}	
+  async findAllInsideIntervalFromObjective(
+    itemId: UUID,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    return await this.subscribedItemAnalysis
+      .findMany({
+        where: { itemId },
+        orderBy: { createdAt: 'asc' },
+      })
+      .then((analysisFromItem: SubscribedItemAnalysis[]) =>
+        analysisFromItem.filter(
+          (analysis) =>
+            analysis.createdAt > startDate && analysis.createdAt < endDate,
+        ),
+      );
+  }
 
-	async onModuleDestroy() {
-		await this.$disconnect();
-		this.logger.log('Disconnected from database');
-	};
+  async findLastFromItem(itemId: UUID) {
+    return await this.subscribedItemAnalysis.findFirstOrThrow({
+      where: { itemId },
+      orderBy: { searchedData: 'desc' },
+    });
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
+    this.logger.log('Disconnected from database');
+  }
 }

@@ -33,7 +33,7 @@ export class AxiosConfiguredInstance {
         };
 
         this.http.interceptors.response.use(
-            (response: AxiosResponse) => response,
+            (response: AxiosResponse) => response.data,
             (error: AxiosError) => {
                 return Promise.reject(
                     error.response ?? error.message ?? 'Error desconocido de axios'

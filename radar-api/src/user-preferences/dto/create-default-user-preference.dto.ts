@@ -1,7 +1,7 @@
 import type { UUID } from 'crypto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { NotificationChannelOption } from 'app/common/utils/notification-channel-options';
+import { NotificationChannelOption } from 'src/common/utils/notification-channel-options';
 import { Language, Theme } from '../enum/user-preferences-options';
 
 export class CreateDefaultUserPreferenceDto {

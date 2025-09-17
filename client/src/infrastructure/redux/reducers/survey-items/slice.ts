@@ -40,7 +40,7 @@ export const surveyItemsSlice = createSlice({
             state: SurveyItemsState, 
             action: PayloadAction<SurveyItemDto[]>
         ) => {
-            state.selectedItems.filter(
+            state.selectedItems = state.selectedItems.filter(
                 (item: SurveyItemDto) => action.payload.includes(item)
             )
         },
@@ -50,9 +50,10 @@ export const surveyItemsSlice = createSlice({
             action: PayloadAction<SurveyItemDto[]>
         ) => {
             const notReplicatedData = action.payload.filter(
-                (item: SurveyItemDto) => state.pendingChanges.toSubscribeItems.includes(item)
+                (item: SurveyItemDto) => !state.pendingChanges.toSubscribeItems.includes(item)
             )
-            state.pendingChanges.toSubscribeItems.concat(notReplicatedData);
+            state.pendingChanges.toSubscribeItems = state.pendingChanges
+                .toSubscribeItems.concat(notReplicatedData);
         },
 
         addPendingUnsubscribes: (
@@ -60,9 +61,10 @@ export const surveyItemsSlice = createSlice({
             action: PayloadAction<SurveyItemDto[]>
         ) => {
             const notReplicatedData = action.payload.filter(
-                (item: SurveyItemDto) => state.pendingChanges.toUnsubscribeItems.includes(item)
+                (item: SurveyItemDto) => !state.pendingChanges.toUnsubscribeItems.includes(item)
             )
-            state.pendingChanges.toUnsubscribeItems.concat(notReplicatedData);
+            state.pendingChanges.toUnsubscribeItems = state.pendingChanges
+                .toUnsubscribeItems.concat(notReplicatedData);
         },
 
         addPendingRemoves: (
@@ -70,9 +72,10 @@ export const surveyItemsSlice = createSlice({
             action: PayloadAction<SurveyItemDto[]>
         ) => {
             const notReplicatedData = action.payload.filter(
-                (item: SurveyItemDto) => state.pendingChanges.toRemoveItems.includes(item)
+                (item: SurveyItemDto) => !state.pendingChanges.toRemoveItems.includes(item)
             )
-            state.pendingChanges.toRemoveItems.concat(notReplicatedData);
+            state.pendingChanges.toRemoveItems = state.pendingChanges
+                .toRemoveItems.concat(notReplicatedData);
         },
 
         clearPendingChanges: (state: SurveyItemsState) => {

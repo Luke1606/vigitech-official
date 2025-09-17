@@ -8,4 +8,7 @@ export interface SurveyItemsInterface {
     subscribeOne: (itemId: UUID) => Promise<void>;
     unsubscribeOne: (itemId: UUID) => Promise<void>;
     removeOne: (itemId: UUID) => Promise<void>;
+    subscribeBatch: (itemIds: UUID[]) => Promise<void>;
+    unsubscribeBatch: (itemIds: UUID[]) => Promise<void>;
+    removeBatch: (itemIds: UUID[]) => Promise<void>;
 }

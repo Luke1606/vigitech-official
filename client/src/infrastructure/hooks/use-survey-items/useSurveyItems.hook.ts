@@ -1,5 +1,5 @@
 import type { UUID } from 'crypto';
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 
 import { 
 	findOneQueryOptions, 
@@ -25,7 +25,7 @@ export const useSurveyItems = () => {
 		getSubscribedQueryOptions()
 	);
 
-	const useFindOneQuery = (itemId: UUID) => useSuspenseQuery(
+	const useFindOneQuery = (itemId: UUID) => useQuery(
 		findOneQueryOptions(itemId)
 	);
 
@@ -49,7 +49,7 @@ export const useSurveyItems = () => {
 		useUnsubscribeBatchMutationOptions()
 	);
 
-	const removeBatchMutation = useMutation(useRemoveBatchMutationOptions());
+	const useRemoveBatchMutation = useMutation(useRemoveBatchMutationOptions());
 
 	return {
 		recommended: useGetRecommendedQuery,
@@ -60,22 +60,22 @@ export const useSurveyItems = () => {
 		removeOne: useRemoveOneMutation.mutate,
 		subscribeBatch: useSubscribeBatchMutation.mutate,
 		unsubscribeBatch: useUnsubscribeBatchMutation.mutate,
-		removeBatch: removeBatchMutation.mutate,
+		removeBatch: useRemoveBatchMutation.mutate,
 		isLoading: {
 			subscribeOne: useSubscribeOneMutation.isPending,
 			unsubscribeOne: useUnsubscribeOneMutation.isPending,
 			removeOne: useRemoveOneMutation.isPending,
 			subscribeBatch: useSubscribeBatchMutation.isPending,
 			unsubscribeBatch: useUnsubscribeBatchMutation.isPending,
-			removeBatch: removeBatchMutation.isPending,
+			removeBatch: useRemoveBatchMutation.isPending,
 		},
 		hasError: {
 			subscribeOne: useSubscribeOneMutation.isError,
 			unsubscribeOne: useUnsubscribeOneMutation.isError,
-			removeOne: useRemoveOneMutation.isPending,
+			removeOne: useRemoveOneMutation.isError,
 			subscribeBatch: useSubscribeBatchMutation.isError,
 			unsubscribeBatch: useUnsubscribeBatchMutation.isError,
-			removeBatch: removeBatchMutation.isError,
+			removeBatch: useRemoveBatchMutation.isError,
 		},
 	};
 };

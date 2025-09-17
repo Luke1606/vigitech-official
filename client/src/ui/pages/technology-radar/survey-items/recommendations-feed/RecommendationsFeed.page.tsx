@@ -1,9 +1,8 @@
 import { useSurveyItemsUI } from '@/infrastructure';
 import { useNavigate } from 'react-router-dom';
 import { Button, SurveyItemCard, CardVariant } from '@/ui/components';
-import type { SurveyItemDto } from '@/infrastructure';
+import { type SurveyItemDto, PathOption } from '@/infrastructure';
 import { useCallback, useEffect, useState } from 'react';
-import { PathOption } from '@/routing';
 
 export const RecommendationsFeed: React.FC = () => {
     const { 

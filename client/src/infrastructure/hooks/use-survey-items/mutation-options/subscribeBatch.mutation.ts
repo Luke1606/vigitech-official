@@ -87,11 +87,17 @@ export const useSubscribeBatchMutationOptions = () => {
 
 		onSettled: () => {
 			queryClient.invalidateQueries({ 
-				queryKey: [surveyItemsKey, recommendedKey] 
+				queryKey: [
+					surveyItemsKey, 
+					recommendedKey
+				] 
 			});
 
 			queryClient.invalidateQueries({ 
-				queryKey: [surveyItemsKey, subscribedKey] 
+				queryKey: [
+					surveyItemsKey, 
+					subscribedKey
+				] 
 			});
 		},
 	})

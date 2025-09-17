@@ -1,7 +1,7 @@
 
 import { NavLink } from 'react-router-dom'
 import { useEffect } from 'react';
-import { PathOption } from '@/routing';
+import { PathOption } from '@/infrastructure';
 
 export const PortalHome: React.FC = () => {
 

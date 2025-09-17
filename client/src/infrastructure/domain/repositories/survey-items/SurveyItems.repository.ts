@@ -6,58 +6,71 @@ import {
 } from '@/infrastructure';
 
 class SurveyItemsRepository implements SurveyItemsInterface {
-    private readonly axios: AxiosConfiguredInstance = new AxiosConfiguredInstance(
-        `${process.env.VITE_SERVER_BASE_URL}/survey-items/`
-    );
+    private readonly axios: AxiosConfiguredInstance;
+
+    constructor() {
+        this.axios = new AxiosConfiguredInstance(
+            `${import.meta.env.VITE_SERVER_BASE_URL}/survey-items/`
+        );
+    }
 
     async findAllRecommended (): Promise<SurveyItemDto[]> {
-        return await this.axios.http.get('recommended');
+        return await this.axios.http
+            .get('recommended');
     };
 
     async findAllSubscribed (): Promise<SurveyItemDto[]> {
-        return await this.axios.http.get('subscribed');
+        return await this.axios.http
+            .get('subscribed');
     };
 
     async findOne (
         itemId: UUID
     ): Promise<SurveyItemDto> {
-        return await this.axios.http.get(`${itemId}`);
+        return await this.axios.http
+            .get(`${itemId}`);
     };
 
     async subscribeOne (
         itemId: UUID
     ): Promise<void> {
-        return await this.axios.http.patch(`subscribe/${itemId}`);
+        return await this.axios.http
+            .patch(`subscribe/${itemId}`);
     };
 
     async unsubscribeOne (
         itemId: UUID
     ): Promise<void> {
-        return await this.axios.http.patch(`unsubscribe/${itemId}`);
+        return await this.axios.http
+            .patch(`unsubscribe/${itemId}`);
     };
 
     async removeOne (
         itemId: UUID
     ): Promise<void> {
-        return await this.axios.http.delete(`${itemId}`);
+        return await this.axios.http
+            .delete(`${itemId}`);
     };
 
     async subscribeBatch (
         itemIds: UUID[]
     ): Promise<void> {
-        return await this.axios.http.patch(`subscribe/batch`, { itemIds });
+        return await this.axios.http
+            .patch('batch', { data: itemIds});
     };
 
     async unsubscribeBatch (
         itemIds: UUID[]
     ): Promise<void> {
-        return await this.axios.http.patch(`unsubscribe/batch`, { itemIds });
+        return await this.axios.http
+            .patch('batch', { data: itemIds});
     };
 
     async removeBatch (
         itemIds: UUID[]
     ): Promise<void> {
-        return await this.axios.http.delete(`batch`, { data: { itemIds } });
+        return await this.axios.http
+            .delete('batch', { data: { itemIds } });
     };
 }
 

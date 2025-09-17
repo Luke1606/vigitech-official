@@ -24,7 +24,7 @@ export class SurveyItemsController {
   @Get('recommended')
   async findAllRecommendations(): Promise<SurveyItem[]> {
     this.logger.log('Executed findAll');
-    return await this.surveyItemsService.findAllRecommendations();
+    return await this.surveyItemsService.findAllRecommended();
   }
 
   @Get('subscribed')
@@ -41,32 +41,32 @@ export class SurveyItemsController {
 
   @Patch('subscribe/:id')
   subscribe(@Param(':id', ParseUUIDPipe) id: UUID): Promise<SurveyItem> {
-    return this.surveyItemsService.subscribe(id);
+    return this.surveyItemsService.subscribeOne(id);
   }
 
   @Patch('unsubscribe/:id')
   unsubscribe(@Param(':id', ParseUUIDPipe) id: UUID): Promise<SurveyItem> {
-    return this.surveyItemsService.unsubscribe(id);
+    return this.surveyItemsService.unsubscribeOne(id);
   }
 
   @Delete(':id')
   async remove(@Param(':id', ParseUUIDPipe) id: UUID): Promise<SurveyItem> {
     this.logger.log('Executed remove');
-    return await this.surveyItemsService.remove(id);
+    return await this.surveyItemsService.removeOne(id);
   }
 
   @Patch('subscribe/batch')
-  subscribeBatch(@Body() itemIds: UUID): Promise<SurveyItem> {
+  subscribeBatch(@Body() itemIds: UUID[]): Promise<void> {
     return this.surveyItemsService.subscribeBatch(itemIds);
   }
 
   @Patch('unsubscribe/batch')
-  unsubscribeBatch(@Body() itemIds: UUID): Promise<SurveyItem> {
+  unsubscribeBatch(@Body() itemIds: UUID[]): Promise<void> {
     return this.surveyItemsService.unsubscribeBatch(itemIds);
   }
 
   @Delete('batch')
-  async removeBatch(@Body() itemIds: UUID): Promise<SurveyItem> {
+  async removeBatch(@Body() itemIds: UUID[]): Promise<void> {
     this.logger.log('Executed remove');
     return await this.surveyItemsService.removeBatch(itemIds);
   }

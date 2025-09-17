@@ -1,12 +1,11 @@
 generator client {
 	provider = "prisma-client-js"
-    output = "../../../../node_modules/.prisma/client"
+    output = "../node_modules/.prisma/client"
 }
 
 datasource db {
 	provider  = "postgresql"
 	url       = env("DATABASE_URL")
-	directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -19,7 +18,6 @@ model User {
     
     lists                          UserItemList[]
     preferences                    UserPreferences?
-    notifications                  Notification[]       @relation("UserNotifications")
 }
 
 
@@ -79,27 +77,6 @@ model UserPreferences {
 
 	userId                         String               @unique
     user                           User?                @relation(fields: [userId], references: [id])
-}
-
-
-enum NotificationState {
-    SENT
-    FAILED
-    SENDING
-}
-
-model Notification {
-  id                               String               @id @default(uuid())
-  title                            String
-  message                          String
-  read                             Boolean              @default(false)
-  channel                          NotificationChannel
-  sentState                        NotificationState    @default(SENDING)
-  
-  createdAt                        DateTime             @default(now())
-  updatedAt                        DateTime             @updatedAt
-                       
-  users                            User[]               @relation("UserNotifications")
 }
 
 

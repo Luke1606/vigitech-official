@@ -4,8 +4,7 @@ import { Link } from 'react-router-dom';
 
 import styles from './Profile.styles.js';
 import { useAuthProvider } from '@/ui/components';
-import { PathOption } from '@/routing';
-import { AuthAction } from '@/infrastructure';
+import { AuthAction, PathOption } from '@/infrastructure';
 
 export const Profile: React.FC = () => {
 	const { user, signOut } = useAuthProvider();

@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { InfoIcon } from "lucide-react";
 
-import { PathOption } from "@/routing";
-import { useSurveyItemsUI, type SurveyItemDto } from "@/infrastructure";
+import { useSurveyItemsUI, type SurveyItemDto, PathOption } from "@/infrastructure";
 import { 
     Alert,
     AlertDescription,

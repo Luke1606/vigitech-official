@@ -22,8 +22,8 @@ export class SurveyItemsService
     this.logger.log('Initialized and connected to database');
   }
 
-  async findAllRecommendations(): Promise<SurveyItem[]> {
-    this.logger.log('Executed findAllRecommendations');
+  async findAllRecommended(): Promise<SurveyItem[]> {
+    this.logger.log('Executed findAllRecommended');
 
     return await this.surveyItem.findMany({
       where: {
@@ -78,7 +78,7 @@ export class SurveyItemsService
             summary,
             source,
           };
-        }),
+        })
       );
 
     // obtener nuevos
@@ -107,7 +107,7 @@ export class SurveyItemsService
     this.logger.log(notRelevantAnymore);
   }
 
-  private async getNewTrendings(): Promise<CreateSurveyItemDto[]> {
+  private getNewTrendings(): CreateSurveyItemDto[] {
     this.logger.log('Executed getTrendings');
     return [
       {
@@ -125,14 +125,16 @@ export class SurveyItemsService
     });
   }
 
-  async updateMany(ids: UUID[], data: UpdateSurveyItemDto[]): Promise<SurveyItem> {
-    return await this.surveyItem.updateMany({
-      where: { id },
-      data,
+  async updateMany(ids: UUID[], data: UpdateSurveyItemDto[]): Promise<void> {
+    await this.surveyItem.updateMany({
+      where: {
+        id: { in: ids },
+      },
+      data: data,
     });
   }
 
-  async subscribe(id: UUID): Promise<SurveyItem> {
+  async subscribeOne(id: UUID): Promise<SurveyItem> {
     this.logger.log(`Executed subscribe of ${id}`);
     const data: SurveyItem = await this.findOne(id);
 
@@ -143,7 +145,7 @@ export class SurveyItemsService
     });
   }
 
-  async unsubscribe(id: UUID): Promise<SurveyItem> {
+  async unsubscribeOne(id: UUID): Promise<SurveyItem> {
     this.logger.log(`Executed unsubscribe of ${id}`);
     const data: SurveyItem = await this.findOne(id);
 
@@ -153,38 +155,36 @@ export class SurveyItemsService
     });
   }
 
-  async remove(id: UUID): Promise<SurveyItem> {
-    this.logger.log('Executed remove');
+  async removeOne(id: UUID): Promise<SurveyItem> {
+    this.logger.log(`Executed remove of ${id}`);
     return await this.update(id, {
       subscribed: false,
     });
   }
 
-  async subscribeBatch(id: UUID): Promise<SurveyItem> {
-    this.logger.log(`Executed subscribe of ${id}`);
-    const data: SurveyItem = await this.findOne(id);
+  async subscribeBatch(ids: UUID[]): Promise<void> {
+    this.logger.log(`Executed subscribe of ${ids.length} items`);
 
-    return await this.updateMany(id, {
-      ...data,
+    return await this.updateMany(ids, {
       subscribed: true,
       active: true,
     });
   }
 
-  async unsubscribeBatch(id: UUID): Promise<SurveyItem> {
-    this.logger.log(`Executed unsubscribe of ${id}`);
-    const data: SurveyItem = await this.findOne(id);
+  async unsubscribeBatch(ids: UUID[]): Promise<void> {
+    this.logger.log(`Executed unsubscribe of ${ids.length} items`);
 
-    return await this.updateMany(id, {
-      ...data,
+    return await this.updateMany(ids, {
       subscribed: false,
     });
   }
 
-  async removeBatch(id: UUID): Promise<SurveyItem> {
-    this.logger.log('Executed remove');
-    return await this.updateMany(id, {
+  async removeBatch(ids: UUID[]): Promise<void> {
+    this.logger.log(`Executed remove of ${ids.length} items`);
+
+    return await this.updateMany(ids, {
       subscribed: false,
+      active: false,
     });
   }
 

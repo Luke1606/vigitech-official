@@ -8,7 +8,7 @@ import {
     NavigationMenuList,
     NavigationMenuTrigger
 } from "@/ui/components/shared/shadcn-ui/navigation-menu"
-import { PathOption } from '@/routing';
+import { PathOption } from '@/infrastructure';
 import { NotificationCenter } from '../../notification-center';
 import { Profile } from './profile';
 
@@ -138,6 +138,16 @@ export const Header: React.FC = () => {
                                         }`}
                                 >
                                     <NavLink to={PathOption.TECHNOLOGY_RADAR_PORTAL}>Home</NavLink>
+                                </NavigationMenuLink>
+                            </NavigationMenuItem>
+
+                            <NavigationMenuItem>
+                                <NavigationMenuLink
+                                    asChild
+                                    className={`px-3 py-1 sm:px-4 sm:py-2 rounded-md font-medium transition duration-300 hover:bg-white hover:text-blue-600 shadow-blue-900 shadow-sm focus:text-blue-600 ${currentPath === "/vigitech-portal/radar" ? "bg-white text-blue-600 ring-2 ring-white/20 shadow-md" : ""
+                                        }`}
+                                >
+                                    <NavLink to={PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED}>Feed</NavLink>
                                 </NavigationMenuLink>
                             </NavigationMenuItem>
 
