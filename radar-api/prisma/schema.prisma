@@ -85,7 +85,6 @@ enum RadarQuadrant {
     SCIENTIFIC_STAGE
     SUPPORT_PLATTFORMS_AND_TECHNOLOGIES
     LANGUAGES_AND_FRAMEWORKS
-    UNKNOWN
 }
 
 enum RadarRing {
@@ -93,7 +92,6 @@ enum RadarRing {
     TEST
     SUSTAIN
     HOLD
-    UNKNOWN
 }
 
 model SurveyItem {
@@ -104,8 +102,8 @@ model SurveyItem {
     subscribed                     Boolean              @default(false)
     active                         Boolean              @default(false)
 
-    radarQuadrant                  RadarQuadrant        @default(UNKNOWN)
-    radarRing                      RadarRing            @default(UNKNOWN)
+    radarQuadrant                  RadarQuadrant
+    radarRing                      RadarRing
 
     createdAt                      DateTime             @default(now())
     updatedAt                      DateTime             @updatedAt
@@ -117,16 +115,55 @@ model SurveyItem {
 
 
 
+model GeneralSearchResult {
+    id                            String               @id @default(uuid())
+    crossRefResult                Json
+    lensResult                    Json
+    openAlexResult                Json
+    unpaywallResult               Json
+
+    analysis                      SubscribedItemAnalysis?
+}
+
+
+enum Trending {
+    UP
+    DOWN
+    STABLE
+    UNSTABLE
+}
+
+enum AccesibilityLevel {
+    FREE
+    PAID
+}
+
+model Metrics {
+    id                            String               @id @default(uuid())
+    citations                     Int
+    downloads                     Int
+    relevance                     Float
+    accesibilityLevel             AccesibilityLevel
+    trending                      Trending
+
+    analysis                      SubscribedItemAnalysis?
+}
+
 
 model SubscribedItemAnalysis {
 	id                             String               @id @default(uuid())
-	searchedData                   Json
-    obtainedMetrics                Json
     
     createdAt                      DateTime             @default(now())
     updatedAt                      DateTime             @updatedAt
 
 	itemId                         String
+
+    dataId                         String               @unique
+	searchedData                   GeneralSearchResult  @relation(fields: [dataId], references: [id])
+
+    metricsId                      String               @unique
+    analyzedMetrics                Metrics              @relation(fields: [metricsId], references: [id])
+
     item                           SurveyItem           @relation(fields: [itemId], references: [id])
 }
 

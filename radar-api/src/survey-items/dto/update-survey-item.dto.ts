@@ -1,12 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PartialType } from '@nestjs/mapped-types';
-import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
-
-import { RadarQuadrant, RadarRing } from '@prisma/client';
-import {
-    SurveyItemRadarQuadrant,
-    SurveyItemRadarRing,
-} from '../enum/survey-items-options';
+import { IsBoolean, IsOptional } from 'class-validator';
 import { CreateSurveyItemDto } from './create-survey-item.dto';
 
 export class UpdateSurveyItemDto extends PartialType(CreateSurveyItemDto) {
@@ -25,26 +19,4 @@ export class UpdateSurveyItemDto extends PartialType(CreateSurveyItemDto) {
     @IsBoolean()
     @IsOptional()
     subscribed? = false;
-
-    @ApiProperty({
-        description:
-            'Cuadrante en el que se ubicó el elemento, por defecto desconocido',
-    })
-    @IsString()
-    @IsOptional()
-    @IsEnum(SurveyItemRadarQuadrant, {
-        message: `Los valores de cuadrante posibles son: ${SurveyItemRadarQuadrant}`,
-    })
-    radarQuadrant?: RadarQuadrant = RadarQuadrant.UNKNOWN;
-
-    @ApiProperty({
-        description:
-            'Anillo en el que se ubicó el elemento, por defecto desconocido',
-    })
-    @IsString()
-    @IsOptional()
-    @IsEnum(SurveyItemRadarRing, {
-        message: `Los valores de anillo posibles son: ${SurveyItemRadarRing}`,
-    })
-    radarRing?: RadarRing = RadarRing.UNKNOWN;
 }

@@ -5,7 +5,6 @@ export const SurveyItemRadarQuadrant = [
     RadarQuadrant.SCIENTIFIC_STAGE,
     RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES,
     RadarQuadrant.LANGUAGES_AND_FRAMEWORKS,
-    RadarQuadrant.UNKNOWN,
 ];
 
 export const SurveyItemRadarRing = [
@@ -13,5 +12,4 @@ export const SurveyItemRadarRing = [
     RadarRing.TEST,
     RadarRing.SUSTAIN,
     RadarRing.HOLD,
-    RadarRing.UNKNOWN,
 ];

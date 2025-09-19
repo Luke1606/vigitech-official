@@ -5,10 +5,31 @@ import {
     OnModuleDestroy,
     OnModuleInit,
 } from '@nestjs/common';
-import { PrismaClient, SurveyItem } from '@prisma/client';
+import {
+    PrismaClient,
+    // RadarQuadrant,
+    // RadarRing,
+    SubscribedItemAnalysis,
+    SurveyItem,
+} from '@prisma/client';
 
 import { CreateSurveyItemDto } from './dto/create-survey-item.dto';
 import { UpdateSurveyItemDto } from './dto/update-survey-item.dto';
+import {
+    CrossRefAPIFetcher,
+    LensAPIFetcher,
+    OpenAlexAPIFetcher,
+    UnpaywallAPIFetcher,
+} from './external-actors/api-fetchers';
+
+import { CrossRefResultDto } from './dto/api-results/cross-ref-result.dto';
+import { LensResultDto } from './dto/api-results/lens-result.dto';
+import { OpenAlexResultDto } from './dto/api-results/open-alex-result.dto';
+import { UnpaywallResultDto } from './dto/api-results/unpaywall-result.dto';
+import { GeneralSearchResultDto } from './dto/general-search-result.dto';
+import { MetricsDto } from './dto/analysis-metrics.dto';
+import { SurveyItemBasicData } from './types/survey-item-basic-data.type';
+import { SurveyItemWithAnalysis } from './types/survey-item-with-analysis.type';
 
 @Injectable()
 export class SurveyItemsService
@@ -20,6 +41,15 @@ export class SurveyItemsService
     async onModuleInit() {
         await this.$connect();
         this.logger.log('Initialized and connected to database');
+    }
+
+    constructor(
+        private readonly crossRefFetcher: CrossRefAPIFetcher,
+        private readonly lensFetcher: LensAPIFetcher,
+        private readonly openAlexFetcher: OpenAlexAPIFetcher,
+        private readonly unpaywallFetcher: UnpaywallAPIFetcher
+    ) {
+        super();
     }
 
     async findAllRecommended(): Promise<SurveyItem[]> {
@@ -42,21 +72,103 @@ export class SurveyItemsService
         });
     }
 
-    async findOne(id: UUID): Promise<SurveyItem> {
+    async findOne(id: UUID): Promise<SurveyItemWithAnalysis> {
         this.logger.log(`Executed findOne of ${id}`);
 
         const item: SurveyItem = await this.surveyItem.findUniqueOrThrow({
             where: { id },
         });
 
+        const lastAnalysis: SubscribedItemAnalysis =
+            await this.findLastAnalysisFromItem(item.id as UUID);
+
         if (!item) throw new Error(`No existe el item de id ${id}`);
         if (!item.active)
             throw new Error(`El item de id ${id} no está disponible`);
 
-        return item;
+        return {
+            item,
+            lastAnalysis,
+        };
     }
 
-    async renewItems(): Promise<void> {
+    async subscribeOne(id: UUID): Promise<SurveyItem> {
+        this.logger.log(`Executed subscribe of ${id}`);
+        const data: SurveyItemWithAnalysis = await this.findOne(id);
+
+        return await this.updateSurveyItem(id, {
+            ...data,
+            subscribed: true,
+            active: true,
+        });
+    }
+
+    async unsubscribeOne(id: UUID): Promise<SurveyItem> {
+        this.logger.log(`Executed unsubscribe of ${id}`);
+        const data: SurveyItemWithAnalysis = await this.findOne(id);
+
+        return await this.updateSurveyItem(id, {
+            ...data,
+            subscribed: false,
+        });
+    }
+
+    async removeOne(id: UUID): Promise<SurveyItem> {
+        this.logger.log(`Executed remove of ${id}`);
+        return await this.updateSurveyItem(id, {
+            subscribed: false,
+        });
+    }
+
+    async subscribeBatch(ids: UUID[]): Promise<void> {
+        this.logger.log(`Executed subscribe of ${ids.length} items`);
+
+        return await this.updateManySurveyItems(ids, {
+            subscribed: true,
+            active: true,
+        });
+    }
+
+    async unsubscribeBatch(ids: UUID[]): Promise<void> {
+        this.logger.log(`Executed unsubscribe of ${ids.length} items`);
+
+        return await this.updateManySurveyItems(ids, {
+            subscribed: false,
+        });
+    }
+
+    async removeBatch(ids: UUID[]): Promise<void> {
+        this.logger.log(`Executed remove of ${ids.length} items`);
+
+        return await this.updateManySurveyItems(ids, {
+            subscribed: false,
+            active: false,
+        });
+    }
+
+    private async updateSurveyItem(
+        id: UUID,
+        data: UpdateSurveyItemDto
+    ): Promise<SurveyItem> {
+        return await this.surveyItem.update({
+            where: { id },
+            data,
+        });
+    }
+
+    private async updateManySurveyItems(
+        ids: UUID[],
+        data: UpdateSurveyItemDto
+    ): Promise<void> {
+        await this.surveyItem.updateMany({
+            where: {
+                id: { in: ids },
+            },
+            data: data,
+        });
+    }
+
+    private async renewItems(): Promise<void> {
         this.logger.log('Executed renewItems');
         // borrar los no suscritos
         await this.surveyItem.deleteMany({
@@ -65,7 +177,7 @@ export class SurveyItemsService
             },
         });
 
-        const subscribedItems: CreateSurveyItemDto[] = await this.surveyItem
+        const subscribedItems: SurveyItemBasicData[] = await this.surveyItem
             .findMany({
                 where: {
                     subscribed: true,
@@ -85,7 +197,6 @@ export class SurveyItemsService
         // obtener nuevos
         const trendingItems: CreateSurveyItemDto[] =
             await this.getNewTrendings();
-
         const stillRelevant: CreateSurveyItemDto[] = [];
         const newTrendings: CreateSurveyItemDto[] = [];
 
@@ -98,7 +209,7 @@ export class SurveyItemsService
             } else newTrendings.push(trendingItem);
         });
 
-        const notRelevantAnymore: CreateSurveyItemDto[] = subscribedItems;
+        const notRelevantAnymore: SurveyItemBasicData[] = subscribedItems;
 
         await this.surveyItem.createMany({
             data: { ...newTrendings },
@@ -109,84 +220,148 @@ export class SurveyItemsService
         this.logger.log(notRelevantAnymore);
     }
 
-    private getNewTrendings(): CreateSurveyItemDto[] {
-        this.logger.log('Executed getTrendings');
-        return [
-            {
+    private async getNewTrendings(): Promise<SurveyItemWithAnalysis[]> {
+        this.logger.log('Executed getNewTrendings');
+
+        // se obtienen las tendencias de cada api
+        const crossRefTrendings = await this.crossRefFetcher.getTrendings();
+
+        const lensTrendings = await this.lensFetcher.getTrendings();
+
+        const openAlexTrendings = await this.openAlexFetcher.getTrendings();
+
+        const unpaywallTrendings = await this.unpaywallFetcher.getTrendings();
+
+        const trendingsBeforeFetching: SurveyItemBasicData[] = [];
+
+        // se guardan todas en un solo array parseandolas a un solo tipo
+        // q tenga solo las propiedades necesarias
+        // PENDIENTE
+        trendingsBeforeFetching.concat(
+            crossRefTrendings.map((_item: CrossRefResultDto) => ({
                 title: 'titulo',
                 summary: 'resumen',
                 source: 'http://myurl.com',
-            },
-        ];
+            }))
+        );
+
+        trendingsBeforeFetching.concat(
+            lensTrendings.map((_item: LensResultDto) => ({
+                title: 'titulo',
+                summary: 'resumen',
+                source: 'http://myurl.com',
+            }))
+        );
+
+        trendingsBeforeFetching.concat(
+            openAlexTrendings.map((_item: OpenAlexResultDto) => ({
+                title: 'titulo',
+                summary: 'resumen',
+                source: 'http://myurl.com',
+            }))
+        );
+
+        trendingsBeforeFetching.concat(
+            unpaywallTrendings.map((_item: UnpaywallResultDto) => ({
+                title: 'titulo',
+                summary: 'resumen',
+                source: 'http://myurl.com',
+            }))
+        );
+
+        // Se recorre el array obteniendo el analisis de cada uno para guardarlos juntos
+        const trendings: SurveyItemWithAnalysis[] = [];
+
+        for (let index = 0; index < trendingsBeforeFetching.length; index++) {
+            const item = trendingsBeforeFetching[index];
+
+            const lastAnalysis: SubscribedItemAnalysis =
+                await this.getAnalysisFromSurveyItem(item);
+
+            trendings.push({
+                item,
+                lastAnalysis,
+            });
+        }
+
+        return trendings;
     }
 
-    async update(id: UUID, data: UpdateSurveyItemDto): Promise<SurveyItem> {
-        return await this.surveyItem.update({
-            where: { id },
-            data,
-        });
+    private async getAnalysisFromSurveyItem(
+        item: SurveyItemBasicData
+    ): Promise<SubscribedItemAnalysis> {
+        const searchedData: GeneralSearchResultDto =
+            await this.getSurveyItemData(item);
+
+        const analyzedMetrics: MetricsDto =
+            await this.getSurveyItemMetricsFromData(item, searchedData);
+
+        return {
+            searchedData,
+            analyzedMetrics,
+        };
     }
 
-    async updateMany(ids: UUID[], data: UpdateSurveyItemDto): Promise<void> {
-        await this.surveyItem.updateMany({
-            where: {
-                id: { in: ids },
-            },
-            data: data,
-        });
+    private async getSurveyItemData(
+        item: SurveyItemBasicData
+    ): Promise<GeneralSearchResultDto> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const crossRefResults: CrossRefResultDto =
+            await this.crossRefFetcher.getInfoFromItem(item);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const lensResults: LensResultDto =
+            await this.lensFetcher.getInfoFromItem(item);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const openAlexResults: OpenAlexResultDto =
+            await this.openAlexFetcher.getInfoFromItem(item);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const unpaywallResults: UnpaywallResultDto =
+            await this.unpaywallFetcher.getInfoFromItem(item);
+
+        return {
+            crossRefResults,
+            lensResults,
+            openAlexResults,
+            unpaywallResults,
+        } as GeneralSearchResultDto;
     }
 
-    async subscribeOne(id: UUID): Promise<SurveyItem> {
-        this.logger.log(`Executed subscribe of ${id}`);
-        const data: SurveyItem = await this.findOne(id);
-
-        return await this.update(id, {
-            ...data,
-            subscribed: true,
-            active: true,
-        });
+    // eslint-disable-next-line @typescript-eslint/require-await
+    private async getSurveyItemMetricsFromData(
+        _item: SurveyItemBasicData,
+        _data: GeneralSearchResultDto
+    ): Promise<MetricsDto> {
+        return {} as MetricsDto;
     }
 
-    async unsubscribeOne(id: UUID): Promise<SurveyItem> {
-        this.logger.log(`Executed unsubscribe of ${id}`);
-        const data: SurveyItem = await this.findOne(id);
-
-        return await this.update(id, {
-            ...data,
-            subscribed: false,
-        });
+    async findAllInsideIntervalFromObjective(
+        itemId: UUID,
+        startDate: Date,
+        endDate: Date
+    ) {
+        return await this.subscribedItemAnalysis
+            .findMany({
+                where: { itemId },
+                orderBy: { createdAt: 'asc' },
+            })
+            .then((analysisFromItem: SubscribedItemAnalysis[]) =>
+                analysisFromItem.filter(
+                    (analysis) =>
+                        analysis.createdAt > startDate &&
+                        analysis.createdAt < endDate
+                )
+            );
     }
 
-    async removeOne(id: UUID): Promise<SurveyItem> {
-        this.logger.log(`Executed remove of ${id}`);
-        return await this.update(id, {
-            subscribed: false,
-        });
-    }
-
-    async subscribeBatch(ids: UUID[]): Promise<void> {
-        this.logger.log(`Executed subscribe of ${ids.length} items`);
-
-        return await this.updateMany(ids, {
-            subscribed: true,
-            active: true,
-        });
-    }
-
-    async unsubscribeBatch(ids: UUID[]): Promise<void> {
-        this.logger.log(`Executed unsubscribe of ${ids.length} items`);
-
-        return await this.updateMany(ids, {
-            subscribed: false,
-        });
-    }
-
-    async removeBatch(ids: UUID[]): Promise<void> {
-        this.logger.log(`Executed remove of ${ids.length} items`);
-
-        return await this.updateMany(ids, {
-            subscribed: false,
-            active: false,
+    private async findLastAnalysisFromItem(
+        itemId: UUID
+    ): Promise<SubscribedItemAnalysis> {
+        return await this.subscribedItemAnalysis.findFirstOrThrow({
+            where: { itemId },
+            orderBy: { searchedData: 'desc' },
         });
     }
 

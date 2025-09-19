@@ -1,1 +1,0 @@
-export { GrokMCPClient } from './GrokMCPClient.client';

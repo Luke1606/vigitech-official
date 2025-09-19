@@ -4,7 +4,6 @@ import { ThrottlerModule } from '@nestjs/throttler';
 
 import { CommonModule } from './common/common.module';
 import { SurveyItemsModule } from './survey-items/survey-items.module';
-// import { SubscribedItemAnalysisModule } from './subscribed-item-analysis/subscribed-item-analysis.module';
 // import { UserItemListsModule } from './user-item-lists/user-item-lists.module';
 
 @Module({
@@ -29,7 +28,6 @@ import { SurveyItemsModule } from './survey-items/survey-items.module';
 
         CommonModule,
         SurveyItemsModule,
-        // SubscribedItemAnalysisModule,
         // UserItemListsModule,
     ],
 })

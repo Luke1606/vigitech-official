@@ -6,12 +6,14 @@ import {
     Get,
     Logger,
     Param,
+    ParseDatePipe,
     ParseUUIDPipe,
     Patch,
 } from '@nestjs/common';
 
 import { SurveyItem } from '@prisma/client';
 import { SurveyItemsService } from './survey-items.service';
+import { SurveyItemWithAnalysis } from './types/survey-item-with-analysis.type';
 
 @Controller('survey-items')
 export class SurveyItemsController {
@@ -34,19 +36,25 @@ export class SurveyItemsController {
     }
 
     @Get(':id')
-    async findOne(@Param(':id', ParseUUIDPipe) id: UUID): Promise<SurveyItem> {
+    async findOne(
+        @Param(':id', ParseUUIDPipe) id: UUID
+    ): Promise<SurveyItemWithAnalysis> {
         this.logger.log('Executed findOne');
         return await this.surveyItemsService.findOne(id);
     }
 
     @Patch('subscribe/:id')
-    subscribe(@Param(':id', ParseUUIDPipe) id: UUID): Promise<SurveyItem> {
-        return this.surveyItemsService.subscribeOne(id);
+    async subscribe(
+        @Param(':id', ParseUUIDPipe) id: UUID
+    ): Promise<SurveyItem> {
+        return await this.surveyItemsService.subscribeOne(id);
     }
 
     @Patch('unsubscribe/:id')
-    unsubscribe(@Param(':id', ParseUUIDPipe) id: UUID): Promise<SurveyItem> {
-        return this.surveyItemsService.unsubscribeOne(id);
+    async unsubscribe(
+        @Param(':id', ParseUUIDPipe) id: UUID
+    ): Promise<SurveyItem> {
+        return await this.surveyItemsService.unsubscribeOne(id);
     }
 
     @Delete(':id')
@@ -56,18 +64,31 @@ export class SurveyItemsController {
     }
 
     @Patch('subscribe/batch')
-    subscribeBatch(@Body() itemIds: UUID[]): Promise<void> {
-        return this.surveyItemsService.subscribeBatch(itemIds);
+    async subscribeBatch(@Body() itemIds: UUID[]): Promise<void> {
+        return await this.surveyItemsService.subscribeBatch(itemIds);
     }
 
     @Patch('unsubscribe/batch')
-    unsubscribeBatch(@Body() itemIds: UUID[]): Promise<void> {
-        return this.surveyItemsService.unsubscribeBatch(itemIds);
+    async unsubscribeBatch(@Body() itemIds: UUID[]): Promise<void> {
+        return await this.surveyItemsService.unsubscribeBatch(itemIds);
     }
 
     @Delete('batch')
     async removeBatch(@Body() itemIds: UUID[]): Promise<void> {
         this.logger.log('Executed remove');
         return await this.surveyItemsService.removeBatch(itemIds);
+    }
+
+    @Get('analysis/:itemId')
+    async findAllInsideIntervalFromObjective(
+        @Param(':itemId', ParseUUIDPipe) itemId: UUID,
+        @Body('startDate', ParseDatePipe) startDate: Date,
+        @Body('endDate', ParseDatePipe) endDate: Date
+    ) {
+        return await this.surveyItemsService.findAllInsideIntervalFromObjective(
+            itemId,
+            startDate,
+            endDate
+        );
     }
 }
