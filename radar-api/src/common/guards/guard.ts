@@ -5,11 +5,10 @@ import {
     // UnauthorizedException,
     // Request
 } from '@nestjs/common';
-// import { SupabaseService } from '../services';
 
 @Injectable()
-export class SupabaseGuard implements CanActivate {
-    // constructor (private readonly supabase: SupabaseService) {}
+export class Guard implements CanActivate {
+    // constructor () {}
 
     canActivate(context: ExecutionContext): boolean {
         return context ? true : false;

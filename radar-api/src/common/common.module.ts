@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
-import { SupabaseGuard } from './guards/guard';
+import { Guard } from './guards/guard';
+import { HttpExceptionFilter } from './filters/http-exception.filter';
 
 @Module({
-    providers: [SupabaseGuard],
+    providers: [Guard, HttpExceptionFilter],
+    exports: [Guard, HttpExceptionFilter],
 })
 export class CommonModule {}

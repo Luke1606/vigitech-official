@@ -1,1 +1,0 @@
-export { CrossRefAPIFetcher } from './cross-ref-api-fetcher.client';
