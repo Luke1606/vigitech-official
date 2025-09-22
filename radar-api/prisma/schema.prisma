@@ -92,6 +92,7 @@ enum RadarRing {
     TEST
     SUSTAIN
     HOLD
+    UNKNOWN
 }
 
 model SurveyItem {
@@ -103,12 +104,12 @@ model SurveyItem {
     active                         Boolean              @default(false)
 
     radarQuadrant                  RadarQuadrant
-    radarRing                      RadarRing
+    radarRing                      RadarRing            @default(UNKNOWN)
 
     createdAt                      DateTime             @default(now())
     updatedAt                      DateTime             @updatedAt
 
-    analysisHistory                SubscribedItemAnalysis[]  
+    analysisHistory                ItemAnalysis[]  
     lists                          UserItemList[]       @relation("ListItems")
     reports                        Report[]             @relation("ReportItems")
 }
@@ -118,11 +119,10 @@ model SurveyItem {
 model GeneralSearchResult {
     id                            String               @id @default(uuid())
     crossRefResult                Json
-    lensResult                    Json
     openAlexResult                Json
     unpaywallResult               Json
 
-    analysis                      SubscribedItemAnalysis?
+    analysis                      ItemAnalysis?
 }
 
 
@@ -146,11 +146,11 @@ model Metrics {
     accesibilityLevel             AccesibilityLevel
     trending                      Trending
 
-    analysis                      SubscribedItemAnalysis?
+    analysis                      ItemAnalysis?
 }
 
 
-model SubscribedItemAnalysis {
+model ItemAnalysis {
 	id                             String               @id @default(uuid())
     
     createdAt                      DateTime             @default(now())
@@ -165,6 +165,7 @@ model SubscribedItemAnalysis {
     analyzedMetrics                Metrics              @relation(fields: [metricsId], references: [id])
 
     item                           SurveyItem           @relation(fields: [itemId], references: [id])
+	@@map("SubscribedItemAnalysis")
 }
 
 

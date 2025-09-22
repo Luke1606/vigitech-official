@@ -13,6 +13,7 @@ import {
     GeminiAgent,
     GrokAgent,
 } from './services/mcp-agents';
+import { ExternalDataUsageService } from './external-data-usage.service';
 
 @Module({
     imports: [HttpModule],
@@ -27,6 +28,8 @@ import {
         DeepseekAgent,
         GeminiAgent,
         GrokAgent,
+        ExternalDataUsageService
     ],
+    exports: [ExternalDataUsageService]
 })
-export class ExternalActorsModule {}
+export class ExternalDataUsageModule {}

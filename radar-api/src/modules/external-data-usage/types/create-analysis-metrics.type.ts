@@ -1,6 +1,6 @@
-import { Trending, AccesibilityLevel } from '../enum/item-analysis-options';
+import { AccesibilityLevel, Trending } from '@prisma/client';
 
-export type Metrics = {
+export type CreateMetricsType = {
     citations: number;
     downloads: number;
     relevance: number;

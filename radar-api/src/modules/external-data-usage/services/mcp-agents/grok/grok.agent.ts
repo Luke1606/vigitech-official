@@ -3,9 +3,8 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 
 import { BaseMCPAgent } from '../base-mcp-agent.client';
-import { MetricsDto } from '../../../dto/analysis-metrics.dto';
-import { SurveyItemBasicData } from '../../../types/survey-item-basic-data.type';
-import { GeneralSearchResultDto } from '../../../dto/general-search-result.dto';
+import { GeneralSearchResult, SurveyItem } from '@prisma/client';
+import { CreateMetricsType } from 'src/modules/external-data-usage/types/create-analysis-metrics.type';
 
 @Injectable()
 export class GrokAgent extends BaseMCPAgent {
@@ -28,9 +27,9 @@ export class GrokAgent extends BaseMCPAgent {
     }
 
     getMetricsFromItemData(
-        _item: SurveyItemBasicData,
-        _data: GeneralSearchResultDto
-    ): Promise<MetricsDto> {
+        _item: SurveyItem,
+        _data: GeneralSearchResult
+    ): Promise<CreateMetricsType> {
         throw new Error('Method not implemented.');
     }
 }

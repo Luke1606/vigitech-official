@@ -7,17 +7,15 @@ import {
 } from '@nestjs/common';
 import {
     PrismaClient,
-    // RadarQuadrant,
-    // RadarRing,
     SubscribedItemAnalysis,
     SurveyItem,
 } from '@prisma/client';
 
 import { UpdateSurveyItemDto } from './dto/update-survey-item.dto';
-import { SurveyItemBasicData } from './types/survey-item-basic-data.type';
-import { SurveyItemWithAnalysis } from './types/survey-item-with-analysis.type';
+import { SurveyItemWithAnalysisType } from './types/survey-item-with-analysis.type';
 import { ExternalDataUsageService } from '../external-data-usage/external-data-usage.service';
-import { CreateSurveyItemDto } from './dto/create-survey-item.dto';
+import { CreateSurveyItemType } from './types/create-survey-item.type';
+import { ItemAnalysisService } from '../item-analysis/item-analysis.service';
 
 @Injectable()
 export class SurveyItemsService
@@ -27,7 +25,8 @@ export class SurveyItemsService
     private readonly logger: Logger = new Logger('SurveyItemsService');
 
     constructor(
-        private readonly externalDataUsageService: ExternalDataUsageService
+        private readonly externalDataUsageService: ExternalDataUsageService,
+        private readonly itemAnalysisService: ItemAnalysisService
     ) {
         super();
     }
@@ -37,17 +36,35 @@ export class SurveyItemsService
         this.logger.log('Initialized and connected to database');
     }
 
-    async findAllRecommended(): Promise<SurveyItem[]> {
+    async findAllRecommended(): Promise<SurveyItemWithAnalysisType[]> {
         this.logger.log('Executed findAllRecommended');
 
-        return await this.surveyItem.findMany({
+        const items: SurveyItem[] = await this.surveyItem.findMany({
             where: {
                 subscribed: false,
             },
         });
+
+        const itemsWithAnalysis: SurveyItemWithAnalysisType[] = [];
+
+        for (let index = 0; index < items.length; index++) {
+            const item = items[index];
+
+            const lastAnalysis: SubscribedItemAnalysis =
+                await this.itemAnalysisService.findLastAnalysisFromItem(
+                    item.id as UUID
+                );
+
+            itemsWithAnalysis.push({
+                item,
+                lastAnalysis,
+            });
+        }
+
+        return itemsWithAnalysis;
     }
 
-    async findAllSubscribed(): Promise<SurveyItem[]> {
+    async findAllSubscribed(): Promise<SurveyItemWithAnalysisType[]> {
         this.logger.log('Executed findAllSubscribed');
 
         return await this.surveyItem.findMany({
@@ -57,7 +74,7 @@ export class SurveyItemsService
         });
     }
 
-    async findOne(id: UUID): Promise<SurveyItemWithAnalysis> {
+    async findOne(id: UUID): Promise<SurveyItemWithAnalysisType> {
         this.logger.log(`Executed findOne of ${id}`);
 
         const item: SurveyItem = await this.surveyItem.findUniqueOrThrow({
@@ -65,7 +82,9 @@ export class SurveyItemsService
         });
 
         const lastAnalysis: SubscribedItemAnalysis =
-            await this.findLastAnalysisFromItem(item.id as UUID);
+            await this.itemAnalysisService.findLastAnalysisFromItem(
+                item.id as UUID
+            );
 
         if (!item) throw new Error(`No existe el item de id ${id}`);
         if (!item.active)
@@ -153,14 +172,15 @@ export class SurveyItemsService
 
     private async renewItems(): Promise<void> {
         this.logger.log('Executed renewItems');
-        // borrar los no suscritos
+
+        // borrar los desactivados
         await this.surveyItem.deleteMany({
             where: {
                 active: false,
             },
         });
 
-        const subscribedItems: SurveyItemBasicData[] = await this.surveyItem
+        const subscribedItems: CreateSurveyItemType[] = await this.surveyItem
             .findMany({
                 where: {
                     subscribed: true,
@@ -168,23 +188,25 @@ export class SurveyItemsService
             })
             .then((items: SurveyItem[]) =>
                 items.map((item: SurveyItem) => {
-                    const { title, summary, source } = item;
+                    const { title, summary, source, radarQuadrant } = item;
                     return {
                         title,
                         summary,
                         source,
-                    };
+                        radarQuadrant,
+                    } as CreateSurveyItemType;
                 })
             );
 
         // obtener nuevos
-        const trendingItems: SurveyItemWithAnalysis[] =
+        const trendingItems: CreateSurveyItemType[] =
             await this.externalDataUsageService.getNewTrendings();
-        const stillRelevant: CreateSurveyItemDto[] = [];
-        const newTrendings: CreateSurveyItemDto[] = [];
 
-        trendingItems.forEach((trendingItem: SurveyItemWithAnalysis) => {
-            if (subscribedItems.includes(trendingItem.item)) {
+        const stillRelevant: CreateSurveyItemType[] = [];
+        const newTrendings: CreateSurveyItemType[] = [];
+
+        trendingItems.forEach((trendingItem: CreateSurveyItemType) => {
+            if (subscribedItems.includes(trendingItem)) {
                 // hace falta ver como verificar que sea el mismo item aunque cambie alguna propiedad en las fuentes
                 // mediante la URI o algo asi, pq hasta la URL puede cambiar, y si algo en ese caso llamar a update
                 stillRelevant.push(trendingItem);
@@ -192,12 +214,18 @@ export class SurveyItemsService
             } else newTrendings.push(trendingItem);
         });
 
-        const notRelevantAnymore: SurveyItemBasicData[] = subscribedItems;
+        const notRelevantAnymore: CreateSurveyItemType[] = subscribedItems;
 
-        await this.surveyItem.createMany({
-            data: { ...newTrendings },
-            skipDuplicates: true,
-        });
+        const createdNewTrendings: SurveyItem[] =
+            await this.surveyItem.createManyAndReturn({
+                data: newTrendings,
+                skipDuplicates: true,
+            });
+
+        // insertar el primer analisis de cada uno
+        await this.itemAnalysisService.getAnalysisesFromSurveyItems(
+            createdNewTrendings
+        );
 
         // notificar los q ya no son relevantes
         this.logger.log(notRelevantAnymore);
@@ -220,15 +248,6 @@ export class SurveyItemsService
                         analysis.createdAt < endDate
                 )
             );
-    }
-
-    private async findLastAnalysisFromItem(
-        itemId: UUID
-    ): Promise<SubscribedItemAnalysis> {
-        return await this.subscribedItemAnalysis.findFirstOrThrow({
-            where: { itemId },
-            orderBy: { createdAt: 'desc' },
-        });
     }
 
     async onModuleDestroy() {

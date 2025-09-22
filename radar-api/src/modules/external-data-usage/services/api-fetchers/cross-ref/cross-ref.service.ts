@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
+import { firstValueFrom } from 'rxjs';
+import { SurveyItem } from '@prisma/client';
 import { BaseFetchingService } from '../fetching-service.base';
-import { SurveyItemBasicData } from 'src/modules/survey-items/types/survey-item-basic-data.type';
 import {
     CrossRefParams,
     CrossRefResponse,
     CrossRefWork,
-} from 'src/modules/external-data-usage/types/cross-ref-responses.type';
-import { CreateSurveyItemDto } from 'src/modules/survey-items/dto/create-survey-item.dto';
+} from '../../../types/cross-ref-responses.type';
+import { CreateSurveyItemType } from 'src/modules/survey-items/types/create-survey-item.type';
 
 @Injectable()
 export class CrossRefService extends BaseFetchingService {
@@ -43,7 +43,7 @@ export class CrossRefService extends BaseFetchingService {
      * Obtiene los trabajos en tendencia actualmente de CrossRef
      * Ordenados por el recuento de citas para encontrar los más relevantes
      */
-    async getTrendings(): Promise<SurveyItemBasicData[]> {
+    async getTrendings(): Promise<CreateSurveyItemType[]> {
         try {
             // Obtener works populares ordenados por is-referenced-by-count (citas)
             const params: CrossRefParams = {
@@ -61,10 +61,12 @@ export class CrossRefService extends BaseFetchingService {
                     this.httpService.get('/works', { params })
                 );
 
-            const works = response.data.message.items;
+            const works: CrossRefWork[] = response.data.message.items;
 
             // Mapear los works a CreateSurveyItemDto
-            return works.map((work) => this.mapWorkToSurveyItemDto(work));
+            return works.map((work: CrossRefWork) =>
+                this.mapWorkToSurveyItem(work)
+            );
         } catch (error) {
             this.logger.error(
                 'Error fetching trending works from CrossRef',
@@ -77,9 +79,7 @@ export class CrossRefService extends BaseFetchingService {
     /**
      * Obtiene información detallada de un ítem específico de CrossRef
      */
-    async getInfoFromItem(
-        item: SurveyItemBasicData
-    ): Promise<CrossRefResponse> {
+    async getInfoFromItem(item: SurveyItem): Promise<CrossRefResponse> {
         try {
             // Buscar works por título
             const params: CrossRefParams = {
@@ -113,7 +113,7 @@ export class CrossRefService extends BaseFetchingService {
                     : current
             );
 
-            return this.mapWorkToCrossRefResultDto(mostRelevantWork, item);
+            return this.mapWorkToCrossRefResult(mostRelevantWork, item);
         } catch (error) {
             this.logger.error('Error fetching item info from CrossRef', error);
             throw new Error('Failed to fetch item');
@@ -182,7 +182,7 @@ export class CrossRefService extends BaseFetchingService {
     /**
      * Mapea un work de CrossRef a CreateSurveyItemDto
      */
-    private mapWorkToSurveyItemDto(work: CrossRefWork): CreateSurveyItemDto {
+    private mapWorkToSurveyItem(work: CrossRefWork): CreateSurveyItemType {
         return {
             title: work.title?.[0] || 'Sin título',
             summary:
@@ -202,15 +202,15 @@ export class CrossRefService extends BaseFetchingService {
                 createdDate: work.created?.['date-time'],
                 depositedDate: work.deposited?.['date-time'],
             },
-        } as unknown as CreateSurveyItemDto;
+        } as unknown as CreateSurveyItemType;
     }
 
     /**
      * Mapea un work de CrossRef a CrossRefResultDto
      */
-    private mapWorkToCrossRefResultDto(
+    private mapWorkToCrossRefResult(
         work: CrossRefWork,
-        originalItem: SurveyItemBasicData
+        originalItem: CreateSurveyItemType
     ): CrossRefResponse {
         return {
             title: work.title?.[0] || 'Sin título',

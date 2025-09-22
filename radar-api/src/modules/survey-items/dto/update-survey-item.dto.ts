@@ -1,23 +1,49 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PartialType } from '@nestjs/mapped-types';
-import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
-import { CreateSurveyItemDto } from './create-survey-item.dto';
+import {
+    IsBoolean,
+    IsEnum,
+    IsOptional,
+    IsString,
+    IsUrl,
+} from 'class-validator';
 import { RadarQuadrant, RadarRing } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
     SurveyItemRadarQuadrant,
     SurveyItemRadarRing,
 } from '../enum/survey-items-options';
-import { CreateItemAnalysisDto } from '../../external-data-usage/types/create-item-analysis.type';
 
-export class UpdateSurveyItemDto extends PartialType(CreateSurveyItemDto) {
+export class UpdateSurveyItemDto {
+    @ApiProperty({ description: 'Título del ítem' })
+    @IsString()
+    @IsOptional()
+    title?: string;
+
+    @ApiProperty({ description: 'Descripción o resumen del ítem' })
+    @IsString()
+    @IsOptional()
+    summary?: string;
+
     @ApiProperty({
-        description: 'Primer analisis que se le hace al objeto',
+        description:
+            'URL de la fuente del ítem, una sea una página o un recurso',
     })
     @IsString()
     @IsOptional()
-    @Type(() => CreateItemAnalysisDto)
-    lastAnalysis?: CreateItemAnalysisDto;
+    @IsUrl()
+    @Type(() => URL)
+    source?: string;
+
+    @ApiProperty({
+        description:
+            'Cuadrante en el que se ubicó el elemento, basado en la búsqueda',
+    })
+    @IsString()
+    @IsOptional()
+    @IsEnum(SurveyItemRadarQuadrant, {
+        message: `Los valores de cuadrante posibles son: ${SurveyItemRadarQuadrant.join()}`,
+    })
+    radarQuadrant?: RadarQuadrant;
 
     @ApiProperty({
         description:
@@ -26,7 +52,7 @@ export class UpdateSurveyItemDto extends PartialType(CreateSurveyItemDto) {
     @IsString()
     @IsOptional()
     @IsEnum(SurveyItemRadarRing, {
-        message: `Los valores de anillo posibles son: ${SurveyItemRadarRing}`,
+        message: `Los valores de anillo posibles son: ${SurveyItemRadarRing.join()}`,
     })
     radarRing?: RadarRing;
 

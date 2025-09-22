@@ -1,103 +1,152 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+    Injectable,
+    Logger,
+    OnModuleDestroy,
+    OnModuleInit,
+} from '@nestjs/common';
+
+import {
+    Metrics,
+    PrismaClient,
+    SurveyItem,
+    GeneralSearchResult,
+    Trending,
+    AccesibilityLevel,
+} from '@prisma/client';
+
 import {
     CrossRefService,
     OpenAlexService,
     UnpaywallService,
 } from './services/api-fetchers';
-import { SurveyItemWithAnalysis } from '../survey-items/types/survey-item-with-analysis.type';
-import { SubscribedItemAnalysis } from '@prisma/client';
-import { CreateSurveyItemDto } from '../survey-items/dto/create-survey-item.dto';
-import { SurveyItemBasicData } from '../survey-items/types/survey-item-basic-data.type';
+
+import { CreateSurveyItemType } from '../survey-items/types/create-survey-item.type';
 import { CrossRefResponse } from './types/cross-ref-responses.type';
 import { OpenAlexResponse } from './types/open-alex-responses.type';
-import { UnpaywallResponse } from './types/unpaywall-result.type';
-import { GeneralSearchResponse } from './types/general-search-response.type';
-import { Metrics } from './types/analysis-metrics.type';
+import { UnpaywallResponse } from './types/unpaywall-responsestype';
+
+import {
+    ChatGPTAgent,
+    ClaudeAgent,
+    CodeGPTAgent,
+    DeepseekAgent,
+    GeminiAgent,
+    GrokAgent,
+} from './services/mcp-agents';
 
 @Injectable()
-export class ExternalDataUsageService {
+export class ExternalDataUsageService
+    extends PrismaClient
+    implements OnModuleInit, OnModuleDestroy
+{
     private readonly logger: Logger = new Logger('ExternalDataUsageService');
 
     constructor(
         private readonly crossRefFetcher: CrossRefService,
         private readonly unpaywallFetcher: UnpaywallService,
-        private readonly openAlexFetcher: OpenAlexService
-    ) {}
-    
+        private readonly openAlexFetcher: OpenAlexService,
+        private readonly chatGPTAgent: ChatGPTAgent,
+        private readonly claudeAgent: ClaudeAgent,
+        private readonly codeGPTAgent: CodeGPTAgent,
+        private readonly deepseekAgent: DeepseekAgent,
+        private readonly geminiAgent: GeminiAgent,
+        private readonly grokAgent: GrokAgent
+    ) {
+        super();
+    }
 
-    async getNewTrendings(): Promise<SurveyItemWithAnalysis[]> {
+    async onModuleInit() {
+        await this.$connect();
+        this.logger.log('Initialized and connected to database');
+    }
+
+    async getNewTrendings(): Promise<CreateSurveyItemType[]> {
         this.logger.log('Executed getNewTrendings');
 
         // se obtienen las tendencias de cada api
-        const crossRefTrendings = await this.crossRefFetcher.getTrendings();
+        const crossRefTrendings: CreateSurveyItemType[] =
+            await this.crossRefFetcher.getTrendings();
 
-        const openAlexTrendings = await this.openAlexFetcher.getTrendings();
+        const openAlexTrendings: CreateSurveyItemType[] =
+            await this.openAlexFetcher.getTrendings();
 
-        const unpaywallTrendings = await this.unpaywallFetcher.getTrendings();
+        const unpaywallTrendings: CreateSurveyItemType[] =
+            await this.unpaywallFetcher.getTrendings();
 
-        const trendingsBeforeFetching: SurveyItemBasicData[] = [
+        return [
             ...crossRefTrendings,
             ...openAlexTrendings,
             ...unpaywallTrendings,
         ];
-        // Se recorre el array obteniendo el analisis de cada uno para guardarlos juntos
-        const trendings: CreateSurveyItemDto[] = [];
-
-        for (let index = 0; index < trendingsBeforeFetching.length; index++) {
-            const item = trendingsBeforeFetching[index];
-
-            const lastAnalysis: SubscribedItemAnalysis =
-                await this.getAnalysisFromSurveyItem(item);
-
-            trendings.push({
-                ...item,
-                lastAnalysis,
-            });
-        }
-
-        return trendings;
     }
 
-    private async getAnalysisFromSurveyItem(
-        item: SurveyItemBasicData
-    ): Promise<CreateItemAnalysisDto> {
-        const searchedData: GeneralSearchResponse =
-            await this.getSurveyItemData(item);
-
-        const analyzedMetrics: Metrics =
-            await this.getSurveyItemMetricsFromData(item, searchedData);
-
-        return {
-            itemId: item.id,
-            searchedData,
-            analyzedMetrics,
-        };
-    }
-
-    private async getSurveyItemData(
-        item: SurveyItemBasicData
-    ): Promise<GeneralSearchResponse> {
-        const crossRefResults: CrossRefResponse | undefined =
+    async getSurveyItemData(item: SurveyItem): Promise<GeneralSearchResult> {
+        const crossRefResult: CrossRefResponse | undefined =
             await this.crossRefFetcher.getInfoFromItem(item);
 
-        const openAlexResults: OpenAlexResponse | undefined =
+        const openAlexResult: OpenAlexResponse | undefined =
             await this.openAlexFetcher.getInfoFromItem(item);
 
-        const unpaywallResults: UnpaywallResponse | undefined =
+        const unpaywallResult: UnpaywallResponse | undefined =
             await this.unpaywallFetcher.getInfoFromItem(item);
 
-        return {
-            crossRefResults,
-            openAlexResults,
-            unpaywallResults,
-        } as unknown as GeneralSearchResponse;
+        return await this.generalSearchResult.create({
+            data: {
+                crossRefResult: crossRefResult as unknown as object,
+                openAlexResult: openAlexResult as unknown as object,
+                unpaywallResult: unpaywallResult as unknown as object,
+            },
+        });
     }
 
-    // eslint-disable-next-line @typescript-eslint/require-await
-    private async getSurveyItemMetricsFromData(
-        _item: SurveyItemBasicData,
-        _data: GeneralSearchResponse
+    async getSurveyItemMetricsFromData(
+        item: SurveyItem,
+        data: GeneralSearchResult
     ): Promise<Metrics> {
-        return {} as Metrics;
+        const chatGptMetrics = await this.chatGPTAgent.getMetricsFromItemData(
+            item,
+            data
+        );
+        const _claudeMetrics = await this.claudeAgent.getMetricsFromItemData(
+            item,
+            data
+        );
+        const _codeGptMetrics = await this.codeGPTAgent.getMetricsFromItemData(
+            item,
+            data
+        );
+        const _deepseekMetrics =
+            await this.deepseekAgent.getMetricsFromItemData(item, data);
+
+        const _geminiMetrics = await this.geminiAgent.getMetricsFromItemData(
+            item,
+            data
+        );
+        const _grokMetrics = await this.grokAgent.getMetricsFromItemData(
+            item,
+            data
+        );
+
+        const citations: number = chatGptMetrics.citations;
+        const downloads: number = chatGptMetrics.downloads;
+        const relevance: number = chatGptMetrics.relevance;
+        const trending: Trending = chatGptMetrics.trending;
+        const accesibilityLevel: AccesibilityLevel =
+            chatGptMetrics.accesibilityLevel;
+
+        return await this.metrics.create({
+            data: {
+                citations,
+                downloads,
+                relevance,
+                trending,
+                accesibilityLevel,
+            },
+        });
+    }
+
+    async onModuleDestroy() {
+        await this.$disconnect();
+        this.logger.log('Disconnected from database');
     }
 }

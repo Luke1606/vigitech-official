@@ -8,12 +8,11 @@ import {
     Get,
     Patch,
     ParseUUIDPipe,
-    ParseDatePipe,
 } from '@nestjs/common';
 
 import { SurveyItem } from '@prisma/client';
 import { SurveyItemsService } from './survey-items.service';
-import { SurveyItemWithAnalysis } from './types/survey-item-with-analysis.type';
+import { SurveyItemWithAnalysisType } from './types/survey-item-with-analysis.type';
 
 @Controller('survey-items')
 export class SurveyItemsController {
@@ -38,7 +37,7 @@ export class SurveyItemsController {
     @Get(':id')
     async findOne(
         @Param('id', new ParseUUIDPipe()) id: UUID
-    ): Promise<SurveyItemWithAnalysis> {
+    ): Promise<SurveyItemWithAnalysisType> {
         this.logger.log('Executed findOne');
         return await this.surveyItemsService.findOne(id);
     }
@@ -79,18 +78,5 @@ export class SurveyItemsController {
     async removeBatch(@Body() itemIds: UUID[]): Promise<void> {
         this.logger.log('Executed remove');
         return await this.surveyItemsService.removeBatch(itemIds);
-    }
-
-    @Get('analysis/:itemId')
-    async findAllInsideIntervalFromObjective(
-        @Param('itemId', new ParseUUIDPipe()) itemId: UUID,
-        @Body('startDate', new ParseDatePipe()) startDate: Date,
-        @Body('endDate', new ParseDatePipe()) endDate: Date
-    ) {
-        return await this.surveyItemsService.findAllInsideIntervalFromObjective(
-            itemId,
-            startDate,
-            endDate
-        );
     }
 }

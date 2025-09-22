@@ -3,8 +3,10 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
+import { SurveyItem } from '@prisma/client';
+
+import { CreateSurveyItemType } from 'src/modules/survey-items/types/create-survey-item.type';
 import { BaseFetchingService } from '../fetching-service.base';
-import { SurveyItemBasicData } from 'src/modules/survey-items/types/survey-item-basic-data.type';
 import {
     OpenAlexResponse,
     OpenAlexTopic,
@@ -33,7 +35,7 @@ export class OpenAlexService extends BaseFetchingService {
      * Obtiene los tópicos en tendencia actualmente de OpenAlex
      * Los tópicos se ordenan por el recuento de citas para encontrar los más relevantes
      */
-    async getTrendings(): Promise<SurveyItemBasicData[]> {
+    async getTrendings(): Promise<CreateSurveyItemType[]> {
         this.logger.log('Executed getTrendings');
 
         try {
@@ -65,9 +67,7 @@ export class OpenAlexService extends BaseFetchingService {
     /**
      * Obtiene información detallada de un ítem específico
      */
-    async getInfoFromItem(
-        item: SurveyItemBasicData
-    ): Promise<OpenAlexResponse> {
+    async getInfoFromItem(item: SurveyItem): Promise<OpenAlexResponse> {
         this.logger.log('Executed getInfoFromItem');
 
         try {
@@ -95,7 +95,7 @@ export class OpenAlexService extends BaseFetchingService {
                 prev.cited_by_count > current.cited_by_count ? prev : current
             );
 
-            return this.mapWorkToCrossRefResultDto(mostRelevantWork, item);
+            return this.mapWorkToOpenAlexResult(mostRelevantWork, item);
         } catch (error) {
             this.logger.error('Error fetching item info from OpenAlex', error);
             throw new Error('Failed to fetch item information');
@@ -164,7 +164,9 @@ export class OpenAlexService extends BaseFetchingService {
     /**
      * Mapea un tópico de OpenAlex a CreateSurveyItemDto
      */
-    private mapTopicToSurveyItemDto(topic: OpenAlexTopic): CreateSurveyItemDto {
+    private mapTopicToSurveyItemDto(
+        topic: OpenAlexTopic
+    ): CreateSurveyItemType {
         return {
             title: topic.display_name,
             summary:
@@ -183,16 +185,16 @@ export class OpenAlexService extends BaseFetchingService {
                 updated_date: topic.updated_date,
             },
             // Otros campos requeridos por CreateSurveyItemDto
-        } as unknown as CreateSurveyItemDto;
+        } as unknown as CreateSurveyItemType;
     }
 
     /**
      * Mapea un work de OpenAlex a CrossRefResultDto
      */
-    private mapWorkToCrossRefResultDto(
+    private mapWorkToOpenAlexResult(
         work: OpenAlexWork,
-        originalItem: SurveyItemBasicData
-    ): CrossRefResultDto {
+        originalItem: SurveyItem
+    ): OpenAlexResponse {
         return {
             title: work.title || work.display_name,
             abstract: work.abstract || '',
@@ -216,6 +218,6 @@ export class OpenAlexService extends BaseFetchingService {
                 })),
             },
             originalItem: originalItem,
-        } as CrossRefResultDto;
+        } as unknown as OpenAlexResponse;
     }
 }
