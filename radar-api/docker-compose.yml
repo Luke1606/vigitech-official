@@ -1,0 +1,42 @@
+version: '3.8'
+services:
+	radar-db:
+		image: postgres:15
+		container_name: radar-postgres
+		restart: unless-stopped
+		environment:
+			POSTGRES_DB: {DB_NAME}
+			POSTGRES_USER: {DB_USER}
+			POSTGRES_PASSWORD: {DB_PASSWORD
+		ports:
+			- "4000:5432"
+		volumes:
+			- postgres_data:/var/lib/postgresql/data
+		networks:
+			- radar-network
+		healthcheck:
+		test: ["CMD-SHELL", "pg_isready -U vigitech-superuser-admin -d radar-db"]
+		interval: 10s
+		timeout: 5s
+		retries: 5
+
+	pgadmin:
+		image: dpage/pgadmin4
+		container_name: radar-pgadmin
+		restart: unless-stopped
+		environment:
+			PGADMIN_DEFAULT_EMAIL: admin@vigitech.com
+			PGADMIN_DEFAULT_PASSWORD: pgadmin-password
+		ports:
+			- "8080:80"
+		depends_on:
+			radar-db:
+				condition: service_healthy
+		networks:
+			- radar-network
+
+volumes:
+  	postgres_data:
+
+networks:
+  	radar-network:

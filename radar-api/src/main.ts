@@ -2,6 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
+import supertokens from 'supertokens-node';
+import { SuperTokensExceptionFilter } from 'supertokens-nestjs';
+
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
@@ -15,6 +18,7 @@ async function bootstrap() {
 
     app.enableCors({
         origin: 'http://localhost:5173',
+        allowedHeaders: ['content-type', ...supertokens.getAllCORSHeaders()],
         credentials: true,
     });
 
@@ -26,7 +30,10 @@ async function bootstrap() {
         })
     );
 
-    app.useGlobalFilters(new HttpExceptionFilter());
+    app.useGlobalFilters(
+        new HttpExceptionFilter(),
+        new SuperTokensExceptionFilter()
+    );
 
     const config = new DocumentBuilder()
         .setTitle('Technologic Radar API')

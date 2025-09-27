@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 export type OpenAlexTopic = {
     id: string;
     display_name: string;

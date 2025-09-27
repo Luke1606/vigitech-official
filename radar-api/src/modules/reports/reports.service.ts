@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { UUID } from 'crypto';
 import {
     Injectable,
@@ -7,11 +8,12 @@ import {
 } from '@nestjs/common';
 import {
     PrismaClient,
-    SubscribedItemAnalysis,
-    SurveyItem,
+    ItemAnalysis,
 } from '@prisma/client';
 import { ItemAnalysisService } from '../item-analysis/item-analysis.service';
 import { AnalysisHistoryType } from './types/analysis-history.type';
+import { SurveyItemsService } from '../survey-items/survey-items.service';
+import { SurveyItemWithAnalysisType } from '../survey-items/types/survey-item-with-analysis.type';
 
 @Injectable()
 export class ReportsService
@@ -20,7 +22,10 @@ export class ReportsService
 {
     private readonly logger: Logger = new Logger('ReportsService');
 
-    constructor(private readonly itemAnalysisService: ItemAnalysisService) {
+    constructor(
+        private readonly itemAnalysisService: ItemAnalysisService,
+        private readonly surveyItemsService: SurveyItemsService
+    ) {
         super();
     }
 
@@ -34,28 +39,23 @@ export class ReportsService
         startDate: Date,
         endDate: Date
     ): Promise<AnalysisHistoryType[]> {
-        const items: SurveyItem[] = await this.surveyItem.findMany({
-            where: {
-                id: { in: itemIds },
-            }
-        });
-
-        if (!items) throw new Error('Ids not found');
-
         const analysisesByItem: AnalysisHistoryType[] = [];
+        
+        for (let index = 0; index < itemIds.length; index++) {
+            const id: UUID = itemIds[index];
+            const itemWithAnalysis: SurveyItemWithAnalysisType = await this.surveyItemsService.findOne(id);
+            
+            if (!itemWithAnalysis) throw new Error(`Id ${id} not found`);
 
-        for (let index = 0; index < items.length; index++) {
-            const item: SurveyItem = items[index];
-
-            const analysises: SubscribedItemAnalysis[] =
+            const analysises: ItemAnalysis[] =
                 await this.itemAnalysisService.findAllInsideIntervalFromObjective(
-                    item.id as UUID,
+                    id,
                     startDate,
                     endDate
                 );
 
             analysisesByItem.push({
-                item,
+                item: itemWithAnalysis.item,
                 analysises,
             });
         }
@@ -63,7 +63,9 @@ export class ReportsService
             data: { 
                 startDate,
                 endDate,
-                items,
+                items: {
+                    connect: itemIds.map(id => ({ id }))
+                },
             }
         });
         return analysisesByItem;

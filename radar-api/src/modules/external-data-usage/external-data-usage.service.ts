@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
     Injectable,
     Logger,
@@ -33,6 +34,7 @@ import {
     GeminiAgent,
     GrokAgent,
 } from './services/mcp-agents';
+import { CreateMetricsType } from './types/create-analysis-metrics.type';
 
 @Injectable()
 export class ExternalDataUsageService
@@ -77,7 +79,7 @@ export class ExternalDataUsageService
             ...crossRefTrendings,
             ...openAlexTrendings,
             ...unpaywallTrendings,
-        ];
+        ] as CreateSurveyItemType[];
     }
 
     async getSurveyItemData(item: SurveyItem): Promise<GeneralSearchResult> {
@@ -103,26 +105,26 @@ export class ExternalDataUsageService
         item: SurveyItem,
         data: GeneralSearchResult
     ): Promise<Metrics> {
-        const chatGptMetrics = await this.chatGPTAgent.getMetricsFromItemData(
+        const chatGptMetrics: CreateMetricsType = await this.chatGPTAgent.getMetricsFromItemData(
             item,
             data
         );
-        const _claudeMetrics = await this.claudeAgent.getMetricsFromItemData(
+        const _claudeMetrics: CreateMetricsType = await this.claudeAgent.getMetricsFromItemData(
             item,
             data
         );
-        const _codeGptMetrics = await this.codeGPTAgent.getMetricsFromItemData(
+        const _codeGptMetrics: CreateMetricsType = await this.codeGPTAgent.getMetricsFromItemData(
             item,
             data
         );
-        const _deepseekMetrics =
+        const _deepseekMetrics: CreateMetricsType =
             await this.deepseekAgent.getMetricsFromItemData(item, data);
 
-        const _geminiMetrics = await this.geminiAgent.getMetricsFromItemData(
+        const _geminiMetrics: CreateMetricsType = await this.geminiAgent.getMetricsFromItemData(
             item,
             data
         );
-        const _grokMetrics = await this.grokAgent.getMetricsFromItemData(
+        const _grokMetrics: CreateMetricsType = await this.grokAgent.getMetricsFromItemData(
             item,
             data
         );

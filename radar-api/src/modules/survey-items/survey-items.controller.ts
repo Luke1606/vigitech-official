@@ -8,13 +8,16 @@ import {
     Get,
     Patch,
     ParseUUIDPipe,
+    UseGuards,
 } from '@nestjs/common';
+import { SuperTokensAuthGuard } from 'supertokens-nestjs';
 
 import { SurveyItem } from '@prisma/client';
 import { SurveyItemsService } from './survey-items.service';
 import { SurveyItemWithAnalysisType } from './types/survey-item-with-analysis.type';
 
 @Controller('survey-items')
+@UseGuards(SuperTokensAuthGuard)
 export class SurveyItemsController {
     private readonly logger: Logger = new Logger('SurveyItemsController');
 
@@ -23,13 +26,13 @@ export class SurveyItemsController {
     }
 
     @Get('recommended')
-    async findAllRecommendations(): Promise<SurveyItem[]> {
+    async findAllRecommendations(): Promise<SurveyItemWithAnalysisType[]> {
         this.logger.log('Executed findAll');
         return await this.surveyItemsService.findAllRecommended();
     }
 
     @Get('subscribed')
-    async findAllSubscribed(): Promise<SurveyItem[]> {
+    async findAllSubscribed(): Promise<SurveyItemWithAnalysisType[]> {
         this.logger.log('Executed findAll');
         return await this.surveyItemsService.findAllSubscribed();
     }

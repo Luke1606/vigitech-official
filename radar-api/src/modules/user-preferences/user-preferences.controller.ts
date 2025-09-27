@@ -1,9 +1,11 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
+import { SuperTokensAuthGuard } from 'supertokens-nestjs';
 
 // import { UserPreferencesService } from './user-preferences.service';
 // import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 
-@Controller()
+@Controller('preferences')
+@UseGuards(SuperTokensAuthGuard)
 export class UserPreferencesController {
     // constructor(private readonly userPreferencesService: UserPreferencesService) {}
     // @MessagePattern('createDefaultUserPreferences')

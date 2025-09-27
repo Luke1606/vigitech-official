@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type { UUID } from 'crypto';
 import {
     Injectable,
@@ -5,11 +9,8 @@ import {
     OnModuleDestroy,
     OnModuleInit,
 } from '@nestjs/common';
-import {
-    PrismaClient,
-    SubscribedItemAnalysis,
-    SurveyItem,
-} from '@prisma/client';
+
+import { PrismaClient, ItemAnalysis, SurveyItem } from '@prisma/client';
 
 import { UpdateSurveyItemDto } from './dto/update-survey-item.dto';
 import { SurveyItemWithAnalysisType } from './types/survey-item-with-analysis.type';
@@ -50,7 +51,7 @@ export class SurveyItemsService
         for (let index = 0; index < items.length; index++) {
             const item = items[index];
 
-            const lastAnalysis: SubscribedItemAnalysis =
+            const lastAnalysis: ItemAnalysis =
                 await this.itemAnalysisService.findLastAnalysisFromItem(
                     item.id as UUID
                 );
@@ -67,11 +68,28 @@ export class SurveyItemsService
     async findAllSubscribed(): Promise<SurveyItemWithAnalysisType[]> {
         this.logger.log('Executed findAllSubscribed');
 
-        return await this.surveyItem.findMany({
+        const items: SurveyItem[] = await this.surveyItem.findMany({
             where: {
                 subscribed: true,
             },
         });
+
+        const itemsWithAnalysis: SurveyItemWithAnalysisType[] = [];
+
+        for (let index = 0; index < items.length; index++) {
+            const item = items[index];
+
+            const lastAnalysis: ItemAnalysis =
+                await this.itemAnalysisService.findLastAnalysisFromItem(
+                    item.id as UUID
+                );
+
+            itemsWithAnalysis.push({
+                item,
+                lastAnalysis,
+            });
+        }
+        return itemsWithAnalysis;
     }
 
     async findOne(id: UUID): Promise<SurveyItemWithAnalysisType> {
@@ -81,7 +99,7 @@ export class SurveyItemsService
             where: { id },
         });
 
-        const lastAnalysis: SubscribedItemAnalysis =
+        const lastAnalysis: ItemAnalysis =
             await this.itemAnalysisService.findLastAnalysisFromItem(
                 item.id as UUID
             );
@@ -170,7 +188,8 @@ export class SurveyItemsService
         });
     }
 
-    private async renewItems(): Promise<void> {
+    // ejecutar periodicamente segun la config
+    private async renewItemRecommendations(): Promise<void> {
         this.logger.log('Executed renewItems');
 
         // borrar los desactivados
@@ -188,11 +207,10 @@ export class SurveyItemsService
             })
             .then((items: SurveyItem[]) =>
                 items.map((item: SurveyItem) => {
-                    const { title, summary, source, radarQuadrant } = item;
+                    const { title, summary, radarQuadrant } = item;
                     return {
                         title,
                         summary,
-                        source,
                         radarQuadrant,
                     } as CreateSurveyItemType;
                 })
@@ -223,7 +241,7 @@ export class SurveyItemsService
             });
 
         // insertar el primer analisis de cada uno
-        await this.itemAnalysisService.getAnalysisesFromSurveyItems(
+        await this.itemAnalysisService.createAndGetAnalysisesFromSurveyItems(
             createdNewTrendings
         );
 
@@ -231,17 +249,38 @@ export class SurveyItemsService
         this.logger.log(notRelevantAnymore);
     }
 
+    // ejecutar periodicamente segun la config
+    private async renewItemAnalysises() {
+        const items: SurveyItem[] = await this.findAllSubscribed().then(
+            (itemsWithAnalysis: SurveyItemWithAnalysisType[]) =>
+                itemsWithAnalysis.map(
+                    (itemsWithAnalysis: SurveyItemWithAnalysisType) =>
+                        itemsWithAnalysis.item
+                )
+        );
+
+        const newAnalysises: ItemAnalysis[] =
+            await this.itemAnalysisService.createAndGetAnalysisesFromSurveyItems(
+                items
+            );
+
+        const changes: number = 0;
+        this.logger.log(
+            `Analysises renewed. It has ${changes} changes in ${newAnalysises.length} items`
+        );
+    }
+
     async findAllInsideIntervalFromObjective(
         itemId: UUID,
         startDate: Date,
         endDate: Date
     ) {
-        return await this.subscribedItemAnalysis
+        return await this.itemAnalysis
             .findMany({
                 where: { itemId },
                 orderBy: { createdAt: 'asc' },
             })
-            .then((analysisFromItem: SubscribedItemAnalysis[]) =>
+            .then((analysisFromItem: ItemAnalysis[]) =>
                 analysisFromItem.filter(
                     (analysis) =>
                         analysis.createdAt > startDate &&

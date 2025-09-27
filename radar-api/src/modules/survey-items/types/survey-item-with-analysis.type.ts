@@ -1,8 +1,7 @@
-import { SurveyItem, SubscribedItemAnalysis } from '@prisma/client';
-import { CreateSurveyItemType } from './create-survey-item.type';
-import { CreateItemAnalysisType } from 'src/modules/item-analysis/types/create-item-analysis.type';
+/* eslint-disable prettier/prettier */
+import { SurveyItem, ItemAnalysis } from '@prisma/client';
 
 export type SurveyItemWithAnalysisType = {
-    item: SurveyItem | CreateSurveyItemType;
-    lastAnalysis: SubscribedItemAnalysis | CreateItemAnalysisType;
+    item: SurveyItem;
+    lastAnalysis: ItemAnalysis;
 };

@@ -8,16 +8,51 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    
+    "db:up": "docker-compose up -d radar-db pgadmin",
+    "db:wait": "wait-port 4000",
+    "dev:with-db": "npm run db:up && npm run db:wait && npm run db:migrate:dev && npm run start:dev",
+    "db:restart": "docker-compose restart radar-db",
+    "dev:stop": "npm run db:down",
+    "db:down": "docker-compose down",
+    "db:clean": "docker-compose down -v --remove-orphans",
+    "db:logs": "docker-compose logs -f radar-db",
+    
+    "db:generate": "prisma generate",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:reset": "prisma migrate reset --force",
+    "db:seed": "ts-node prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "db:status": "prisma migrate status",
+    
+    "dev:infra": "npm run db:up && sleep 10",
+    "dev:full": "npm run dev:infra && npm run db:migrate:dev && npm run start:dev",
+    "dev:reset": "npm run db:clean && npm run dev:full",
+    
+    "test:db:up": "docker-compose -f docker-compose.test.yml up -d",
+    "test:db:down": "docker-compose -f docker-compose.test.yml down",
+    "test:with-db": "npm run test:db:up && sleep 5 && npm run db:migrate:deploy && npm test && npm run test:db:down",
+    "test:ci": "npm run test:with-db -- --coverage --passWithNoTests",
+    
+    "build:prod": "npm run lint && npm run test:ci && npm run build",
+    "docker:build": "docker build -t radar-api:latest .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env radar-api:latest",
+    
+    "health:db": "npx wait-port localhost:4000 -t 30000",
+    "health:api": "npx wait-port localhost:3000 -t 30000"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",
@@ -28,7 +63,9 @@
     "@nestjs/throttler": "^6.4.0",
     "axios": "^1.12.2",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "supertokens-nestjs": "^0.0.5",
+    "supertokens-node": "^23.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

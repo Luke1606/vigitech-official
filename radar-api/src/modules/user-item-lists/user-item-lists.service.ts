@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 import type { UUID } from 'crypto';
 import {
     Injectable,
@@ -18,7 +19,7 @@ export class UserItemListsService
     private readonly logger: Logger = new Logger('UserItemListService');
 
     async onModuleInit(): Promise<void> {
-        this.$connect();
+        await this.$connect();
         this.logger.log('Initialized and connected to database');
     }
 
@@ -72,7 +73,7 @@ export class UserItemListsService
     }
 
     async onModuleDestroy(): Promise<void> {
-        this.$disconnect();
+        await this.$disconnect();
         this.logger.log('Disconnected from database');
     }
 }

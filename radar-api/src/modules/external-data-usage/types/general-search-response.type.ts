@@ -1,5 +1,5 @@
 import { CrossRefResponse } from './cross-ref-responses.type';
-import { OpenAlexResponse } from '../../../../dist/survey-items/external-actors/types/open-alex-entities.type';
+import { OpenAlexResponse } from './open-alex-responses.type';
 import { UnpaywallResponse } from './unpaywall-responsestype';
 
 export type CreateGeneralSearchType = {

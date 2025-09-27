@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import type { UUID } from 'crypto';
 import {
     Injectable,
@@ -5,16 +6,18 @@ import {
     OnModuleDestroy,
     OnModuleInit,
 } from '@nestjs/common';
+
 import {
     GeneralSearchResult,
     Metrics,
     PrismaClient,
-    SubscribedItemAnalysis,
+    ItemAnalysis,
     SurveyItem,
 } from '@prisma/client';
 
-import { ExternalDataUsageService } from '../external-data-usage/external-data-usage.service';
-import { CreateItemAnalysisType } from './types/create-item-analysis.type';
+import { ExternalDataUsageService } from '../external-data-usage/external-data-usage.service.js';
+import { CreateItemAnalysisType } from './types/create-item-analysis.type.js';
+
 
 @Injectable()
 export class ItemAnalysisService
@@ -34,9 +37,9 @@ export class ItemAnalysisService
         this.logger.log('Initialized and connected to database');
     }
 
-    async getAnalysisesFromSurveyItems(
+    async createAndGetAnalysisesFromSurveyItems(
         items: SurveyItem[]
-    ): Promise<SubscribedItemAnalysis[]> {
+    ): Promise<ItemAnalysis[]> {
         const analysises: CreateItemAnalysisType[] = [];
 
         for (let index = 0; index < items.length; index++) {
@@ -54,13 +57,11 @@ export class ItemAnalysisService
             analysises.push({
                 itemId: item.id,
                 dataId: searchedData.id,
-                searchedData,
                 metricsId: analyzedMetrics.id,
-                analyzedMetrics,
             });
         }
 
-        return await this.subscribedItemAnalysis.createMany({
+        return await this.itemAnalysis.createManyAndReturn({
             data: analysises,
             skipDuplicates: false,
         });
@@ -70,13 +71,13 @@ export class ItemAnalysisService
         itemId: UUID,
         startDate: Date,
         endDate: Date
-    ) {
-        return await this.subscribedItemAnalysis
+    ): Promise<ItemAnalysis[]> {
+        return await this.itemAnalysis
             .findMany({
                 where: { itemId },
                 orderBy: { createdAt: 'asc' },
             })
-            .then((analysisFromItem: SubscribedItemAnalysis[]) =>
+            .then((analysisFromItem: ItemAnalysis[]) =>
                 analysisFromItem.filter(
                     (analysis) =>
                         analysis.createdAt > startDate &&
@@ -87,8 +88,8 @@ export class ItemAnalysisService
 
     async findLastAnalysisFromItem(
         itemId: UUID
-    ): Promise<SubscribedItemAnalysis> {
-        return await this.subscribedItemAnalysis.findFirstOrThrow({
+    ): Promise<ItemAnalysis> {
+        return await this.itemAnalysis.findFirstOrThrow({
             where: { itemId },
             orderBy: { createdAt: 'desc' },
         });

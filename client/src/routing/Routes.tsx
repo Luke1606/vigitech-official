@@ -1,8 +1,9 @@
 import { type RouteObject, Navigate } from "react-router-dom";
+import { SessionAuth } from "supertokens-auth-react/recipe/session";
+
 import { PathOption } from '@/infrastructure';
-import { Layout, Error, ProtectedRoutes } from "@/ui/components";
+import { Layout, Error } from "@/ui/components";
 import { 
-    AuthForm,
     PortalHome, 
     FAQ,
     About,
@@ -12,18 +13,18 @@ import {
     ItemDetails
 } from "@/ui/pages";
 
-const vigitechGlobalPrefix: string = "/vigitech";
+const vigitechGlobalPrefix: string = "vigitech";
 const portalGlobalPrefix: string = "portal/";
 const technologyRadarGlobalPrefix: string = "technology-radar/";
 
 export const routes: RouteObject[] = [
     {
-        path: "/",
+        path: '/',
         element: <Navigate to={PathOption.VIGITECH_PORTAL_HOME} replace />
     },
     {
-        path: `${PathOption.VIGITECH_CENTRALIZED_AUTH}/:action?`,
-        element: <AuthForm />
+        path: vigitechGlobalPrefix,
+        element: <Navigate to={PathOption.VIGITECH_PORTAL_HOME} replace />
     },
     {
         path: vigitechGlobalPrefix,
@@ -47,7 +48,7 @@ export const routes: RouteObject[] = [
                 <TechnologyRadarHome />
             },
             {
-                element: <ProtectedRoutes />,
+                element: <SessionAuth />,
                 children: [
                     {
                         path: `${technologyRadarGlobalPrefix}subscribed-items-radar`,

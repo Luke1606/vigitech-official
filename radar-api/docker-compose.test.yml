@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+	test-db:
+		image: postgres:15
+		container_name: radar-test-db
+		environment:
+			POSTGRES_DB: radar-test-db
+			POSTGRES_USER: test-user
+			POSTGRES_PASSWORD: test-password
+		ports:
+			- "5433:5432"
+		networks:
+			- test-network
+
+networks:
+  	test-network:

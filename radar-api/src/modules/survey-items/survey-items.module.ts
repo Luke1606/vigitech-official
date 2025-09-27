@@ -9,5 +9,6 @@ import { ItemAnalysisModule } from '../item-analysis/item-analysis.module';
     imports: [ExternalDataUsageModule, ItemAnalysisModule],
     controllers: [SurveyItemsController],
     providers: [SurveyItemsService],
+    exports: [SurveyItemsService],
 })
 export class SurveyItemsModule {}

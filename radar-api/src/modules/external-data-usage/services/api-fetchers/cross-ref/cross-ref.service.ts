@@ -190,7 +190,7 @@ export class CrossRefService extends BaseFetchingService {
                 `Trabajo publicado en ${work.publisher} con ${work['is-referenced-by-count'] || 0} citas`,
             source: 'CrossRef',
             metadata: {
-                doi: work.DOI,
+                doi: work.doi,
                 publisher: work.publisher,
                 type: work.type,
                 subjects: work.subject || [],
@@ -233,7 +233,7 @@ export class CrossRefService extends BaseFetchingService {
             citation_count: work['is-referenced-by-count'] || 0,
             source: 'CrossRef',
             metadata: {
-                doi: work.DOI,
+                doi: work.doi,
                 type: work.type,
                 subtype: work.subtype,
                 url: work.URL,

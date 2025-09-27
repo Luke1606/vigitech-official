@@ -6,6 +6,7 @@ generator client {
 datasource db {
 	provider  = "postgresql"
 	url       = env("DATABASE_URL")
+    directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
@@ -99,7 +100,6 @@ model SurveyItem {
     id                             String               @id @default(uuid())
     title                          String
 	summary                        String
-	source                         String
     subscribed                     Boolean              @default(false)
     active                         Boolean              @default(false)
 

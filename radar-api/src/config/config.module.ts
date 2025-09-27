@@ -1,6 +1,8 @@
+/* eslint-disable prettier/prettier */
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule as cfgModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { SupertokensModule } from './app-config/supertokens.module';
 
 @Global()
 @Module({
@@ -21,9 +23,9 @@ import { ThrottlerModule } from '@nestjs/throttler';
                 ],
             }),
         }),
+        SupertokensModule,
     ],
     providers: [ConfigService],
     exports: [ConfigService],
 })
-
 export class ConfigModule {}

@@ -1,5 +1,5 @@
 export type CrossRefWork = {
-    DOI: string;
+    doi: string;
     title: string[];
     abstract?: string;
     author: Array<{

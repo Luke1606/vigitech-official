@@ -1,8 +1,7 @@
-import { GeneralSearchResultDto } from '../../dto/general-search-result.dto';
-import { MetricsDto } from '../../dto/analysis-metrics.dto';
-import { SurveyItemBasicData } from '../../types/survey-item-basic-data.type';
 import { HttpService } from '@nestjs/axios';
 import { BaseExternalActor } from '../external-actor.base';
+import { GeneralSearchResult, SurveyItem } from '@prisma/client';
+import { CreateMetricsType } from '../../types/create-analysis-metrics.type';
 
 export abstract class BaseMCPAgent extends BaseExternalActor {
     protected constructor(
@@ -15,7 +14,7 @@ export abstract class BaseMCPAgent extends BaseExternalActor {
     }
 
     abstract getMetricsFromItemData(
-        item: SurveyItemBasicData,
-        data: GeneralSearchResultDto
-    ): Promise<MetricsDto>;
+        item: SurveyItem,
+        data: GeneralSearchResult
+    ): Promise<CreateMetricsType>;
 }
