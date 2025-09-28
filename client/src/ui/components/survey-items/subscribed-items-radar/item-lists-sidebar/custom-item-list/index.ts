@@ -1,0 +1,1 @@
+export { CustomItemsList } from './CustomItemList.component';

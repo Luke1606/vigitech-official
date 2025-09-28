@@ -1,17 +1,19 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { type SurveyItemDto } from '@/infrastructure';
+import type { SurveyItem, ChangeLogEntry } from '@/infrastructure';
 
 export interface SurveyItemsState {
-    selectedItems: SurveyItemDto[];
+    selectedItems: SurveyItem[];
+    changeLogs: string[];
     pendingChanges: {
-        toRemoveItems: SurveyItemDto[];
-        toSubscribeItems: SurveyItemDto[];
-        toUnsubscribeItems: SurveyItemDto[];
+        toRemoveItems: SurveyItem[];
+        toSubscribeItems: SurveyItem[];
+        toUnsubscribeItems: SurveyItem[];
     }
 }
 
 const initialState: SurveyItemsState = {
     selectedItems: [],
+    changeLogs: [],
     pendingChanges: {
         toRemoveItems: [],
         toSubscribeItems: [],
@@ -26,10 +28,10 @@ export const surveyItemsSlice = createSlice({
     reducers: {
         addToSelectedItems: (
             state: SurveyItemsState,
-            action: PayloadAction<SurveyItemDto[]>
+            action: PayloadAction<SurveyItem[]>
         ) => {
             action.payload.forEach(
-                (item: SurveyItemDto) => {
+                (item: SurveyItem) => {
                     if (!state.selectedItems.includes(item))
                         state.selectedItems.push(item)
                 }
@@ -38,19 +40,33 @@ export const surveyItemsSlice = createSlice({
 
         removeFromSelectedItems: (
             state: SurveyItemsState, 
-            action: PayloadAction<SurveyItemDto[]>
+            action: PayloadAction<SurveyItem[]>
         ) => {
             state.selectedItems = state.selectedItems.filter(
-                (item: SurveyItemDto) => action.payload.includes(item)
+                (item: SurveyItem) => action.payload.includes(item)
             )
+        },
+
+        addChangeLog: (
+            state: SurveyItemsState,
+            action: PayloadAction<ChangeLogEntry>
+        ) => {
+            const { itemTitle, oldRing, newRing } = action.payload;
+            state.changeLogs.push(
+                `Item ${itemTitle} has been moved from ${oldRing} to ${newRing}`
+            )
+        },
+
+        clearChangeLog: (state: SurveyItemsState) => {
+            state.changeLogs = [];
         },
 
         addPendingSubscribes: (
             state: SurveyItemsState, 
-            action: PayloadAction<SurveyItemDto[]>
+            action: PayloadAction<SurveyItem[]>
         ) => {
             const notReplicatedData = action.payload.filter(
-                (item: SurveyItemDto) => !state.pendingChanges.toSubscribeItems.includes(item)
+                (item: SurveyItem) => !state.pendingChanges.toSubscribeItems.includes(item)
             )
             state.pendingChanges.toSubscribeItems = state.pendingChanges
                 .toSubscribeItems.concat(notReplicatedData);
@@ -58,10 +74,10 @@ export const surveyItemsSlice = createSlice({
 
         addPendingUnsubscribes: (
             state: SurveyItemsState, 
-            action: PayloadAction<SurveyItemDto[]>
+            action: PayloadAction<SurveyItem[]>
         ) => {
             const notReplicatedData = action.payload.filter(
-                (item: SurveyItemDto) => !state.pendingChanges.toUnsubscribeItems.includes(item)
+                (item: SurveyItem) => !state.pendingChanges.toUnsubscribeItems.includes(item)
             )
             state.pendingChanges.toUnsubscribeItems = state.pendingChanges
                 .toUnsubscribeItems.concat(notReplicatedData);
@@ -69,10 +85,10 @@ export const surveyItemsSlice = createSlice({
 
         addPendingRemoves: (
             state: SurveyItemsState, 
-            action: PayloadAction<SurveyItemDto[]>
+            action: PayloadAction<SurveyItem[]>
         ) => {
             const notReplicatedData = action.payload.filter(
-                (item: SurveyItemDto) => !state.pendingChanges.toRemoveItems.includes(item)
+                (item: SurveyItem) => !state.pendingChanges.toRemoveItems.includes(item)
             )
             state.pendingChanges.toRemoveItems = state.pendingChanges
                 .toRemoveItems.concat(notReplicatedData);
@@ -91,6 +107,8 @@ export const surveyItemsSlice = createSlice({
 export const { 
     addToSelectedItems,
     removeFromSelectedItems, 
+    addChangeLog,
+    clearChangeLog,
     addPendingSubscribes, 
     addPendingUnsubscribes,
     addPendingRemoves, 

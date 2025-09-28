@@ -1,0 +1,1 @@
+export { ChangeLogSideBar } from './ChangeLogSideBar.component';

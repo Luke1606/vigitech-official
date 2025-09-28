@@ -1,7 +1,7 @@
 import type { UUID } from "crypto";
 import type React from "react";
 import { Plus, Trash2, View } from "lucide-react";
-import { type SurveyItemDto } from "@/infrastructure";
+import { type SurveyItem } from "@/infrastructure";
 import { 
     Card, 
     CardHeader, 
@@ -10,17 +10,14 @@ import {
     CardFooter, 
     Button
 } from "@/ui/components";
-import { CardVariant } from "./";
 
 export const SurveyItemCard: React.FC<{
     key: UUID;
-    item: SurveyItemDto
-    variant: CardVariant
+    item: SurveyItem
     selected: boolean
     onSelect: CallableFunction
     onUnselect: CallableFunction
-    onSubscribe?: CallableFunction
-    onUnsubscribe?: CallableFunction
+    onSubscribe: CallableFunction
     onRemove: CallableFunction
     onViewDetails: CallableFunction
     isLoading: {
@@ -30,18 +27,14 @@ export const SurveyItemCard: React.FC<{
 }> = ({
     key,
     item,
-    variant,
     selected,
     onSelect,
     onUnselect,
     onSubscribe,
-    onUnsubscribe,
     onRemove,
     onViewDetails,
     isLoading
 }) => {
-    if (variant === CardVariant.RECOMMENDED && !onSubscribe) return null;
-    if (variant === CardVariant.SUBSCRIBED && !onUnsubscribe) return null;
 
     return (
         <Card 
@@ -65,22 +58,13 @@ export const SurveyItemCard: React.FC<{
                     <View className="w-4 h-4 mr-2" /> Details
                 </Button>
 
-                { variant === CardVariant.RECOMMENDED &&
-                    <Button
-                        className="mr-2"
-                        onClick={() => onSubscribe()}
-                        disabled={isLoading.subscribeOne}>
-                        <Plus className="w-4 h-4 mr-2" /> Subscribe
-                    </Button>}
+                <Button
+                    className="mr-2"
+                    onClick={() => onSubscribe()}
+                    disabled={isLoading.subscribeOne}>
+                    <Plus className="w-4 h-4 mr-2" /> Subscribe
+                </Button>
 
-                { variant === CardVariant.SUBSCRIBED &&
-                    <Button
-                        className="mr-2"
-                        onClick={() => onUnsubscribe()}
-                        disabled={isLoading.subscribeOne}>
-                        <Plus className="w-4 h-4 mr-2" /> Unsubscribe
-                    </Button>}
-    
                 <Button
                     variant="destructive"
                     onClick={() => onRemove()}

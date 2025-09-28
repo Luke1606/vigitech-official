@@ -1,6 +1,5 @@
 import type React from 'react';
 import error from '/error.png'
-import { useNavigate } from 'react-router-dom';
 
 interface ErrorProps {
     errorTitle: string, 
@@ -12,8 +11,6 @@ export const Error: React.FC<ErrorProps> = ({
     errorDescription='' 
 }) => {
 
-    const navigate = useNavigate();
-    
     return (
         <div className='error-container'>
             <h1 
@@ -36,7 +33,7 @@ export const Error: React.FC<ErrorProps> = ({
             
             <button 
                 className='accept-button'
-                onClick={() => navigate('/')}
+                onClick={() => window.location.href = '/'}
                 >
                 Volver
             </button>

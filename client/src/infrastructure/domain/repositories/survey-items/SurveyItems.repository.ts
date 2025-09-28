@@ -2,7 +2,7 @@ import type { UUID } from "crypto";
 import { 
     AxiosConfiguredInstance,
     type SurveyItemsInterface,
-    type SurveyItemDto
+    type SurveyItem
 } from '@/infrastructure';
 
 class SurveyItemsRepository implements SurveyItemsInterface {
@@ -14,19 +14,19 @@ class SurveyItemsRepository implements SurveyItemsInterface {
         );
     }
 
-    async findAllRecommended (): Promise<SurveyItemDto[]> {
+    async findAllRecommended (): Promise<SurveyItem[]> {
         return await this.axios.http
             .get('recommended');
     };
 
-    async findAllSubscribed (): Promise<SurveyItemDto[]> {
+    async findAllSubscribed (): Promise<SurveyItem[]> {
         return await this.axios.http
             .get('subscribed');
     };
 
     async findOne (
         itemId: UUID
-    ): Promise<SurveyItemDto> {
+    ): Promise<SurveyItem> {
         return await this.axios.http
             .get(`${itemId}`);
     };

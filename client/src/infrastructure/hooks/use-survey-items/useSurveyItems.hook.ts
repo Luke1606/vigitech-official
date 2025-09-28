@@ -1,5 +1,5 @@
 import type { UUID } from 'crypto';
-import { useMutation, useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { 
 	findOneQueryOptions, 
@@ -17,11 +17,11 @@ import {
 } from './mutation-options';
 
 export const useSurveyItems = () => {
-	const useGetRecommendedQuery = useSuspenseQuery(
+	const useGetRecommendedQuery = useQuery(
 		getRecommendedQueryOptions()
 	);
 
-	const useGetSubscribedQuery = useSuspenseQuery(
+	const useGetSubscribedQuery = useQuery(
 		getSubscribedQueryOptions()
 	);
 

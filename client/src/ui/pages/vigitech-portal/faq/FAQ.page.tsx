@@ -8,15 +8,38 @@ export const FAQ: React.FC = () => {
 
     return (
         <>
-            {/* Decoración opaca tipo Vigitech */}
-            <img src="/pregunta_faq.png" className="opacity-10 absolute w-16 top-[160px] left-[40px] rotate-[30deg]" />
-            <img src="/pregunta_faq.png" className="opacity-10 absolute w-20 top-[320px] left-[120px] rotate-[325deg]" />
-            <img src="/pregunta_faq.png" className="opacity-10 absolute w-14 top-[480px] left-[40px] rotate-[10deg]" />
-            <img src="/pregunta_faq.png" className="opacity-10 absolute w-16 top-[640px] left-[120px] rotate-[300deg]" />
-            <img src="/pregunta_faq.png" className="opacity-10 absolute w-14 top-[160px] right-[40px] rotate-[30deg]" />
-            <img src="/pregunta_faq.png" className="opacity-10 absolute w-16 top-[320px] right-[120px] rotate-[325deg]" />
-            <img src="/pregunta_faq.png" className="opacity-10 absolute w-20 top-[480px] right-[40px] rotate-[10deg]" />
-            <img src="/pregunta_faq.png" className="opacity-10 absolute w-14 top-[640px] right-[120px] rotate-[300deg]" />
+            <img 
+                src="/pregunta_faq.png" className="opacity-10 absolute w-16 top-[160px] left-[40px] rotate-[30deg]"
+                title=""
+                alt=""/>
+            <img 
+                src="/pregunta_faq.png" className="opacity-10 absolute w-20 top-[320px] left-[120px] rotate-[325deg]"
+                title=""
+                alt=""/>
+            <img 
+                src="/pregunta_faq.png" className="opacity-10 absolute w-14 top-[480px] left-[40px] rotate-[10deg]"
+                title=""
+                alt=""/>
+            <img 
+                src="/pregunta_faq.png" className="opacity-10 absolute w-16 top-[640px] left-[120px] rotate-[300deg]"
+                title=""
+                alt=""/>
+            <img 
+                src="/pregunta_faq.png" className="opacity-10 absolute w-14 top-[160px] right-[40px] rotate-[30deg]"
+                title=""
+                alt=""/>
+            <img 
+                src="/pregunta_faq.png" className="opacity-10 absolute w-16 top-[320px] right-[120px] rotate-[325deg]"
+                title=""
+                alt=""/>
+            <img 
+                src="/pregunta_faq.png" className="opacity-10 absolute w-20 top-[480px] right-[40px] rotate-[10deg]"
+                title=""
+                alt=""/>
+            <img 
+                src="/pregunta_faq.png" className="opacity-10 absolute w-14 top-[640px] right-[120px] rotate-[300deg]"
+                title=""
+                alt=""/>
 
             <section className="min-h-screen px-6 py-16 bg-gradient-to-br from-indigo-800 via-purple-700 to-blue-700 text-white relative overflow-hidden">
                 <div className="relative z-10 flex flex-col items-center gap-y-10">

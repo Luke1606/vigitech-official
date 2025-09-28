@@ -15,6 +15,7 @@ import { EmailPasswordPreBuiltUI } from "supertokens-auth-react/recipe/emailpass
 
 import { superTokensConfig, queryClient, store } from "./infrastructure";
 import { routes } from "./routing";
+import { ErrorBoundary, SidebarProvider } from "./ui/components";
 
 SuperTokens.init(superTokensConfig);
 
@@ -29,15 +30,19 @@ const router: DataRouter = createBrowserRouter([
     ).map((route) => route.props)
 ]);
 
-function App() {
+const App = () => {
 	return (
-		<SuperTokensWrapper>
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<RouterProvider router={router} />
-				</Provider>
-			</QueryClientProvider>
-		</SuperTokensWrapper>
+		<ErrorBoundary>
+			<SuperTokensWrapper>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<SidebarProvider>
+							<RouterProvider router={router} />
+						</SidebarProvider>
+					</Provider>
+				</QueryClientProvider>
+			</SuperTokensWrapper>
+		</ErrorBoundary>
 	)
 }
 

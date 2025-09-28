@@ -1,7 +1,7 @@
 import { useSurveyItemsUI } from '@/infrastructure';
 import { useNavigate } from 'react-router-dom';
-import { Button, SurveyItemCard, CardVariant } from '@/ui/components';
-import { type SurveyItemDto, PathOption } from '@/infrastructure';
+import { Button, SurveyItemCard } from '@/ui/components';
+import { type SurveyItem, PathOption } from '@/infrastructure';
 import { useCallback, useEffect, useState } from 'react';
 
 export const RecommendationsFeed: React.FC = () => {
@@ -72,7 +72,7 @@ export const RecommendationsFeed: React.FC = () => {
                             addToSelectedItems(recommended.data);
                         }}>
                         { recommended.data.every(
-                            (item: SurveyItemDto) => 
+                            (item: SurveyItem) => 
                                 selectedItems.includes(item)
                         )? "Unselect all" : "Select all"
                             }
@@ -102,11 +102,10 @@ export const RecommendationsFeed: React.FC = () => {
                         Remove all selected
                     </Button> 
                 </div>
-            { recommended.data.map((item: SurveyItemDto) => (
+            { recommended.data.map((item: SurveyItem) => (
                 <SurveyItemCard
                     key={item.id}
                     item={item}
-                    variant={CardVariant.RECOMMENDED}
                     selected={selectedItems.includes(item)}
                     onSelect={() => {
                         if (!isMultipleSelection)

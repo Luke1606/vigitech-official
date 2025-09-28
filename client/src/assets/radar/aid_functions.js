@@ -218,4 +218,3 @@ export const mouse_out = (data) => {
     hideBubble()
     unhighlightLegendItem(data)
 }
-

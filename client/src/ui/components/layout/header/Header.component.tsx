@@ -12,12 +12,46 @@ import { PathOption } from '@/infrastructure';
 import { NotificationCenter } from '../../notification-center';
 import { Profile } from './profile';
 import styles from './Header.styles';
+import { ServiceCard, type ServiceCardProps } from './service-card';
 
 export const Header: React.FC = () => {
     const location = useLocation();
     const currentPath: PathOption = location.pathname as PathOption;
 
     const separator = <div className={styles.separator}></div>
+
+    const servicesInfo: { 
+        to: PathOption,
+        service: ServiceCardProps
+    }[] = [
+        {
+            to: PathOption.TECHNOLOGY_RADAR_PORTAL,
+            service: {
+                imageSrc: '/vigitech_home_radar.jpg',
+                title: 'Technology Radar',
+                alt: 'Radar Service Home',
+                description: 'Track and evaluate the caliber of global tech trends.'
+            }
+        },
+        {
+            to: '#' as PathOption,
+            service: {
+                imageSrc: '/vigitech_home_browser.jpg',
+                title: 'Technology Browser',
+                alt: 'Browser Service Home',
+                description: 'Find insights about all kinds of technologies.'
+            }
+        },
+        {
+            to: '#' as PathOption,
+            service: {
+                imageSrc: '/vigitech_home_graphics.jpg',
+                title: 'Technology Graphics',
+                alt: 'Graphics Service Home',
+                description: 'Analyze global tech trends and their impact through data visualizations.'
+            }
+        },
+    ];
 
     return (
         <header className={styles.header}>
@@ -51,49 +85,23 @@ export const Header: React.FC = () => {
                                 <NavigationMenuContent className="p-0">
                                     <ul className={styles.navigationMenuUl}>
                                         {/* Items */}
-                                        <li>
-                                            <NavigationMenuLink asChild>
-                                                <NavLink to={PathOption.TECHNOLOGY_RADAR_PORTAL}>
-                                                    <Card 
-                                                        imageSrc='/vigitech_home_radar.jpg'
-                                                        title='Technology Radar'
-                                                        alt='Radar Service Home'
-                                                        description='Track and evaluate the caliber of global tech trends.'
-                                                        />
-                                                </NavLink>
-                                            </NavigationMenuLink>
-                                        </li>
+                                        { servicesInfo.map(
+                                            (item: {to: PathOption, service: ServiceCardProps}, index) => (
+                                                <li key={index}>
+                                                    <NavigationMenuLink asChild>
+                                                        <NavLink to={item.to}>
+                                                            <ServiceCard 
+                                                                imageSrc={item.service.imageSrc}
+                                                                title={item.service.title}
+                                                                alt={item.service.alt}
+                                                                description={item.service.description}
+                                                                />
+                                                        </NavLink>
+                                                    </NavigationMenuLink>
 
-                                        {separator}
-                                        
-                                        <li>
-                                            <NavigationMenuLink asChild>
-                                                <NavLink to="#">
-                                                    <Card 
-                                                        imageSrc='/vigitech_home_browser.jpg'
-                                                        title='Technology Browser'
-                                                        alt='Browser Service Home'
-                                                        description='Find insights about all kinds of technologies.'
-                                                        />
-                                                </NavLink>
-                                            </NavigationMenuLink>
-                                        </li>
-
-                                        {separator}
-                                        
-                                        <li>
-                                            <NavigationMenuLink asChild>
-                                                <NavLink to="#">
-                                                    <Card 
-                                                        imageSrc='/vigitech_home_graphics.jpg'
-                                                        title='Technology Graphics'
-                                                        alt='Graphics Service Home'
-                                                        description='Analyze global tech trends and their impact through data visualizations.'
-                                                        />
-                                                </NavLink>
-                                            </NavigationMenuLink>
-                                        </li>
-                                        {separator}
+                                                    {separator}
+                                                </li>)
+                                            )}
                                     </ul>
                                 </NavigationMenuContent>
                             </NavigationMenuItem>
@@ -188,38 +196,5 @@ export const Header: React.FC = () => {
                 </NavigationMenuList>
             </NavigationMenu>
         </header >
-    )
-}
-
-const Card: React.FC<{
-    imageSrc: string,
-    title: string,
-    alt: string,
-    description: string
-}> = ({
-    imageSrc,
-    title,
-    alt,
-    description,
-}) => {
-    return (
-        <figure className='flex justify-between items-center gap-x-5'>
-            <img 
-                className='w-20 h-20'
-                src= {imageSrc}
-                title={title}
-                alt={alt} 
-                />
-
-            <figcaption>
-                <caption className="font-semibold text-base sm:text-lg">
-                    {title}
-                </caption>
-
-                <p className="text-sm text-gray-700">
-                    {description}
-                </p>
-            </figcaption>
-        </figure>
     )
 }

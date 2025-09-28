@@ -1,0 +1,92 @@
+import { Clock, EyeIcon, EyeOff, Trash2 } from 'lucide-react';
+import { useSurveyItemsUI } from '@/infrastructure';
+import { 
+    Button, 
+    ScrollArea, 
+    Sidebar, 
+    SidebarContent, 
+    SidebarGroup, 
+    SidebarGroupContent, 
+    SidebarGroupLabel, 
+    SidebarMenu, 
+} from '@/ui/components';
+
+export const ChangeLogSideBar: React.FC<{
+    visible: boolean
+    toggleVisible: () => void
+}> = ({ 
+    visible, 
+    toggleVisible 
+}) => {
+    const { changeLogs, clearChangeLog } = useSurveyItemsUI();
+
+    return (
+        <>
+            <Button
+                type='button'
+                onClick={toggleVisible}>
+                { visible?
+                    <>
+                        <EyeOff/>
+                        Collapse
+                    </>
+                    :
+                    <>
+                        <EyeIcon/>
+                        Collapse
+                    </>
+                }
+            </Button>
+
+            <Sidebar 
+                side='right'
+                className={`my-12 transition-all duration-300 
+                    ${visible ? 'w-80' : 'w-collapsed'}`
+                }>
+                <SidebarContent>
+                    <SidebarGroup>
+                        <SidebarGroupLabel
+                            className="font-semibold">
+                            ChangeLog
+                        </SidebarGroupLabel>
+                        
+                        <SidebarGroupContent>
+                            <SidebarMenu>
+                                <div className="border-t pt-4 mt-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="h-4 w-4" />
+                                        </div>
+            
+                                        { changeLogs?.length > 0 && (
+                                            <Button variant="ghost" size="sm" onClick={clearChangeLog}>
+                                                <Trash2 className="h-3 w-3" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                    
+                                    <ScrollArea className="h-48">
+                                        <div className="space-y-2">
+                                        
+                                            { changeLogs?.length === 0 ? (
+                                                <p className="text-sm text-muted-foreground text-center py-4">
+                                                    No hay cambios recientes
+                                                </p>
+                                            ) : (
+                                                changeLogs?.map((log: string, index: number) => (
+                                                    <div key={index} className="text-xs p-2 bg-muted rounded">
+                                                        {log}
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </ScrollArea>
+                                </div>
+                            </SidebarMenu>
+                        </SidebarGroupContent>
+                    </SidebarGroup>
+                </SidebarContent>
+            </Sidebar>
+        </>
+    )
+};

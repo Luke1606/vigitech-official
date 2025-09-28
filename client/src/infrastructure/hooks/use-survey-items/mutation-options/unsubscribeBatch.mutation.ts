@@ -1,6 +1,6 @@
 import type { UUID } from "crypto";
 import { mutationOptions, useQueryClient } from "@tanstack/react-query";
-import { surveyItemsRepository, type SurveyItemDto } from "@/infrastructure";
+import { surveyItemsRepository, type SurveyItem } from "@/infrastructure";
 import { surveyItemsKey, subscribedKey } from "../constants";
 
 export const useUnsubscribeBatchMutationOptions = () => {
@@ -21,16 +21,16 @@ export const useUnsubscribeBatchMutationOptions = () => {
 				] 
 			});
 
-			const previousSubscribed: SurveyItemDto[] | undefined = queryClient
-				.getQueryData<SurveyItemDto[]>(
+			const previousSubscribed: SurveyItem[] | undefined = queryClient
+				.getQueryData<SurveyItem[]>(
 					[surveyItemsKey, subscribedKey]
 				);
 
-			queryClient.setQueryData<SurveyItemDto[]>(
+			queryClient.setQueryData<SurveyItem[]>(
 				[surveyItemsKey, subscribedKey], 
 				(old) => 
 					old?.filter(
-						(item: SurveyItemDto) => !itemIds.includes(item.id)
+						(item: SurveyItem) => !itemIds.includes(item.id)
 					) || []
 			);
 
@@ -41,7 +41,7 @@ export const useUnsubscribeBatchMutationOptions = () => {
 			_err: Error, 
 			_itemId: UUID[], 
 			context: {
-				previousSubscribed: SurveyItemDto[] | undefined;
+				previousSubscribed: SurveyItem[] | undefined;
 			} | undefined
 		) => {
 			if (context?.previousSubscribed) {

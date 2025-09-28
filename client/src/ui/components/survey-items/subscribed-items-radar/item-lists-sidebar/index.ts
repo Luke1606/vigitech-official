@@ -1,0 +1,1 @@
+export { ItemListsSideBar } from './ItemListsSideBar.component';

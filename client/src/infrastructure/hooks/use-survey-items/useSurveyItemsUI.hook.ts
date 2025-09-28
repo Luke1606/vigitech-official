@@ -1,9 +1,12 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { 
 	type SurveyItemsState,
-	type SurveyItemDto,
+	type SurveyItem,
+	type ChangeLogEntry,
 	addToSelectedItems,
 	removeFromSelectedItems,
+	addChangeLog,
+	clearChangeLog,
 	addPendingSubscribes,
 	addPendingUnsubscribes,
     addPendingRemoves,
@@ -15,39 +18,49 @@ export const useSurveyItemsUI = () => {
 	const dispatch = useDispatch();
 	const selectedItems = useSelector((state: SurveyItemsState) => state.selectedItems);
 	const pendingChanges = useSelector((state: SurveyItemsState) => state.pendingChanges);
+	const changeLogs = useSelector((state: SurveyItemsState) => state.changeLogs);
 	const query = useSurveyItems();
 
 	return {
 		...query,
 		selectedItems,
 		pendingChanges,
+		changeLogs,
 		
 		addToSelectedItems: (
-			items: SurveyItemDto[]
+			items: SurveyItem[]
 		) => dispatch(
 			addToSelectedItems(items)
 		),
 
 		removeFromSelectedItems: (
-			items: SurveyItemDto[]
+			items: SurveyItem[]
 		) => dispatch(
 			removeFromSelectedItems(items)
 		),
+
+		addChangeLog: (
+			changeLog: ChangeLogEntry
+		) => dispatch(
+			addChangeLog(changeLog)
+		),
+
+		clearChangeLog: () => dispatch(clearChangeLog()),
 		
 		addPendingSubscribes: (
-			items: SurveyItemDto[]
+			items: SurveyItem[]
 		) => dispatch(
 			addPendingSubscribes(items)
 		),
 		
 		addPendingUnsubscribes: (
-			items: SurveyItemDto[]
+			items: SurveyItem[]
 		) => dispatch(
 			addPendingUnsubscribes(items)
 		),
 
 		addPendingRemoves: (
-			items: SurveyItemDto[]
+			items: SurveyItem[]
 		) => dispatch(
 			addPendingRemoves(items)
 		),

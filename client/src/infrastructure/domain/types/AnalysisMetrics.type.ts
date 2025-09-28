@@ -1,6 +1,6 @@
 import type { Trending, AccesibilityLevel } from "../enums";
 
-export type AnalysisMetricsDto = {
+export type AnalysisMetrics = {
     citations: number;
     downloads: number;
     relevance: number;

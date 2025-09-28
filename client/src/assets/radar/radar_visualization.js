@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import * as d3 from "d3";
-import { rings, legend_offset, title_offset } from "./position_consts"
+import * as d3 from 'd3';
+import { rings, legend_offset, title_offset } from "./position_consts";
 import {
 	viewbox,
 	translate,
@@ -40,7 +40,6 @@ import {
  * @property {Object} [colors] - Colores personalizados para el radar.
  * @property {string} [colors.background="#2f2c79"] - Color de fondo del radar.
  * @property {string} [colors.grid="#888"] - Color de las líneas de la cuadrícula.
- * @property {string} [colors.inactive="#ddd"] - Color para elementos inactivos.
  */
 
 const radar_visualization = (config) => {
@@ -50,7 +49,6 @@ const radar_visualization = (config) => {
 	config.colors = ("colors" in config) ? config.colors : {
 		background: "#2f2c79",
 		grid: '#888',
-		inactive: "#ddd",
 	};
 
 	config.print_layout = ("print_layout" in config) ? config.print_layout : true
@@ -269,7 +267,7 @@ const radar_visualization = (config) => {
 		blip = d3.select(nodes[i])
 
 		// blip link
-		if (data.active && Object.prototype.hasOwnProperty.call(data, "link") && data.link) {
+		if (Object.prototype.hasOwnProperty.call(data, "link") && data.link) {
 			blip = blip.append("a")
 				.attr("xlink:href", data.link)
 
@@ -300,7 +298,7 @@ const radar_visualization = (config) => {
 		}
 
 		// blip text
-		if (data.active || config.print_layout) {
+		if (config.print_layout) {
 			const blip_text = config.print_layout ? data.id : data.label.match(/[a-z]/i)
 
 			blip.append("text")

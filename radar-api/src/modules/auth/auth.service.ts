@@ -177,6 +177,7 @@ export class AuthConfigService {
                     {
                         clientId: linkedInClient,
                         clientSecret: linkedInSecret,
+                        scope: ['openid', 'profile', 'email']
                     },
                 ],
             },

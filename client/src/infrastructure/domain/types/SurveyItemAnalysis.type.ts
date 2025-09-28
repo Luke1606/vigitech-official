@@ -1,8 +1,8 @@
-import type { AnalysisMetricsDto } from "./AnalysisMetrics.type";
+import type { AnalysisMetrics } from "./AnalysisMetrics.type";
 // import { GeneralSearchResultDto } from "./GeneralSearchResult.dto";
 
-export type SurveyItemAnalysisDto = {
+export type SurveyItemAnalysis = {
     // searchedResult: GeneralSearchResultDto;
-    obtainedMetrics: AnalysisMetricsDto;
+    obtainedMetrics: AnalysisMetrics;
     searchedDate: Date;
 }
