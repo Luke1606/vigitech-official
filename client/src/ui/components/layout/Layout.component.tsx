@@ -10,17 +10,17 @@ export const Layout: React.FC = () => {
     const currentPath: PathOption = location.pathname as PathOption;
 
     return (
-        <>
+        <div className="flex flex-col w-screen">
             <Header />
 
-            <main className='mt-8 overflow-x-hidden'>
+            <main className='mt-10 overflow-x-hidden'>
                 <Outlet />
             </main>
-            
-            { ![ PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED,
-                PathOption.TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR
-                ].includes(currentPath) && 
+
+            {![PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED,
+            PathOption.TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR
+            ].includes(currentPath) &&
                 <Footer />}
-        </>
+        </div>
     )
 }
