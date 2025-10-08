@@ -3,30 +3,30 @@ import { ItemListsSideBar, ChangeLogSideBar, Radar } from "@/ui/components"
 
 export const SubscribedItemsRadar = () => {
     const [
-        itemListsSidebarVisible, 
-        setItemListsSidebarVisible 
+        itemListsSidebarVisible,
+        setItemListsSidebarVisible
     ] = useState<boolean>(false);
-    
+
     const [
-        changeLogsSidebarVisible, 
-        setChangeLogsSidebarVisible 
+        changeLogsSidebarVisible,
+        setChangeLogsSidebarVisible
     ] = useState<boolean>(false);
 
     return (
-        <>
+        <div className="flex justify-between">
             <ItemListsSideBar
                 visible={itemListsSidebarVisible}
                 toggleVisible={
                     () => setItemListsSidebarVisible(!itemListsSidebarVisible)
-                }/>
+                } />
 
-            <Radar/>
+            <Radar />
 
             <ChangeLogSideBar
                 visible={changeLogsSidebarVisible}
                 toggleVisible={
                     () => setChangeLogsSidebarVisible(!changeLogsSidebarVisible)
-                }/>
-        </>
+                } />
+        </div>
     )
 }

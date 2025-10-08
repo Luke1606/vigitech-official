@@ -21,9 +21,9 @@ export const ChangeLogSideBar: React.FC<{
         const { changeLogs, clearChangeLog } = useSurveyItemsUI();
 
         return (
-            <>
+            <div className='flex mt-8 gap-x-20'>
                 <Button
-                    className='absolute top-16 right-5 z-40'
+                    className='absolute top-16 z-40 right-5'
                     type='button'
                     onClick={toggleVisible}>
                     {visible ?
@@ -86,6 +86,6 @@ export const ChangeLogSideBar: React.FC<{
                         </SidebarGroup>
                     </SidebarContent>
                 </Sidebar>
-            </>
+            </div>
         )
     };
