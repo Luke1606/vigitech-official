@@ -1,5 +1,5 @@
 const styles = {
-    container: 'flex items-center justify-end p-4',
+    container: 'flex items-center justify-end px-4',
     subcontainer: 'flex items-center gap-4',
     icon: 'w-8 h-8 text-gray-600',
     userInfo: 'flex flex-col',
