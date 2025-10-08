@@ -1,23 +1,46 @@
-import { Controller, UseGuards } from '@nestjs/common';
+import {
+    Get,
+    Post,
+    Body,
+    Patch,
+    Param,
+    Logger,
+    UseGuards,
+    Controller,
+    ParseUUIDPipe,
+} from '@nestjs/common';
 import { SuperTokensAuthGuard } from 'supertokens-nestjs';
 
-// import { UserPreferencesService } from './user-preferences.service';
-// import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
+import { UserPreferencesService } from './user-preferences.service';
+import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
+import type { UUID } from 'crypto';
 
 @Controller('preferences')
 @UseGuards(SuperTokensAuthGuard)
 export class UserPreferencesController {
-    // constructor(private readonly userPreferencesService: UserPreferencesService) {}
-    // @MessagePattern('createDefaultUserPreferences')
-    // create () {
-    // 	return this.userPreferencesService.createDefault();
-    // }
-    // @MessagePattern('findActualUserPreferences')
-    // findActualUserPreferences () {
-    // 	return this.userPreferencesService.findActualUserPreferences();
-    // }
-    // @MessagePattern('updateUserPreference')
-    // update (@Payload() newPreferences: UpdateUserPreferenceDto) {
-    // 	return this.userPreferencesService.update(newPreferences);
-    // }
+    private readonly logger: Logger = new Logger('UserPreferencesController');
+
+    constructor(
+        private readonly userPreferencesService: UserPreferencesService
+    ) {
+        this.logger.log('Initialized');
+    }
+
+    @Post()
+    create() {
+        return this.userPreferencesService.createDefault();
+    }
+
+    @Get()
+    findActualUserPreferences() {
+        return this.userPreferencesService.findActualUserPreferences();
+    }
+
+    @Patch(':id')
+    update(
+        @Param('id', new ParseUUIDPipe()) id: UUID,
+        @Body() newPreferences: UpdateUserPreferenceDto
+    ) {
+        return this.userPreferencesService.update(newPreferences);
+    }
 }

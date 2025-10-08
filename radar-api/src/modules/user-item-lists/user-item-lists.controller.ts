@@ -40,8 +40,23 @@ export class UserItemListsController {
     }
 
     @Post()
-    create(@Body() data: CreateUserItemListDto): Promise<UserItemList> {
-        return this.userItemListsService.create(data);
+    createList(@Body() data: CreateUserItemListDto): Promise<UserItemList> {
+        return this.userItemListsService.createList(data);
+    }
+
+    @Patch(':id')
+    async updateList(
+        @Param(':id', ParseUUIDPipe) id: UUID,
+        @Body() data: UpdateUserItemListDto
+    ): Promise<UserItemList> {
+        return await this.userItemListsService.updateList(id, data);
+    }
+
+    @Delete(':id')
+    async removeList(
+        @Param(':id', ParseUUIDPipe) id: UUID
+    ): Promise<UserItemList> {
+        return await this.userItemListsService.removeList(id);
     }
 
     @Patch(':listId')
@@ -60,14 +75,6 @@ export class UserItemListsController {
         return await this.userItemListsService.appendAllItems(id, itemIds);
     }
 
-    @Patch(':id')
-    async update(
-        @Param(':id', ParseUUIDPipe) id: UUID,
-        @Body() data: UpdateUserItemListDto
-    ): Promise<UserItemList> {
-        return await this.userItemListsService.update(id, data);
-    }
-
     @Patch(':listId')
     async removeOneItem(
         @Param(':listId') listId: UUID,
@@ -82,10 +89,5 @@ export class UserItemListsController {
         @Body() itemIds: UUID[]
     ): Promise<UserItemList> {
         return await this.userItemListsService.removeAllItems(id, itemIds);
-    }
-
-    @Delete(':id')
-    async remove(@Param(':id', ParseUUIDPipe) id: UUID): Promise<UserItemList> {
-        return await this.userItemListsService.remove(id);
     }
 }

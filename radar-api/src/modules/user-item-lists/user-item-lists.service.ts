@@ -31,11 +31,27 @@ export class UserItemListsService
         return await this.userItemList.findUniqueOrThrow({ where: { id } });
     }
 
-    async create(data: CreateUserItemListDto): Promise<UserItemList> {
+    async createList(data: CreateUserItemListDto): Promise<UserItemList> {
         return this.userItemList.create({
             data: {
                 ...data,
             },
+        });
+    }
+
+    async updateList(
+        id: UUID,
+        data: UpdateUserItemListDto
+    ): Promise<UserItemList> {
+        return await this.userItemList.update({
+            where: { id },
+            data,
+        });
+    }
+
+    async removeList(id: UUID): Promise<UserItemList> {
+        return await this.userItemList.delete({
+            where: { id },
         });
     }
 
@@ -49,13 +65,6 @@ export class UserItemListsService
         return {} as UserItemList;
     }
 
-    async update(id: UUID, data: UpdateUserItemListDto): Promise<UserItemList> {
-        return await this.userItemList.update({
-            where: { id },
-            data,
-        });
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async removeOneItem(id: UUID, itemId: UUID): Promise<UserItemList> {
         return {} as UserItemList;
@@ -64,12 +73,6 @@ export class UserItemListsService
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async removeAllItems(listId: UUID, itemIds: UUID[]): Promise<UserItemList> {
         return {} as UserItemList;
-    }
-
-    async remove(id: UUID): Promise<UserItemList> {
-        return await this.userItemList.delete({
-            where: { id },
-        });
     }
 
     async onModuleDestroy(): Promise<void> {
