@@ -9,7 +9,7 @@ import {
     UnpaywallResponse,
     UnpaywallWork,
 } from '../../../types/unpaywall-responsestype';
-import { CreateSurveyItemType } from 'src/modules/survey-items/types/create-survey-item.type';
+import { CreateSurveyItemType } from '../../../../survey-items/types/create-survey-item.type';
 
 @Injectable()
 export class UnpaywallService extends BaseFetchingService {

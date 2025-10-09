@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { BaseMCPAgent } from '../base-mcp-agent.client';
 import { GeneralSearchResult, SurveyItem } from '@prisma/client';
-import { CreateMetricsType } from 'src/modules/external-data-usage/types/create-analysis-metrics.type';
+import { CreateMetricsType } from '../../../types/create-analysis-metrics.type';
 
 @Injectable()
 export class CodeGPTAgent extends BaseMCPAgent {

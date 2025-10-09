@@ -25,5 +25,5 @@ export const superTokensConfig: SuperTokensConfig = {
             }
         }),
         Session.init(),
-    ]
+    ],
 }

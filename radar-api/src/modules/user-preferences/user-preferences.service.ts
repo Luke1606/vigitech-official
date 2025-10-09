@@ -1,3 +1,4 @@
+import { UUID } from 'crypto';
 import {
     Injectable,
     Logger,
@@ -8,7 +9,6 @@ import {
 import { CreateDefaultUserPreferenceDto } from './dto/create-default-user-preference.dto';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { PrismaClient, User, UserPreferences } from '@prisma/client';
-import { UUID } from 'crypto';
 
 @Injectable()
 export class UserPreferencesService

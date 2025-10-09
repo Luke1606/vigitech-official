@@ -6,7 +6,7 @@ echo ===============================================
 echo.
 
 echo Aplicando migraciones...
-npx prisma migrate dev
+start cmd /k "npx prisma migrate dev"
 
 echo Iniciando servidor NestJS...
 npm run start:dev

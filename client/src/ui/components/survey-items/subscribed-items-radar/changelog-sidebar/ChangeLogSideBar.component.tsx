@@ -23,7 +23,7 @@ export const ChangeLogSideBar: React.FC<{
         return (
             <div className='flex mt-8 gap-x-20'>
                 <Button
-                    className='absolute top-16 z-40 right-5'
+                    className='absolute bottom-5 right-5 z-40'
                     type='button'
                     onClick={toggleVisible}>
                     {visible ?

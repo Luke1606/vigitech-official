@@ -21,7 +21,6 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     
-    "db:up": "docker-compose up -d radar-db pgadmin",
     "db:wait": "wait-port 4000",
     "dev:with-db": "npm run db:up && npm run db:wait && npm run db:migrate:dev && npm run start:dev",
     "db:restart": "docker-compose restart radar-db",

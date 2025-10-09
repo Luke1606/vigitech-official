@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { SurveyItem } from '@prisma/client';
 
-import { CreateSurveyItemType } from 'src/modules/survey-items/types/create-survey-item.type';
+import { CreateSurveyItemType } from '../../../../survey-items/types/create-survey-item.type';
 import { BaseFetchingService } from '../fetching-service.base';
 import {
     OpenAlexResponse,

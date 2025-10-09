@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { BaseExternalActor } from '../external-actor.base';
-import { CreateSurveyItemType } from 'src/modules/survey-items/types/create-survey-item.type';
+import { CreateSurveyItemType } from '../../../survey-items/types/create-survey-item.type';
 import { SurveyItem } from '@prisma/client';
 
 @Injectable()

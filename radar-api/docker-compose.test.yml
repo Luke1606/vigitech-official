@@ -1,6 +1,6 @@
 services:
   test-db:
-    image: postgres:15
+    image: postgres:16
     container_name: radar-test-db
     environment:
       POSTGRES_DB: radar-test-db

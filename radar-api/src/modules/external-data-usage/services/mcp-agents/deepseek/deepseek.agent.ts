@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 
 import { BaseMCPAgent } from '../base-mcp-agent.client';
-import { CreateMetricsType } from 'src/modules/external-data-usage/types/create-analysis-metrics.type';
+import { CreateMetricsType } from '../../../types/create-analysis-metrics.type';
 import { GeneralSearchResult, SurveyItem } from '@prisma/client';
 
 @Injectable()

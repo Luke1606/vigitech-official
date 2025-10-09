@@ -25,7 +25,7 @@ export const ItemListsSideBar: React.FC<{
         return (
             <div className='flex mt-8'>
                 <Button
-                    className='absolute left-60 z-40 top-16'
+                    className='absolute bottom-5 left-5 z-40'
                     type='button'
                     onClick={toggleVisible}>
                     {visible ?

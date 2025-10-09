@@ -14,7 +14,7 @@ echo [3/4] Construyendo aplicación...
 npm run build
 
 echo [4/4] Generando cliente Prisma para producción...
-npx prisma generate
+start cmd /k "npx prisma generate"
 
 echo ===============================================
 echo    BUILD DE PRODUCCION COMPLETADO!

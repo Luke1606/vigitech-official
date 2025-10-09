@@ -6,9 +6,9 @@ import {
     SuperTokensAuthGuard 
 } from 'supertokens-nestjs';
 
-import { AuthModule } from 'src/modules/auth/auth.module';
-import { AuthConfigService } from 'src/modules/auth/auth.service';
-import { UsersModule } from 'src/modules/users/users.module';
+import { AuthModule } from '../../modules/auth/auth.module';
+import { AuthConfigService } from '../../modules/auth/auth.service';
+import { UsersModule } from '../../modules/users/users.module';
 
 @Module({
     imports: [

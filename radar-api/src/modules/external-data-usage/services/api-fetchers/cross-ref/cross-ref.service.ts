@@ -10,7 +10,7 @@ import {
     CrossRefResponse,
     CrossRefWork,
 } from '../../../types/cross-ref-responses.type';
-import { CreateSurveyItemType } from 'src/modules/survey-items/types/create-survey-item.type';
+import { CreateSurveyItemType } from '../../../../survey-items/types/create-survey-item.type';
 
 @Injectable()
 export class CrossRefService extends BaseFetchingService {

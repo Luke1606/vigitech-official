@@ -8,12 +8,12 @@ echo.
 docker-compose up -d radar-db pgadmin
 
 echo Base de datos iniciada!
-echo PostgreSQL disponible en: localhost:4000
+echo PostgreSQL disponible en: http://localhost:4000
 echo PGAdmin disponible en: http://localhost:8080
 echo.
 echo Credenciales PGAdmin:
-echo Email: admin@vigitech.com
-echo Password: pgadmin-password
+echo Email: superuser-admin@vigitech.com
+echo Password: vigitech-dev-password-DO_NOT_TOUCH_4000
 echo.
 echo Presiona cualquier tecla para ver logs...
 pause
