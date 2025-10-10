@@ -14,68 +14,77 @@ import {
 
 import type { UserItemList } from '@/infrastructure';
 import styles from './CustomItemList.styles';
+import { useState } from 'react';
 
-export const CustomItemsList: React.FC<UserItemList> = ({
-    name, 
-    items
+export const CustomItemsList: React.FC<UserItemList & {
+    onRename?: (name: string) => void;
+    onAddItem?: (name: string) => void;
+    onRemoveItem?: (name: string, index: number) => void;
+    onDeleteList?: (name: string) => void;
+}> = ({
+    name,
+    items,
+    onRename,
+    onAddItem,
+    onRemoveItem,
+    onDeleteList
 }) => {
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button 
-                    className={styles.expandButton}>
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button className={styles.expandButton}>
                         {name}
-                </Button>
-            </DropdownMenuTrigger>
-            
-            <DropdownMenuContent>
-                <DropdownMenuLabel 
-                    className="text-lg">
-                    {name}
-                </DropdownMenuLabel>
+                    </Button>
+                </DropdownMenuTrigger>
 
-                <DropdownMenuSeparator />
+                <DropdownMenuContent className="w-72 space-y-2">
+                    <DropdownMenuLabel className="text-lg font-semibold">
+                        {name}
+                    </DropdownMenuLabel>
 
-                {items.map((item, index) => (
-                    <div className="flex flex-col gap-y-2">
-                        <div className="flex gap-x-1 justify-between items-center">
-                            <DropdownMenuItem key={index} className="text-md">
-                                {item.title}
-                            </DropdownMenuItem>
+                    <DropdownMenuSeparator />
 
-                            <div className="flex gap-x-2 items-center">
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <Share2 />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Move to other list</p>
-                                    </TooltipContent>
-                                </Tooltip>
+                    {/* Acciones generales */}
+                    <DropdownMenuItem onClick={() => onRename?.(name)}>
+                        ✏️ Cambiar nombre
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onAddItem?.(name)}>
+                        ➕ Agregar elemento
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDeleteList?.(name)}>
+                        🗑️ Eliminar lista
+                    </DropdownMenuItem>
 
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Trash2 />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Delete from list</p>
-                                    </TooltipContent>
-                                </Tooltip>
+                    <DropdownMenuSeparator />
 
+                    {/* Elementos individuales */}
+                    {items.length === 0 ? (
+                        <p className="text-sm text-muted-foreground px-2">Sin elementos</p>
+                    ) : (
+                        items.map((item, index) => (
+                            <div key={index} className="flex justify-between items-center px-2">
+                                <DropdownMenuItem className="text-md">
+                                    {item.title}
+                                </DropdownMenuItem>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Maximize />
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => onRemoveItem?.(name, index)}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p>View details</p>
+                                        <p>Quitar elemento</p>
                                     </TooltipContent>
                                 </Tooltip>
                             </div>
-                        </div>
-                        <div className={styles.separator}></div>
-                    </div>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-}
+                        ))
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
+    };
