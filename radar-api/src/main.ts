@@ -12,10 +12,6 @@ async function bootstrap() {
     const logger = new Logger('Main');
     const app = await NestFactory.create(AppModule);
 
-    const globalPrefix = 'api';
-
-    app.setGlobalPrefix(globalPrefix);
-
     app.enableCors({
         origin: 'http://localhost:5173',
         allowedHeaders: ['content-type', ...supertokens.getAllCORSHeaders()],
@@ -46,14 +42,12 @@ async function bootstrap() {
         .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
+    SwaggerModule.setup('', app, document);
 
     const port = process.env.PORT || 3000;
     await app.listen(port);
 
-    logger.log(
-        `Application is running on: http://localhost:${port}/${globalPrefix}`
-    );
+    logger.log(`Application is running on: http://localhost:${port}`);
 }
 
 void bootstrap();

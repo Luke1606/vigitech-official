@@ -22,7 +22,7 @@ echo ====================================================
 echo    SERVIDOR LISTO EN: http://localhost:3000
 echo    PostgreSQL EN: http://localhost:4000
 echo    PGAdmin LISTO EN: http://localhost:8080
-echo
+
 echo    Credenciales PGAdmin:
 echo    Email: superuser-admin@vigitech.com
 echo    Password: vigitech-dev-password-DO_NOT_TOUCH_4000

@@ -1,4 +1,5 @@
-import { Maximize, Share2, Trash2 } from 'lucide-react';
+import type { UUID } from 'crypto';
+import { Trash2 } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -11,15 +12,13 @@ import {
     TooltipTrigger,
     Button
 } from '@/ui/components';
-
 import type { UserItemList } from '@/infrastructure';
 import styles from './CustomItemList.styles';
-import { useState } from 'react';
 
 export const CustomItemsList: React.FC<UserItemList & {
     onRename?: (name: string) => void;
     onAddItem?: (name: string) => void;
-    onRemoveItem?: (name: string, index: number) => void;
+    onRemoveItem?: (name: string, id: UUID) => void;
     onDeleteList?: (name: string) => void;
 }> = ({
     name,
@@ -44,20 +43,20 @@ export const CustomItemsList: React.FC<UserItemList & {
 
                     <DropdownMenuSeparator />
 
-                    {/* Acciones generales */}
                     <DropdownMenuItem onClick={() => onRename?.(name)}>
                         ✏️ Cambiar nombre
                     </DropdownMenuItem>
+
                     <DropdownMenuItem onClick={() => onAddItem?.(name)}>
                         ➕ Agregar elemento
                     </DropdownMenuItem>
+
                     <DropdownMenuItem onClick={() => onDeleteList?.(name)}>
                         🗑️ Eliminar lista
                     </DropdownMenuItem>
 
                     <DropdownMenuSeparator />
 
-                    {/* Elementos individuales */}
                     {items.length === 0 ? (
                         <p className="text-sm text-muted-foreground px-2">Sin elementos</p>
                     ) : (
@@ -71,7 +70,7 @@ export const CustomItemsList: React.FC<UserItemList & {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => onRemoveItem?.(name, index)}
+                                            onClick={() => onRemoveItem?.(name, item.id)}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>

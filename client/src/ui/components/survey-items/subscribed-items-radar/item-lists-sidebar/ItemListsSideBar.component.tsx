@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { EyeIcon, EyeOff, Plus } from 'lucide-react';
-import type { UserItemList } from '@/infrastructure';
+import { 
+    RadarQuadrant, 
+    RadarRing, 
+    type SurveyItem, 
+    type SurveyItemAnalysis, 
+    type UserItemList 
+} from '@/infrastructure';
 import { CustomItemsList } from './custom-item-list';
 import {
     Button,
@@ -22,6 +28,7 @@ import {
     DialogFooter
 } from '@/ui/components';
 import { Input } from '@/ui/components';
+import type { UUID } from 'crypto';
 
 
 export const ItemListsSideBar: React.FC<{
@@ -37,58 +44,59 @@ export const ItemListsSideBar: React.FC<{
         const [renameTarget, setRenameTarget] = useState<string | null>(null);
         const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
         const [addTarget, setAddTarget] = useState<string | null>(null);
-        const [removeTarget, setRemoveTarget] = useState<{ listName: string; itemIndex: number } | null>(null);
+        const [removeTarget, setRemoveTarget] = useState<{ 
+            listName: string; 
+            itemId: UUID 
+        } | null>(null);
 
         const availableItems: SurveyItem[] = [
             {
-                id: '1',
+                id: '1' as UUID,
                 title: 'React',
                 summary: 'Biblioteca declarativa para construir interfaces de usuario.',
-                radarQuadrant: 'Frameworks',
-                radarRing: 'Adoptar',
-                lastAnalysists: 2025
+                radarQuadrant: RadarQuadrant.LANGUAGES_AND_FRAMEWORKS,
+                radarRing: RadarRing.ADOPT,
+                lastAnalysis: {} as unknown as SurveyItemAnalysis
             },
             {
-                id: '2',
+                id: '2' as UUID,
                 title: 'TypeScript',
                 summary: 'Superset de JavaScript que añade tipado estático.',
-                radarQuadrant: 'Lenguajes',
-                radarRing: 'Adoptar',
-                lastAnalysists: 2025
+                radarQuadrant: RadarQuadrant.LANGUAGES_AND_FRAMEWORKS,
+                radarRing: RadarRing.ADOPT,
+                lastAnalysis: {} as unknown as SurveyItemAnalysis
             },
             {
-                id: '3',
+                id: '3' as UUID,
                 title: 'Tailwind CSS',
                 summary: 'Framework de utilidades para estilos rápidos y consistentes.',
-                radarQuadrant: 'Herramientas',
-                radarRing: 'Evaluar',
-                lastAnalysists: 2024
+                radarQuadrant: RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES,
+                radarRing: RadarRing.SUSTAIN,
+                lastAnalysis: {} as unknown as SurveyItemAnalysis
             },
             {
-                id: '4',
+                id: '4' as UUID,
                 title: 'Vite',
                 summary: 'Bundler moderno para desarrollo frontend rápido.',
-                radarQuadrant: 'Herramientas',
-                radarRing: 'Adoptar',
-                lastAnalysists: 2025
+                radarQuadrant: RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES,
+                radarRing: RadarRing.ADOPT,
+                lastAnalysis: {} as unknown as SurveyItemAnalysis
             },
             {
-                id: '5',
+                id: '5' as UUID,
                 title: 'Zod',
                 summary: 'Validador de esquemas TypeScript con inferencia de tipos.',
-                radarQuadrant: 'Librerías',
-                radarRing: 'Explorar',
-                lastAnalysists: 2023
+                radarQuadrant: RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES,
+                radarRing: RadarRing.TEST,
+                lastAnalysis: {} as unknown as SurveyItemAnalysis
             }
         ];
 
-
         const [selectedItems, setSelectedItems] = useState<string[]>([]);
-
 
         const openRenameDialog = (name: string) => {
             setRenameTarget(name);
-            setNewListName(name); // Prellenar con el nombre actual
+            setNewListName(name);
         };
 
         const openDeleteDialog = (name: string) => {
@@ -99,11 +107,11 @@ export const ItemListsSideBar: React.FC<{
             setAddTarget(name);
             const currentList = lists.find(list => list.name === name);
             const existingIds = currentList?.items.map(item => item.id) || [];
-            setSelectedItems(existingIds); // ✅ preselección
+            setSelectedItems(existingIds);
         };
 
-        const openRemoveItemDialog = (listName: string, index: number) => {
-            setRemoveTarget({ listName, itemIndex: index });
+        const openRemoveItemDialog = (listName: string, id: UUID) => {
+            setRemoveTarget({ listName, itemId: id });
         };
 
         return (
@@ -125,8 +133,7 @@ export const ItemListsSideBar: React.FC<{
 
                 <Sidebar
                     side="left"
-                    className={`my-12 transition-all duration-300 ${visible ? 'w-80' : 'w-0'}`}
-                >
+                    className={`my-12 transition-all duration-300 ${visible ? 'w-80' : 'w-0'}`}>
                     <SidebarContent>
                         <SidebarGroup>
                             <SidebarGroupLabel className="font-semibold text-xl pt-4">
@@ -135,7 +142,6 @@ export const ItemListsSideBar: React.FC<{
 
                             <SidebarGroupContent>
                                 <SidebarMenu>
-                                    {/* Botón "Crear" siempre visible, encima de las listas */}
                                     <SidebarMenuItem key="create-button">
                                         <Dialog open={open} onOpenChange={setOpen}>
                                             <DialogTrigger asChild>
@@ -156,7 +162,7 @@ export const ItemListsSideBar: React.FC<{
                                                     placeholder="Nombre de la lista"
                                                     value={newListName}
                                                     onChange={(e) => setNewListName(e.target.value)}
-                                                />
+                                                    />
 
                                                 <DialogFooter>
                                                     <Button
@@ -169,16 +175,13 @@ export const ItemListsSideBar: React.FC<{
                                                                 setNewListName('');
                                                                 setOpen(false);
                                                             }
-                                                        }}
-                                                    >
+                                                        }}>
                                                         Guardar
                                                     </Button>
-
                                                 </DialogFooter>
                                             </DialogContent>
                                         </Dialog>
                                     </SidebarMenuItem>
-
 
                                     {/* Mostrar mensaje si no hay listas */}
                                     {(!lists || lists.length === 0) ? (
@@ -193,13 +196,9 @@ export const ItemListsSideBar: React.FC<{
                                                     items={list.items}
                                                     onRename={(name) => openRenameDialog(name)}
                                                     onAddItem={(name) => openAddItemDialog(name)}
-                                                    onDeleteList={(name) => openDeleteDialog(name)} // ✅ Aquí está el cambio
-                                                    onRemoveItem={(name, index) => openRemoveItemDialog(name, index)}
-
-
+                                                    onDeleteList={(name) => openDeleteDialog(name)}
+                                                    onRemoveItem={(name, id) => openRemoveItemDialog(name, id)}
                                                 />
-
-
                                             </SidebarMenuItem>
                                         ))
                                     )}
@@ -249,9 +248,11 @@ export const ItemListsSideBar: React.FC<{
                                 <DialogHeader>
                                     <DialogTitle>¿Eliminar lista?</DialogTitle>
                                 </DialogHeader>
+                                
                                 <p className="text-sm text-muted-foreground">
-                                    Esta acción no se puede deshacer. ¿Estás seguro de que quieres eliminar <strong>{deleteTarget}</strong>?
+                                    Esta acción no se puede deshacer. Los elementos contenidos en la lista no se eliminarán de la pantalla. ¿Estás seguro de que quieres eliminar <strong>{deleteTarget}</strong>?
                                 </p>
+                                
                                 <DialogFooter>
                                     <Button variant="outline" onClick={() => setDeleteTarget(null)}>
                                         Cancelar
@@ -293,7 +294,6 @@ export const ItemListsSideBar: React.FC<{
                                             <span>{item.title}</span>
                                         </label>
                                     ))}
-
                                 </div>
 
                                 <DialogFooter>
@@ -311,7 +311,7 @@ export const ItemListsSideBar: React.FC<{
                                                             );
                                                             return {
                                                                 ...list,
-                                                                items: updatedItems, // ✅ reemplaza con los seleccionados
+                                                                items: updatedItems,
                                                             };
                                                         }
                                                         return list;
@@ -351,23 +351,23 @@ export const ItemListsSideBar: React.FC<{
                                                     list.name === removeTarget.listName
                                                         ? {
                                                             ...list,
-                                                            items: list.items.filter((_, i) => i !== removeTarget.itemIndex)
+                                                            items: list.items.filter(
+                                                                (item: SurveyItem) => 
+                                                                    item.id !== removeTarget.itemId
+                                                            )
                                                         }
                                                         : list
                                                 )
                                             );
                                             setRemoveTarget(null);
-                                        }}
-                                    >
+                                        }}>
                                         Quitar
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
                     )}
-
                 </Sidebar>
-
             </div >
         )
     };
