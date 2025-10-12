@@ -1,5 +1,4 @@
 import { Clock, EyeIcon, EyeOff, Trash2 } from 'lucide-react';
-import { useSurveyItemsUI } from '@/infrastructure';
 import {
     Button,
     ScrollArea,
@@ -10,6 +9,7 @@ import {
     SidebarGroupLabel,
     SidebarMenu,
 } from '@/ui/components';
+import { useChangelog } from '@/infrastructure/hooks/use-changelog';
 
 export const ChangeLogSideBar: React.FC<{
     visible: boolean
@@ -18,7 +18,7 @@ export const ChangeLogSideBar: React.FC<{
     visible,
     toggleVisible
 }) => {
-        const { changeLogs, clearChangeLog } = useSurveyItemsUI();
+        const { changelogs, clearChangeLog } = useChangelog();
 
         return (
             <div className='flex mt-8 gap-x-20'>
@@ -57,7 +57,7 @@ export const ChangeLogSideBar: React.FC<{
                                                 <Clock className="h-4 w-4" />
                                             </div>
 
-                                            {changeLogs?.length > 0 && (
+                                            {changelogs?.length > 0 && (
                                                 <Button variant="ghost" size="sm" onClick={clearChangeLog}>
                                                     <Trash2 className="h-3 w-3" />
                                                 </Button>
@@ -67,12 +67,12 @@ export const ChangeLogSideBar: React.FC<{
                                         <ScrollArea className="h-48">
                                             <div className="space-y-2">
 
-                                                {changeLogs?.length === 0 ? (
+                                                {changelogs?.length === 0 ? (
                                                     <p className="text-sm text-muted-foreground text-center py-4">
                                                         No hay cambios recientes
                                                     </p>
                                                 ) : (
-                                                    changeLogs?.map((log: string, index: number) => (
+                                                    changelogs?.map((log: string, index: number) => (
                                                         <div key={index} className="text-xs p-2 bg-muted rounded">
                                                             {log}
                                                         </div>

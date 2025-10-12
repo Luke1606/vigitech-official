@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { InfoIcon } from "lucide-react";
 
 import radar_visualization from '@/assets/radar/radar_visualization';
-import { useSurveyItemsUI, type SurveyItem, PathOption, type RadarEntry, mapSurveyItemToRadarEntry } from "@/infrastructure";
+import { useSurveyItems, type SurveyItem, PathOption, type RadarEntry, mapSurveyItemToRadarEntry } from "@/infrastructure";
 import { 
     Alert,
     AlertDescription,
@@ -37,7 +37,7 @@ export const SubscribedItemsRadar = () => {
         removeFromSelectedItems,
         addPendingUnsubscribes,
         addPendingRemoves
-    } = useSurveyItemsUI();
+    } = useSurveyItems();
     
     const [
         isMultipleSelection, 

@@ -2,7 +2,7 @@ import type { UUID } from "crypto";
 import React from "react";
 import { useParams } from "react-router-dom";
 import { InfoIcon } from "lucide-react";
-import { useSurveyItemsUI } from "@/infrastructure";
+import { useSurveyItems } from "@/infrastructure";
 import { 
     Alert, 
     AlertDescription,
@@ -15,7 +15,7 @@ import {
 
 export const ItemDetails: React.FC = () => {
 	const { id } = useParams<{ id: string }>();
-	const { findOne } = useSurveyItemsUI();
+	const { findOne } = useSurveyItems();
 	const { data: item, isLoading, error } = findOne(id! as UUID);
 
 	if (isLoading) {

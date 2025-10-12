@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { EyeIcon, EyeOff, Plus } from 'lucide-react';
 import { 
-    RadarQuadrant, 
-    RadarRing, 
     type SurveyItem, 
-    type SurveyItemAnalysis, 
     type UserItemList 
 } from '@/infrastructure';
 import { CustomItemsList } from './custom-item-list';
@@ -29,6 +26,7 @@ import {
 } from '@/ui/components';
 import { Input } from '@/ui/components';
 import type { UUID } from 'crypto';
+import { availableItems } from './available-items';
 
 
 export const ItemListsSideBar: React.FC<{
@@ -49,48 +47,7 @@ export const ItemListsSideBar: React.FC<{
             itemId: UUID 
         } | null>(null);
 
-        const availableItems: SurveyItem[] = [
-            {
-                id: '1' as UUID,
-                title: 'React',
-                summary: 'Biblioteca declarativa para construir interfaces de usuario.',
-                radarQuadrant: RadarQuadrant.LANGUAGES_AND_FRAMEWORKS,
-                radarRing: RadarRing.ADOPT,
-                lastAnalysis: {} as unknown as SurveyItemAnalysis
-            },
-            {
-                id: '2' as UUID,
-                title: 'TypeScript',
-                summary: 'Superset de JavaScript que añade tipado estático.',
-                radarQuadrant: RadarQuadrant.LANGUAGES_AND_FRAMEWORKS,
-                radarRing: RadarRing.ADOPT,
-                lastAnalysis: {} as unknown as SurveyItemAnalysis
-            },
-            {
-                id: '3' as UUID,
-                title: 'Tailwind CSS',
-                summary: 'Framework de utilidades para estilos rápidos y consistentes.',
-                radarQuadrant: RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES,
-                radarRing: RadarRing.SUSTAIN,
-                lastAnalysis: {} as unknown as SurveyItemAnalysis
-            },
-            {
-                id: '4' as UUID,
-                title: 'Vite',
-                summary: 'Bundler moderno para desarrollo frontend rápido.',
-                radarQuadrant: RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES,
-                radarRing: RadarRing.ADOPT,
-                lastAnalysis: {} as unknown as SurveyItemAnalysis
-            },
-            {
-                id: '5' as UUID,
-                title: 'Zod',
-                summary: 'Validador de esquemas TypeScript con inferencia de tipos.',
-                radarQuadrant: RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES,
-                radarRing: RadarRing.TEST,
-                lastAnalysis: {} as unknown as SurveyItemAnalysis
-            }
-        ];
+        const [elements, setElements] = useState<SurveyItem[]>(availableItems);
 
         const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -114,21 +71,287 @@ export const ItemListsSideBar: React.FC<{
             setRemoveTarget({ listName, itemId: id });
         };
 
+        const listElements = !lists || lists.length === 0 ?
+            (
+                <SidebarMenuItem key="none">
+                    <p>No lists here</p>
+                </SidebarMenuItem>
+            ) : (
+                lists.map((list: UserItemList) => (
+                    <SidebarMenuItem key={list.name}>
+                        <CustomItemsList
+                            name={list.name}
+                            items={list.items}
+                            onRename={(name) => openRenameDialog(name)}
+                            onAddItem={(name) => openAddItemDialog(name)}
+                            onDeleteList={(name) => openDeleteDialog(name)}
+                            onRemoveItem={(name, id) => openRemoveItemDialog(name, id)}
+                        />
+                    </SidebarMenuItem>
+                ))
+            );
+
+        const createButton = (
+            <SidebarMenuItem key="create-button">
+                <Dialog open={open} onOpenChange={setOpen}>
+                    <DialogTrigger asChild>
+                        <SidebarMenuButton asChild className='mt-5'>
+                            <Button>
+                                <Plus />
+                                Create
+                            </Button>
+                        </SidebarMenuButton>
+                    </DialogTrigger>
+
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Create new list</DialogTitle>
+                        </DialogHeader>
+                        
+                        <Input
+                            id='create-list-name'
+                            placeholder="Name of the list"
+                            value={newListName}
+                            onChange={(e) => setNewListName(e.target.value)}
+                            />
+
+                        <DialogFooter>
+                            <Button
+                                onClick={() => {
+                                    if (newListName.trim()) {
+                                        setLists((prev: UserItemList[]) => [
+                                            ...prev,
+                                            { name: newListName.trim(), items: [] },
+                                        ]);
+                                        setNewListName('');
+                                        setOpen(false);
+                                    }
+                                }}>
+                                Save
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </SidebarMenuItem>
+        );
+
+        const renameListDialog = renameTarget && (
+            <Dialog open={true} onOpenChange={() => setRenameTarget(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Rename list</DialogTitle>
+                    </DialogHeader>
+
+                    <Input
+                        id='rename-list-name'
+                        placeholder="Nuevo nombre"
+                        value={newListName}
+                        onChange={(e) => setNewListName(e.target.value)}
+                    />
+
+                    <DialogFooter>
+                        <Button
+                            onClick={() => {
+                                if (newListName.trim()) {
+                                    setLists(prev =>
+                                        prev.map(list =>
+                                            list.name === renameTarget
+                                                ? { ...list, name: newListName.trim() }
+                                                : list
+                                        )
+                                    );
+                                    setRenameTarget(null);
+                                    setNewListName('');
+                                }
+                            }}
+                        >
+                            Save
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        );
+
+        const deleteListDialog = deleteTarget && (
+            <Dialog 
+                open={true} 
+                onOpenChange={
+                    () => setDeleteTarget(null)
+                }>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete list?</DialogTitle>
+                    </DialogHeader>
+                    
+                    <p className="text-sm text-muted-foreground">
+                        This action cannot be undone. The contained elements won't be removed from the screen. ¿Are you sure you want to delete <strong>{deleteTarget}</strong>?
+                    </p>
+                    
+                    <DialogFooter>
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setDeleteTarget(null)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={() => {
+                                setLists(prev => prev.filter(list => list.name !== deleteTarget));
+                                setDeleteTarget(null);
+                            }}
+                        >
+                            Delete
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        );
+
+        const addElementToListDialog = addTarget && (
+            <Dialog open={true} onOpenChange={() => setAddTarget(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add elements to {addTarget}</DialogTitle>
+                    </DialogHeader>
+                    
+                    <Input 
+                        id='search-elements'
+                        type="text" 
+                        placeholder="Search by name..."
+                        onChange={
+                            (e) => setElements(
+                                availableItems.filter(
+                                    (item: SurveyItem) => 
+                                        item.title.toLowerCase().includes(e.target.value.toLowerCase())
+                                )
+                            )
+                        }
+                        />
+
+                    <ul className="space-y-2" role="list">
+                        {elements.map((item: SurveyItem) => (
+                            <li 
+                                key={item.id} 
+                                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                                <label className="flex items-center gap-4 p-4 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedItems.includes(item.id)}
+                                        onChange={(e) => {
+                                            if (e.target.checked)
+                                            setSelectedItems(prev => [...prev, item.id]);
+                                            else
+                                            setSelectedItems(prev => prev.filter(id => id !== item.id));
+                                        }}
+                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                        aria-labelledby={`item-title-${item.id}`}
+                                        />
+                                    
+                                    <div className="flex-1 min-w-0">
+                                        <h3 
+                                            id={`item-title-${item.id}`} 
+                                            className="text-gray-900 font-medium truncate">
+                                            {item.title}
+                                        </h3>
+                                    </div>
+                                        
+                                    <div className="flex items-center gap-2">
+                                        <span 
+                                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {item.radarQuadrant}
+                                        </span>
+                                    
+                                        <span 
+                                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            {item.radarRing}
+                                        </span>
+                                    </div>
+                                </label>
+                            </li>
+                        ))}
+                        </ul>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setAddTarget(null)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                if (addTarget) {
+                                    setLists(prev =>
+                                        prev.map(list => {
+                                            if (list.name === addTarget) {
+                                                const updatedItems = availableItems.filter(item =>
+                                                    selectedItems.includes(item.id)
+                                                );
+                                                return {
+                                                    ...list,
+                                                    items: updatedItems,
+                                                };
+                                            }
+                                            return list;
+                                        })
+                                    );
+                                    setSelectedItems([]);
+                                    setAddTarget(null);
+                                }
+                            }}
+                        >
+                            Save
+                        </Button>
+
+
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        );
+
+        const removeElementFromListDialog = removeTarget && (
+            <Dialog open={true} onOpenChange={() => setRemoveTarget(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Remove element?</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-muted-foreground">
+                        ¿Are you sure you want to remove this element from <strong>{removeTarget.listName}</strong>?
+                    </p>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setRemoveTarget(null)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={() => {
+                                setLists(prev =>
+                                    prev.map(list =>
+                                        list.name !== removeTarget.listName ?
+                                            list
+                                            : 
+                                            {
+                                                ...list,
+                                                items: list.items.filter(
+                                                    (item: SurveyItem) => 
+                                                        item.id !== removeTarget.itemId
+                                                )
+                                            }
+                                    )
+                                );
+                                setRemoveTarget(null);
+                            }}>
+                            Remove
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        );
+        
         return (
             <div className='flex mt-8'>
                 <Button
                     className='absolute bottom-5 left-5 z-40'
                     type='button'
                     onClick={toggleVisible}>
-                    {visible ?
-                        <>
-                            <EyeOff />
-                        </>
-                        :
-                        <>
-                            <EyeIcon />
-                        </>
-                    }
+                    { visible ? <EyeOff /> : <EyeIcon /> }
                 </Button>
 
                 <Sidebar
@@ -142,231 +365,23 @@ export const ItemListsSideBar: React.FC<{
 
                             <SidebarGroupContent>
                                 <SidebarMenu>
-                                    <SidebarMenuItem key="create-button">
-                                        <Dialog open={open} onOpenChange={setOpen}>
-                                            <DialogTrigger asChild>
-                                                <SidebarMenuButton asChild className='mt-5'>
-                                                    <Button>
-                                                        <Plus />
-                                                        Crear
-                                                    </Button>
-                                                </SidebarMenuButton>
-                                            </DialogTrigger>
+                    
+                                    { createButton }
+                                    
+                                    { listElements }
 
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>Crear nueva lista</DialogTitle>
-                                                </DialogHeader>
-
-                                                <Input
-                                                    placeholder="Nombre de la lista"
-                                                    value={newListName}
-                                                    onChange={(e) => setNewListName(e.target.value)}
-                                                    />
-
-                                                <DialogFooter>
-                                                    <Button
-                                                        onClick={() => {
-                                                            if (newListName.trim()) {
-                                                                setLists((prev: UserItemList[]) => [
-                                                                    ...prev,
-                                                                    { name: newListName.trim(), items: [] },
-                                                                ]);
-                                                                setNewListName('');
-                                                                setOpen(false);
-                                                            }
-                                                        }}>
-                                                        Guardar
-                                                    </Button>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </SidebarMenuItem>
-
-                                    {/* Mostrar mensaje si no hay listas */}
-                                    {(!lists || lists.length === 0) ? (
-                                        <SidebarMenuItem key="none">
-                                            <p>No hay listas</p>
-                                        </SidebarMenuItem>
-                                    ) : (
-                                        lists.map((list: UserItemList) => (
-                                            <SidebarMenuItem key={list.name}>
-                                                <CustomItemsList
-                                                    name={list.name}
-                                                    items={list.items}
-                                                    onRename={(name) => openRenameDialog(name)}
-                                                    onAddItem={(name) => openAddItemDialog(name)}
-                                                    onDeleteList={(name) => openDeleteDialog(name)}
-                                                    onRemoveItem={(name, id) => openRemoveItemDialog(name, id)}
-                                                />
-                                            </SidebarMenuItem>
-                                        ))
-                                    )}
                                 </SidebarMenu>
                             </SidebarGroupContent>
                         </SidebarGroup>
                     </SidebarContent>
-                    {/* Diálogo para renombrar lista */}
-                    {renameTarget && (
-                        <Dialog open={true} onOpenChange={() => setRenameTarget(null)}>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Renombrar lista</DialogTitle>
-                                </DialogHeader>
 
-                                <Input
-                                    placeholder="Nuevo nombre"
-                                    value={newListName}
-                                    onChange={(e) => setNewListName(e.target.value)}
-                                />
-
-                                <DialogFooter>
-                                    <Button
-                                        onClick={() => {
-                                            if (newListName.trim()) {
-                                                setLists(prev =>
-                                                    prev.map(list =>
-                                                        list.name === renameTarget
-                                                            ? { ...list, name: newListName.trim() }
-                                                            : list
-                                                    )
-                                                );
-                                                setRenameTarget(null);
-                                                setNewListName('');
-                                            }
-                                        }}
-                                    >
-                                        Guardar
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                    )}
-                    {deleteTarget && (
-                        <Dialog open={true} onOpenChange={() => setDeleteTarget(null)}>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>¿Eliminar lista?</DialogTitle>
-                                </DialogHeader>
-                                
-                                <p className="text-sm text-muted-foreground">
-                                    Esta acción no se puede deshacer. Los elementos contenidos en la lista no se eliminarán de la pantalla. ¿Estás seguro de que quieres eliminar <strong>{deleteTarget}</strong>?
-                                </p>
-                                
-                                <DialogFooter>
-                                    <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-                                        Cancelar
-                                    </Button>
-                                    <Button
-                                        variant="destructive"
-                                        onClick={() => {
-                                            setLists(prev => prev.filter(list => list.name !== deleteTarget));
-                                            setDeleteTarget(null);
-                                        }}
-                                    >
-                                        Eliminar
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                    )}
-                    {addTarget && (
-                        <Dialog open={true} onOpenChange={() => setAddTarget(null)}>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Agregar elementos a {addTarget}</DialogTitle>
-                                </DialogHeader>
-
-                                <div className="space-y-2">
-                                    {availableItems.map(item => (
-                                        <label key={item.id} className="flex items-center gap-2">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedItems.includes(item.id)}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setSelectedItems(prev => [...prev, item.id]);
-                                                    } else {
-                                                        setSelectedItems(prev => prev.filter(id => id !== item.id));
-                                                    }
-                                                }}
-                                            />
-                                            <span>{item.title}</span>
-                                        </label>
-                                    ))}
-                                </div>
-
-                                <DialogFooter>
-                                    <Button variant="outline" onClick={() => setAddTarget(null)}>
-                                        Cancelar
-                                    </Button>
-                                    <Button
-                                        onClick={() => {
-                                            if (addTarget) {
-                                                setLists(prev =>
-                                                    prev.map(list => {
-                                                        if (list.name === addTarget) {
-                                                            const updatedItems = availableItems.filter(item =>
-                                                                selectedItems.includes(item.id)
-                                                            );
-                                                            return {
-                                                                ...list,
-                                                                items: updatedItems,
-                                                            };
-                                                        }
-                                                        return list;
-                                                    })
-                                                );
-                                                setSelectedItems([]);
-                                                setAddTarget(null);
-                                            }
-                                        }}
-                                    >
-                                        Guardar
-                                    </Button>
-
-
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                    )}
-                    {removeTarget && (
-                        <Dialog open={true} onOpenChange={() => setRemoveTarget(null)}>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>¿Quitar elemento?</DialogTitle>
-                                </DialogHeader>
-                                <p className="text-sm text-muted-foreground">
-                                    ¿Estás seguro de que quieres quitar este elemento de la lista <strong>{removeTarget.listName}</strong>?
-                                </p>
-                                <DialogFooter>
-                                    <Button variant="outline" onClick={() => setRemoveTarget(null)}>
-                                        Cancelar
-                                    </Button>
-                                    <Button
-                                        variant="destructive"
-                                        onClick={() => {
-                                            setLists(prev =>
-                                                prev.map(list =>
-                                                    list.name === removeTarget.listName
-                                                        ? {
-                                                            ...list,
-                                                            items: list.items.filter(
-                                                                (item: SurveyItem) => 
-                                                                    item.id !== removeTarget.itemId
-                                                            )
-                                                        }
-                                                        : list
-                                                )
-                                            );
-                                            setRemoveTarget(null);
-                                        }}>
-                                        Quitar
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                    )}
+                    { renameListDialog }
+                    
+                    { deleteListDialog }
+                    
+                    { addElementToListDialog }
+                    
+                    { removeElementFromListDialog }
                 </Sidebar>
             </div >
         )

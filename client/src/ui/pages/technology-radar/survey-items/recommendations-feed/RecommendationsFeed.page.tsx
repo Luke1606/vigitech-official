@@ -1,4 +1,4 @@
-import { useSurveyItemsUI } from '@/infrastructure';
+import { useSurveyItems } from '@/infrastructure';
 import { useNavigate } from 'react-router-dom';
 import { Button, SurveyItemCard } from '@/ui/components';
 import { type SurveyItem, PathOption } from '@/infrastructure';
@@ -13,7 +13,7 @@ export const RecommendationsFeed: React.FC = () => {
         addToSelectedItems,
         addPendingSubscribes,
         removeFromSelectedItems,
-    } = useSurveyItemsUI();
+    } = useSurveyItems();
 
     const unselectAll = useCallback(
         () => {

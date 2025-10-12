@@ -5,12 +5,12 @@ export const SubscribedItemsRadar = () => {
     const [
         itemListsSidebarVisible,
         setItemListsSidebarVisible
-    ] = useState<boolean>(false);
+    ] = useState<boolean>(true);
 
     const [
         changeLogsSidebarVisible,
         setChangeLogsSidebarVisible
-    ] = useState<boolean>(false);
+    ] = useState<boolean>(true);
 
     return (
         <div className="flex justify-between">
