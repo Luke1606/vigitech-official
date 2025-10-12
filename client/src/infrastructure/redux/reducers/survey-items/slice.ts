@@ -1,9 +1,8 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { SurveyItem, ChangeLogEntry } from '@/infrastructure';
+import type { SurveyItem } from '@/infrastructure';
 
 export interface SurveyItemsState {
     selectedItems: SurveyItem[];
-    changeLogs: string[];
     pendingChanges: {
         toRemoveItems: SurveyItem[];
         toSubscribeItems: SurveyItem[];
@@ -13,14 +12,12 @@ export interface SurveyItemsState {
 
 const initialState: SurveyItemsState = {
     selectedItems: [],
-    changeLogs: [],
     pendingChanges: {
         toRemoveItems: [],
         toSubscribeItems: [],
         toUnsubscribeItems: []
     }
 };
-
 
 export const surveyItemsSlice = createSlice({
     name: 'surveyItems',
@@ -45,20 +42,6 @@ export const surveyItemsSlice = createSlice({
             state.selectedItems = state.selectedItems.filter(
                 (item: SurveyItem) => action.payload.includes(item)
             )
-        },
-
-        addChangeLog: (
-            state: SurveyItemsState,
-            action: PayloadAction<ChangeLogEntry>
-        ) => {
-            const { itemTitle, oldRing, newRing } = action.payload;
-            state.changeLogs.push(
-                `Item ${itemTitle} has been moved from ${oldRing} to ${newRing}`
-            )
-        },
-
-        clearChangeLog: (state: SurveyItemsState) => {
-            state.changeLogs = [];
         },
 
         addPendingSubscribes: (
@@ -107,8 +90,6 @@ export const surveyItemsSlice = createSlice({
 export const { 
     addToSelectedItems,
     removeFromSelectedItems, 
-    addChangeLog,
-    clearChangeLog,
     addPendingSubscribes, 
     addPendingUnsubscribes,
     addPendingRemoves, 

@@ -6,13 +6,13 @@ import { useCallback, useEffect, useState } from 'react';
 
 export const RecommendationsFeed: React.FC = () => {
     const { 
+        isLoading,
         recommended,
         selectedItems,
-        addToSelectedItems,
-        removeFromSelectedItems,
-        addPendingSubscribes,
         addPendingRemoves,
-        isLoading 
+        addToSelectedItems,
+        addPendingSubscribes,
+        removeFromSelectedItems,
     } = useSurveyItemsUI();
 
     const unselectAll = useCallback(

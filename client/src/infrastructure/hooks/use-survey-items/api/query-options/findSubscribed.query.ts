@@ -2,7 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { surveyItemsRepository } from '@/infrastructure';
 import { surveyItemsKey, subscribedKey } from '../constants';
 
-export const getSubscribedQueryOptions = () => queryOptions({
+export const findSubscribedQueryOptions = () => queryOptions({
     queryKey: [
         surveyItemsKey, 
         subscribedKey

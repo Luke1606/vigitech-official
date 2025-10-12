@@ -1,1 +1,1 @@
-export { useSurveyItemsUI } from './useSurveyItemsUI.hook';
+export { useSurveyItems } from './useSurveyItems.hook';
