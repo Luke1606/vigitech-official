@@ -21,7 +21,7 @@ export const NotificationCenter: React.FC = () => {
             appearance={{
                 variables: {
                     colorPrimary: "#DD2450",
-                    colorForeground: "#0E121B"
+                    colorForeground: "#FFF"
                 }
             }}
             />

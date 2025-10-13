@@ -1,8 +1,6 @@
 import { type RouteObject, Navigate } from "react-router-dom";
-import { SessionAuth } from "supertokens-auth-react/recipe/session";
-
 import { PathOption } from '@/infrastructure';
-import { Layout, Error } from "@/ui/components";
+import { Layout, Error, ProtectedRoutes } from "@/ui/components";
 import { 
     PortalHome, 
     FAQ,
@@ -48,15 +46,15 @@ export const routes: RouteObject[] = [
                 <TechnologyRadarHome />
             },
             {
-                path: `${technologyRadarGlobalPrefix}subscribed-items-radar`,
-                element: <SubscribedItemsRadar />
-            },
-            {
-                element: <SessionAuth />,
+                element: <ProtectedRoutes />,
                 children: [
                     {
                         path: `${technologyRadarGlobalPrefix}recommendations-feed`,
                         element: <RecommendationsFeed />
+                    },
+                    {
+                        path: `${technologyRadarGlobalPrefix}subscribed-items-radar`,
+                        element: <SubscribedItemsRadar />
                     },
                     {
                         path: `${technologyRadarGlobalPrefix}item-details/:item`,
