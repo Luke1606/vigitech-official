@@ -46,7 +46,7 @@ export class AuthConfigService {
             appInfo: {
                 appName: 'Technology-Radar',
                 apiDomain: apiUrl,
-                apiBasePath: 'api/auth',
+                apiBasePath: 'auth',
                 websiteDomain: websiteUrl,
                 websiteBasePath: 'vigitech/auth',
             },

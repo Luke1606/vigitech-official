@@ -19,7 +19,6 @@ import { ErrorBoundary, SidebarProvider } from "./ui/components";
 
 SuperTokens.init(superTokensConfig);
 
-
 const router: DataRouter = createBrowserRouter([
 	...routes,
 	...getSuperTokensRoutesForReactRouterDom(reactRouterDom,

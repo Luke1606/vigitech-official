@@ -10,7 +10,9 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
     const logger = new Logger('Main');
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create(AppModule, {
+        logger,
+    });
 
     app.enableCors({
         origin: 'http://localhost:5173',
@@ -42,7 +44,7 @@ async function bootstrap() {
         .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('', app, document);
+    SwaggerModule.setup('api', app, document);
 
     const port = process.env.PORT || 3000;
     await app.listen(port);
