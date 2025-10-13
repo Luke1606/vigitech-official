@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { EyeIcon, EyeOff, Plus } from 'lucide-react';
 import { 
+    getQuadrantColor,
+    getQuadrantLightColor,
+    getRingColor,
+    getRingLightColor,
     type SurveyItem, 
     type UserItemList 
 } from '@/infrastructure';
@@ -223,6 +227,10 @@ export const ItemListsSideBar: React.FC<{
                                 availableItems.filter(
                                     (item: SurveyItem) => 
                                         item.title.toLowerCase().includes(e.target.value.toLowerCase())
+                                        ||
+                                        item.radarQuadrant.toLowerCase().includes(e.target.value.toLowerCase())
+                                        ||
+                                        item.radarRing.toLowerCase().includes(e.target.value.toLowerCase())
                                 )
                             )
                         }
@@ -257,12 +265,20 @@ export const ItemListsSideBar: React.FC<{
                                         
                                     <div className="flex items-center gap-2">
                                         <span 
-                                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium"
+                                            style={{
+                                                backgroundColor: getQuadrantLightColor(item.radarQuadrant),
+                                                color: getQuadrantColor(item.radarQuadrant)
+                                            }}>
                                             {item.radarQuadrant}
                                         </span>
                                     
                                         <span 
-                                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium"
+                                            style={{
+                                                backgroundColor: getRingLightColor(item.radarRing),
+                                                color: getRingColor(item.radarRing)
+                                            }}>
                                             {item.radarRing}
                                         </span>
                                     </div>
@@ -295,8 +311,7 @@ export const ItemListsSideBar: React.FC<{
                                     setSelectedItems([]);
                                     setAddTarget(null);
                                 }
-                            }}
-                        >
+                            }}>
                             Save
                         </Button>
 

@@ -1,0 +1,24 @@
+:root {
+  /* Colores para cuadrantes */
+  --color-business-intel: 59 130 246;    /* blue-500*/
+  --color-scientific-stage: 139 92 246;  /* purple-500 */
+  --color-support-platforms: 34 197 94;  /* green-500 */
+  --color-languages: 245 158 11;         /* amber-500 */
+  
+  /* Colores para anillos */
+  --color-adopt: 34 197 94;    /* green-500 */
+  --color-test: 234 179 8;     /* yellow-500 */
+  --color-sustain: 249 115 22; /* orange-500 */
+  --color-hold: 239 68 68;     /* red-500 */
+  
+  /* Versiones claras para fondos */
+  --color-business-intel-light: 219 234 254;
+  --color-scientific-stage-light: 243 232 255;
+  --color-support-platforms-light: 220 252 231;
+  --color-languages-light: 254 243 199;
+  
+  --color-adopt-light: 220 252 231;
+  --color-test-light: 254 249 195;
+  --color-sustain-light: 255 237 213;
+  --color-hold-light: 254 226 226;
+}
