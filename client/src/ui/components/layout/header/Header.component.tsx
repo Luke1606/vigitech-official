@@ -1,5 +1,6 @@
 import React from 'react'
 import { useLocation, NavLink } from 'react-router-dom';
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 import {
     NavigationMenu,
     NavigationMenuContent,
@@ -10,7 +11,6 @@ import {
 } from "@/ui/components/shared/shadcn-ui/navigation-menu"
 import { PathOption } from '@/infrastructure';
 import { NotificationCenter } from '../../notification-center';
-import { Profile } from './profile';
 import styles from './Header.styles';
 import { ServiceCard, type ServiceCardProps } from './service-card';
 
@@ -190,7 +190,20 @@ export const Header: React.FC = () => {
                             asChild
                             className={styles.navigationMenuLink}
                             >
-                            <Profile />
+                            <SignedOut>
+                                <SignInButton />
+                            </SignedOut>
+                        </NavigationMenuLink>
+                    </NavigationMenuItem>
+
+                    <NavigationMenuItem>
+                        <NavigationMenuLink
+                            asChild
+                            className={styles.navigationMenuLink}
+                            >
+                            <SignedIn>
+                                <UserButton />
+                            </SignedIn>
                         </NavigationMenuLink>
                     </NavigationMenuItem>
                 </NavigationMenuList>

@@ -2,7 +2,6 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule as cfgModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { SupertokensModule } from './app-config/supertokens.module';
 
 @Global()
 @Module({
@@ -23,7 +22,6 @@ import { SupertokensModule } from './app-config/supertokens.module';
                 ],
             }),
         }),
-        SupertokensModule,
     ],
     providers: [ConfigService],
     exports: [ConfigService],
