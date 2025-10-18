@@ -1,2 +1,2 @@
-export { superTokensConfig } from './superTokensConfig';
+//export { superTokensConfig } from './superTokensConfig';
 export { queryClient } from './queryClient';
