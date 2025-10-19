@@ -52,8 +52,8 @@ export const useSurveyItemsAPI = () => {
 	const useRemoveBatchMutation = useMutation(useRemoveBatchMutationOptions());
 
 	return {
-		recommended: useGetRecommendedQuery,
-		subscribed: useGetSubscribedQuery,
+		getRecommended: useGetRecommendedQuery,
+		getSubscribed: useGetSubscribedQuery,
 		findOne: useFindOneQuery,
 		subscribeOne: useSubscribeOneMutation.mutate,
 		unsubscribeOne: useUnsubscribeOneMutation.mutate,

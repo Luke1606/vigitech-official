@@ -9,9 +9,7 @@ import {
     ParseUUIDPipe,
     Patch,
     Post,
-    UseGuards,
 } from '@nestjs/common';
-import { SuperTokensAuthGuard } from 'supertokens-nestjs';
 
 import { UserItemList } from '@prisma/client';
 import { UserItemListsService } from './user-item-lists.service';
@@ -19,7 +17,6 @@ import { CreateUserItemListDto } from './dto/create-user-item-list.dto';
 import { UpdateUserItemListDto } from './dto/update-user-item-list.dto';
 
 @Controller('item-lists')
-@UseGuards(SuperTokensAuthGuard)
 export class UserItemListsController {
     private readonly logger: Logger = new Logger('UserItemListsController');
 

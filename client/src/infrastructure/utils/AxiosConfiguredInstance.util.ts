@@ -10,7 +10,7 @@ export class AxiosConfiguredInstance {
 
     constructor(
         baseURL: string,
-        apiKey?: string,
+        bearer?: string,
         axiosInstance?: AxiosInstance
     ) {
         this.http = axiosInstance??
@@ -22,11 +22,11 @@ export class AxiosConfiguredInstance {
                 }
             });
         
-        if (apiKey) {
+        if (bearer) {
             this.http.interceptors.request.use(
                 (config: InternalAxiosRequestConfig) => {
                     config.headers = config.headers?? {};
-                    config.headers.Authorization = `Bearer ${apiKey}`;
+                    config.headers.Authorization = `Bearer ${bearer}`;
                     return config;
                 }
             )

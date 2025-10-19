@@ -15,19 +15,20 @@ import {
 import type { UserItemList } from '@/infrastructure';
 import styles from './CustomItemList.styles';
 
-export const CustomItemsList: React.FC<UserItemList & {
+export const CustomItemsList: React.FC<{
+    list: UserItemList
     onRename?: (name: string) => void;
     onAddItem?: (name: string) => void;
     onRemoveItem?: (name: string, id: UUID) => void;
     onDeleteList?: (name: string) => void;
 }> = ({
-    name,
-    items,
+    list,
     onRename,
     onAddItem,
     onRemoveItem,
     onDeleteList
 }) => {
+        const {name, items} = list;
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>

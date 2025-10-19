@@ -32,14 +32,8 @@ const itemListSlice = createSlice({
     name: 'itemLists',
     initialState,
     reducers: {
-        // findAll
-        setLists(state, action: PayloadAction<(UserItemList & { id: UUID })[]>) {
-            state.lists = action.payload;
-        },
-
-        // findOne
         upsertList(state, action: PayloadAction<UserItemList & { id: UUID }>) {
-            const index = state.lists.findIndex(l => l.id === action.payload.id);
+            const index = state.lists.findIndex((item: UserItemList) => item.id === action.payload.id);
             if (index >= 0) {
                 state.lists[index] = action.payload;
             } else {
@@ -47,19 +41,16 @@ const itemListSlice = createSlice({
             }
         },
 
-        // createList
         createList(state, action: PayloadAction<UserItemList & { id: UUID }>) {
             state.lists.push(action.payload);
             state.pendingChanges.toCreateLists.push(action.payload);
         },
 
-        // updateList
-        updateListName(state, action: PayloadAction<{ listId: UUID; listName: string }>) {
+        updateList(state, action: PayloadAction<{ listId: UUID; listName: string }>) {
             const list = state.lists.find(l => l.id === action.payload.listId);
             if (list) list.name = action.payload.listName;
         },
 
-        // removeList
         removeList(state, action: PayloadAction<UUID>) {
             const list = state.lists.find(l => l.id === action.payload);
             if (list) {
@@ -68,8 +59,7 @@ const itemListSlice = createSlice({
             }
         },
 
-        // appendOneItem
-        appendItem(state, action: PayloadAction<{ listId: UUID; item: SurveyItem }>) {
+        appendOneItem(state, action: PayloadAction<{ listId: UUID; item: SurveyItem }>) {
             const list = state.lists.find(l => l.id === action.payload.listId);
             if (list && !list.items.some(i => i.id === action.payload.item.id)) {
                 list.items.push(action.payload.item);
@@ -88,8 +78,7 @@ const itemListSlice = createSlice({
             }
         },
 
-        // appendAllItems
-        appendItems(state, action: PayloadAction<{ listId: UUID; items: SurveyItem[] }>) {
+        appendAllItems(state, action: PayloadAction<{ listId: UUID; items: SurveyItem[] }>) {
             const list = state.lists.find(l => l.id === action.payload.listId);
             if (list) {
                 const newIds: UUID[] = [];
@@ -115,8 +104,7 @@ const itemListSlice = createSlice({
             }
         },
 
-        // removeOneItem
-        removeItem(state, action: PayloadAction<{ listId: UUID; itemId: UUID }>) {
+        removeOneItem(state, action: PayloadAction<{ listId: UUID; itemId: UUID }>) {
             const list = state.lists.find(l => l.id === action.payload.listId);
             if (list) {
                 list.items = list.items.filter(i => i.id !== action.payload.itemId);
@@ -135,8 +123,7 @@ const itemListSlice = createSlice({
             }
         },
 
-        // removeAllItems
-        removeItems(state, action: PayloadAction<{ listId: UUID; itemIds: UUID[] }>) {
+        removeAllItems(state, action: PayloadAction<{ listId: UUID; itemIds: UUID[] }>) {
             const list = state.lists.find(l => l.id === action.payload.listId);
             if (list) {
                 list.items = list.items.filter(i => !action.payload.itemIds.includes(i.id));
@@ -153,7 +140,6 @@ const itemListSlice = createSlice({
             }
         },
 
-        // limpiar cambios pendientes
         clearListPendingChanges(state) {
             state.pendingChanges = {
                 toDeleteLists: [],
@@ -166,15 +152,14 @@ const itemListSlice = createSlice({
 });
 
 export const {
-    setLists,
     upsertList,
     createList,
-    updateListName,
+    updateList,
     removeList,
-    appendItem,
-    appendItems,
-    removeItem,
-    removeItems,
+    appendOneItem,
+    appendAllItems,
+    removeOneItem,
+    removeAllItems,
     clearListPendingChanges
 } = itemListSlice.actions;
 

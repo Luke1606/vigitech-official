@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 export const RecommendationsFeed: React.FC = () => {
     const { 
         isLoading,
-        recommended,
+        getRecommended,
         selectedItems,
         addPendingRemoves,
         addToSelectedItems,
@@ -33,13 +33,13 @@ export const RecommendationsFeed: React.FC = () => {
 
     const navigate = useNavigate();
     
-    if (recommended.isLoading)
+    if (getRecommended.isLoading)
         return <div>Loading recommendations...</div>;
 
-    if (recommended.error)
-        return <div>Error loading recommendations: {recommended.error.message}</div>;
+    if (getRecommended.error)
+        return <div>Error loading recommendations: {getRecommended.error.message}</div>;
 
-     if (!recommended.data || recommended.data.length === 0) {
+     if (!getRecommended.data || getRecommended.data.length === 0) {
         return (
             <div className="text-center py-12">
                 <h3 className="text-lg font-medium text-muted-foreground">
@@ -69,9 +69,9 @@ export const RecommendationsFeed: React.FC = () => {
                         onClick={() => {
                             if (isMultipleSelection)
                                 setMultipleSelection(true);
-                            addToSelectedItems(recommended.data);
+                            addToSelectedItems(getRecommended.data);
                         }}>
-                        { recommended.data.every(
+                        { getRecommended.data.every(
                             (item: SurveyItem) => 
                                 selectedItems.includes(item)
                         )? "Unselect all" : "Select all"
@@ -102,7 +102,7 @@ export const RecommendationsFeed: React.FC = () => {
                         Remove all selected
                     </Button> 
                 </div>
-            { recommended.data.map((item: SurveyItem) => (
+            { getRecommended.data.map((item: SurveyItem) => (
                 <SurveyItemCard
                     key={item.id}
                     item={item}
