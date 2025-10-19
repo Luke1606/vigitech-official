@@ -31,7 +31,7 @@ export const SubscribedItemsRadar = () => {
     const navigate = useNavigate();
 
     const { 
-        subscribed, 
+        getSubscribed, 
         selectedItems,
         addToSelectedItems,
         removeFromSelectedItems,
@@ -110,11 +110,11 @@ export const SubscribedItemsRadar = () => {
         if (
             !svgRef.current || 
             !containerRef.current || 
-            !subscribed?.data || 
-            subscribed?.data.length === 0
+            !getSubscribed?.data || 
+            getSubscribed?.data.length === 0
         ) return;
 
-        const radarEntries = subscribed?.data.map(
+        const radarEntries = getSubscribed?.data.map(
             (item: SurveyItem) => mapSurveyItemToRadarEntry(item)
         );
 
@@ -155,7 +155,7 @@ export const SubscribedItemsRadar = () => {
         svgRef.current.innerHTML = '';
         
         radar_visualization(config);
-    }, [subscribed.data, handleBlipClick, handleBlipHover]);
+    }, [getSubscribed.data, handleBlipClick, handleBlipHover]);
 
     useEffect(() => {
         initializeRadar();
@@ -175,23 +175,23 @@ export const SubscribedItemsRadar = () => {
         removeFromSelectedItems(selectedItems);
     };
 
-    if (subscribed.isLoading) {
+    if (getSubscribed.isLoading) {
         return <div>Loading subscribed items...</div>;
     }
 
-    if (subscribed.error) {
+    if (getSubscribed.error) {
         return (
             <Alert variant="destructive">
                 <InfoIcon className="h-4 w-4" />
 
                 <AlertDescription>
-                    Error loading subscribed items: {subscribed.error.message}
+                    Error loading subscribed items: {getSubscribed.error.message}
                 </AlertDescription>
             </Alert>
         );
     }
 
-    if (!subscribed.data || subscribed.data.length === 0) {
+    if (!getSubscribed.data || getSubscribed.data.length === 0) {
         return (
             <div className="text-center py-12">
                 <h3 className="text-lg font-medium text-muted-foreground">
@@ -225,9 +225,9 @@ export const SubscribedItemsRadar = () => {
                         onClick={() => {
                             if (isMultipleSelection)
                                 setMultipleSelection(true);
-                            addToSelectedItems(subscribed.data);
+                            addToSelectedItems(getSubscribed.data);
                         }}>
-                        { subscribed.data.every(
+                        { getSubscribed.data.every(
                             (item: SurveyItem) => 
                                 selectedItems.includes(item)
                         )? "Unselect all" : "Select all"

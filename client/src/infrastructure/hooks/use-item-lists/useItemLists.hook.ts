@@ -3,15 +3,14 @@ import {
     type UserItemList,
     type SurveyItem,
     type ItemListState,
-    setLists,
     upsertList,
     createList,
-    updateListName,
+    updateList,
     removeList,
-    appendItem,
-    appendItems,
-    removeItem,
-    removeItems,
+    appendOneItem,
+    appendAllItems,
+    removeOneItem,
+    removeAllItems,
     clearPendingChanges
 } from '@/infrastructure';
 import type { UUID } from "crypto";
@@ -23,41 +22,56 @@ export const useUserItemLists = () => {
     const lists = useSelector((state: ItemListState) => state.lists);
     const pendingChanges = useSelector((state: ItemListState) => state.pendingChanges);
 
-    const query = useUserItemListsAPI(); // tu hook de API para fetch/findAll/findOne
+    const query = useUserItemListsAPI();
 
     return {
         ...query,
         lists,
         pendingChanges,
 
-        setLists: (lists: (UserItemList & { id: UUID })[]) =>
-            dispatch(setLists(lists)),
+        upsertList: (
+            list: UserItemList & { id: UUID }
+        ) => dispatch(
+            upsertList(list)
+        ),
 
-        upsertList: (list: UserItemList & { id: UUID }) =>
-            dispatch(upsertList(list)),
-
-        createList: (list: UserItemList & { id: UUID }) =>
+        createList: (
+            list: UserItemList & { id: UUID }
+        ) =>
             dispatch(createList(list)),
 
-        updateListName: (listId: UUID, listName: string) =>
-            dispatch(updateListName({ listId, listName })),
+        updateListName: (
+            listId: UUID, listName: string
+        ) =>
+            dispatch(updateList({ listId, listName })),
 
-        removeList: (listId: UUID) =>
+        removeList: (
+            listId: UUID
+        ) =>
             dispatch(removeList(listId)),
 
-        appendItem: (listId: UUID, item: SurveyItem) =>
-            dispatch(appendItem({ listId, item })),
+        appendItem: (
+            listId: UUID, item: SurveyItem
+        ) =>
+            dispatch(appendOneItem({ listId, item })),
 
-        appendItems: (listId: UUID, items: SurveyItem[]) =>
-            dispatch(appendItems({ listId, items })),
+        appendItems: (
+            listId: UUID, items: SurveyItem[]
+        ) =>
+            dispatch(appendAllItems({ listId, items })),
 
-        removeItem: (listId: UUID, itemId: UUID) =>
-            dispatch(removeItem({ listId, itemId })),
+        removeItem: (
+            listId: UUID, itemId: UUID
+        ) =>
+            dispatch(removeOneItem({ listId, itemId })),
 
-        removeItems: (listId: UUID, itemIds: UUID[]) =>
-            dispatch(removeItems({ listId, itemIds })),
+        removeItems: (
+            listId: UUID, itemIds: UUID[]
+        ) =>
+            dispatch(removeAllItems({ listId, itemIds })),
 
-        clearPendingChanges: () =>
-            dispatch(clearPendingChanges())
+        clearPendingChanges: () => dispatch(
+            clearPendingChanges()
+        )
     };
 };

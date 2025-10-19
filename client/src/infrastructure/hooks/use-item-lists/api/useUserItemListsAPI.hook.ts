@@ -7,16 +7,15 @@ import {
 } from './query-options';
 
 import {
-    useAppendAllItemsMutationOptions,
-    useAppendOneItemMutationOptions,
     useCreateListMutationOptions,
     useDeleteListMutationOptions,
+    useAppendOneItemMutationOptions,
+    useAppendAllItemsMutationOptions,
+    useRemoveOneItemMutationOptions,
     useRemoveAllItemsMutationOptions,
-    useRemoveOneItemMutationOptions
 } from './mutation-options';
 
 export const useUserItemListsAPI = () => {
-
     const useFindAllListsQuery = useQuery(
         findAllQueryOptions()
     );
