@@ -1,0 +1,1 @@
+export const userItemListsKey: string = 'userItemLists';

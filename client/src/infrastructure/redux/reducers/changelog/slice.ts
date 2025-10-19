@@ -27,9 +27,10 @@ export const changelogSlice = createSlice({
         clearChangeLog: (state: ChangelogState) => {
             state.changelogs = [];
         },
-    }})
+    }
+})
 
-export const { 
+export const {
     addChangeLog,
     clearChangeLog
 } = changelogSlice.actions;
