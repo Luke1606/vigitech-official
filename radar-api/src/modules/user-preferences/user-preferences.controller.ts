@@ -5,18 +5,15 @@ import {
     Patch,
     Param,
     Logger,
-    UseGuards,
     Controller,
     ParseUUIDPipe,
 } from '@nestjs/common';
-import { SuperTokensAuthGuard } from 'supertokens-nestjs';
 
 import { UserPreferencesService } from './user-preferences.service';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import type { UUID } from 'crypto';
 
 @Controller('preferences')
-@UseGuards(SuperTokensAuthGuard)
 export class UserPreferencesController {
     private readonly logger: Logger = new Logger('UserPreferencesController');
 

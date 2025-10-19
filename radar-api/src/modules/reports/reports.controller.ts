@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import type { UUID } from 'crypto';
 import {
     Body,
@@ -6,14 +7,11 @@ import {
     Logger,
     ParseDatePipe,
     ParseUUIDPipe,
-    UseGuards,
 } from '@nestjs/common';
-import { SuperTokensAuthGuard } from 'supertokens-nestjs';
 import { ReportsService } from './reports.service';
 import { AnalysisHistoryType } from './types/analysis-history.type';
 
 @Controller('reports')
-@UseGuards(SuperTokensAuthGuard)
 export class ReportsController {
     private readonly logger: Logger = new Logger('ReportsController');
 

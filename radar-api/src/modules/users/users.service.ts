@@ -15,13 +15,13 @@ export class UsersService
     }
 
     async createOrUpdateUser(data: UserType): Promise<User> {
-        const { id, profileId } = data;
+        const { id, clerkId } = data;
 
         let whereCondition;
             if (id)
                 whereCondition = { id };
             else
-                whereCondition = { profileId };
+                whereCondition = { clerkId };
 
         return await this.user.upsert({
             where: whereCondition,
