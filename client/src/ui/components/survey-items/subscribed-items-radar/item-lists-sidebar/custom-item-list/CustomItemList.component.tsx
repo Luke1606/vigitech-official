@@ -17,10 +17,10 @@ import styles from './CustomItemList.styles';
 
 export const CustomItemsList: React.FC<{
     list: UserItemList
-    onRename?: (name: string) => void;
+    onRename?: (id: string, listNewName: string) => void;
     onAddItem?: (name: string) => void;
-    onRemoveItem?: (name: string, id: UUID) => void;
-    onDeleteList?: (name: string) => void;
+    onRemoveItem?: (listid: string, itemIds: UUID[]) => void;
+    onDeleteList?: (id: string) => void;
 }> = ({
     list,
     onRename,
@@ -28,7 +28,7 @@ export const CustomItemsList: React.FC<{
     onRemoveItem,
     onDeleteList
 }) => {
-        const {name, items} = list;
+        const { id, name, items } = list;
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -44,15 +44,15 @@ export const CustomItemsList: React.FC<{
 
                     <DropdownMenuSeparator />
 
-                    <DropdownMenuItem onClick={() => onRename?.(name)}>
+                    <DropdownMenuItem onClick={() => onRename?.(id, name)}>
                         ✏️ Cambiar nombre
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => onAddItem?.(name)}>
+                    <DropdownMenuItem onClick={() => onAddItem?.(id)}>
                         ➕ Agregar elemento
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => onDeleteList?.(name)}>
+                    <DropdownMenuItem onClick={() => onDeleteList?.(id)}>
                         🗑️ Eliminar lista
                     </DropdownMenuItem>
 
@@ -71,7 +71,7 @@ export const CustomItemsList: React.FC<{
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => onRemoveItem?.(name, item.id)}
+                                            onClick={() => onRemoveItem?.(id, [item.id])}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>

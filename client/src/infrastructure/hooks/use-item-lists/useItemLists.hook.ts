@@ -1,26 +1,24 @@
+import type { UUID } from 'crypto';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     type UserItemList,
     type SurveyItem,
-    type ItemListState,
-    upsertList,
-    createList,
-    updateList,
-    removeList,
-    appendOneItem,
-    appendAllItems,
-    removeOneItem,
-    removeAllItems,
-    clearPendingChanges
+    addPendingCreateList,
+    addPendingUpdateList,
+    addPendingRemoveList,
+    addPendingAppendAllItems,
+    addPendingRemoveAllItems,
+    clearPendingChanges,
+    type RootState,
+    type AppDispatch
 } from '@/infrastructure';
-import type { UUID } from "crypto";
 import { useUserItemListsAPI } from './api/useUserItemListsAPI.hook';
 
 export const useUserItemLists = () => {
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
 
-    const lists = useSelector((state: ItemListState) => state.lists);
-    const pendingChanges = useSelector((state: ItemListState) => state.pendingChanges);
+    const lists = useSelector((state: RootState) => state.itemLists.lists);
+    const pendingChanges = useSelector((state: RootState) => state.itemLists.pendingChanges);
 
     const query = useUserItemListsAPI();
 
@@ -29,46 +27,30 @@ export const useUserItemLists = () => {
         lists,
         pendingChanges,
 
-        upsertList: (
-            list: UserItemList & { id: UUID }
-        ) => dispatch(
-            upsertList(list)
-        ),
-
-        createList: (
-            list: UserItemList & { id: UUID }
+        addPendingCreateList: (
+            list: UserItemList
         ) =>
-            dispatch(createList(list)),
+            dispatch(addPendingCreateList(list)),
 
-        updateListName: (
-            listId: UUID, listName: string
+        addPendingUpdateList: (
+            listId: string, listNewName: string
         ) =>
-            dispatch(updateList({ listId, listName })),
+            dispatch(addPendingUpdateList({ listId, listNewName })),
 
-        removeList: (
-            listId: UUID
+        addPendingRemoveList: (
+            listId: string
         ) =>
-            dispatch(removeList(listId)),
+            dispatch(addPendingRemoveList(listId)),
 
-        appendItem: (
-            listId: UUID, item: SurveyItem
+        addPendingAppendAllItems: (
+            listId: string, items: SurveyItem[]
         ) =>
-            dispatch(appendOneItem({ listId, item })),
+            dispatch(addPendingAppendAllItems({ listId, items })),
 
-        appendItems: (
-            listId: UUID, items: SurveyItem[]
+        addPendingRemoveAllItems: (
+            listId: string, itemIds: UUID[]
         ) =>
-            dispatch(appendAllItems({ listId, items })),
-
-        removeItem: (
-            listId: UUID, itemId: UUID
-        ) =>
-            dispatch(removeOneItem({ listId, itemId })),
-
-        removeItems: (
-            listId: UUID, itemIds: UUID[]
-        ) =>
-            dispatch(removeAllItems({ listId, itemIds })),
+            dispatch(addPendingRemoveAllItems({ listId, itemIds })),
 
         clearPendingChanges: () => dispatch(
             clearPendingChanges()
