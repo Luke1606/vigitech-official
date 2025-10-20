@@ -1,5 +1,5 @@
 import type { UUID } from 'crypto';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { EyeIcon, EyeOff, Plus } from 'lucide-react';
 import {
     getQuadrantColor,
@@ -88,6 +88,19 @@ export const ItemListsSideBar: React.FC<{
         const openRemoveItemDialog = (listId: string, itemIds: UUID[]) => {
             setRemoveElementTarget({ listId, itemIds });
         };
+
+        const getAvailableItemsForTarget = (target: UserItemList): SurveyItem[] => {
+            const usedIds = new Set(target.items.map(item => item.id));
+            return availableItems.filter(item => !usedIds.has(item.id));
+        };
+
+        useEffect(() => {
+            if (addTarget) {
+                setElements(getAvailableItemsForTarget(addTarget));
+                setSelectedItems([]);
+            }
+        }, [addTarget]);
+
 
         const listElements = !lists || lists.length === 0 ?
             (
@@ -230,18 +243,18 @@ export const ItemListsSideBar: React.FC<{
                         id='search-elements'
                         type="text"
                         placeholder="Search by name..."
-                        onChange={
-                            (e) => setElements(
-                                prev =>
-                                    prev.filter(
-                                        (item: SurveyItem) =>
-                                            item.title.toLowerCase().includes(e.target.value.toLowerCase())
-                                            ||
-                                            item.radarQuadrant.toLowerCase().includes(e.target.value.toLowerCase())
-                                            ||
-                                            item.radarRing.toLowerCase().includes(e.target.value.toLowerCase()))
-                            )
-                        }
+                        onChange={(e) => {
+                            const query = e.target.value.toLowerCase();
+                            const available = getAvailableItemsForTarget(addTarget);
+                            setElements(
+                                available.filter(item =>
+                                    item.title.toLowerCase().includes(query) ||
+                                    item.radarQuadrant.toLowerCase().includes(query) ||
+                                    item.radarRing.toLowerCase().includes(query)
+                                )
+                            );
+                        }}
+
                     />
 
                     <ul className="space-y-2" role="list">
@@ -309,7 +322,8 @@ export const ItemListsSideBar: React.FC<{
                                 addPendingAppendAllItems(addTarget.id, updatedItems);
                                 setSelectedItems([]);
                                 setAddTarget(null);
-                                setElements(availableItems);
+                                setElements(getAvailableItemsForTarget(addTarget));
+
                             }
                             }>
                             Save
