@@ -46,13 +46,17 @@
     "health:api": "npx wait-port localhost:3000 -t 30000"
   },
   "dependencies": {
+    "@clerk/backend": "^2.18.3",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/throttler": "^6.4.0",
     "axios": "^1.12.2",
+    "passport": "^0.7.0",
+    "passport-custom": "^1.1.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "svix": "^1.77.0"
