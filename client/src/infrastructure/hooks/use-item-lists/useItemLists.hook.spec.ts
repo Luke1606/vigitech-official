@@ -101,158 +101,161 @@ describe('useUserItemLists', () => {
         mockDispatch.mockClear();
     });
 
-    it('should expose Redux state and query API methods', () => {
-        const { result } = renderHook(() => useUserItemLists());
+    describe('useUserItemLists', () => {
+        // ...
 
-        expect(result.current.lists).toEqual(['list1', 'list2']);
-        expect(result.current.pendingChanges).toEqual(['change1']);
-        expect(result.current.findAll).toBe(mockQueryAPI.findAll);
-        expect(result.current.findOne).toBe(mockQueryAPI.findOne);
-    });
+        it('debería exponer el estado de Redux y los métodos de la API', () => {
+            const { result } = renderHook(() => useUserItemLists());
 
-    it('should dispatch addPendingCreateList correctly', () => {
-        const mockList = { id: 'abc', name: 'Test List' } as UserItemList;
-        const { result } = renderHook(() => useUserItemLists());
-
-        result.current.addPendingCreateList(mockList);
-        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
-            type: expect.stringContaining('addPendingCreateList'),
-            payload: mockList,
-        }));
-    });
-
-    it('should dispatch addPendingUpdateList correctly', () => {
-        const { result } = renderHook(() => useUserItemLists());
-        result.current.addPendingUpdateList('list-id', 'New Name');
-
-        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
-            type: expect.stringContaining('addPendingUpdateList'),
-            payload: { listId: 'list-id', listNewName: 'New Name' },
-        }));
-    });
-
-    it('should dispatch addPendingRemoveList correctly', () => {
-        const { result } = renderHook(() => useUserItemLists());
-        result.current.addPendingRemoveList('list-id');
-
-        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
-            type: expect.stringContaining('addPendingRemoveList'),
-            payload: 'list-id',
-        }));
-    });
-
-    it('should dispatch addPendingAppendAllItems correctly', () => {
-        const { result } = renderHook(() => useUserItemLists());
-        result.current.addPendingAppendAllItems('list-id', [items]);
-
-        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
-            type: expect.stringContaining('addPendingAppendAllItems'),
-            payload: { listId: 'list-id', items: [items] },
-        }));
-
-    });
-
-    it('should dispatch addPendingRemoveAllItems correctly', () => {
-        const { result } = renderHook(() => useUserItemLists());
-        result.current.addPendingRemoveAllItems('list-id', [items.id]);
-
-        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
-            type: expect.stringContaining('addPendingRemoveAllItems'),
-            payload: { listId: 'list-id', itemIds: [items.id] },
-        }));
-
-    });
-
-    it('should dispatch clearPendingChanges correctly', () => {
-        const { result } = renderHook(() => useUserItemLists());
-        result.current.clearPendingChanges();
-
-        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
-            type: expect.stringContaining('clearPendingChanges'),
-        }));
-    });
-
-    it('should not dispatch addPendingCreateList if list is null', () => {
-        const { result } = renderHook(() => useUserItemLists());
-        result.current.addPendingCreateList(null as unknown as UserItemList);
-
-        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
-            type: expect.stringContaining('addPendingCreateList'),
-            payload: null,
-        }));
-    });
-
-    it('should not dispatch addPendingUpdateList if listId or name is missing', () => {
-        const { result } = renderHook(() => useUserItemLists());
-        result.current.addPendingUpdateList('', '');
-
-        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
-            type: expect.stringContaining('addPendingUpdateList'),
-            payload: { listId: '', listNewName: '' },
-        }));
-    });
-
-    it('should not dispatch addPendingRemoveList if listId is undefined', () => {
-        const { result } = renderHook(() => useUserItemLists());
-        result.current.addPendingRemoveList(undefined as unknown as string);
-
-        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
-            type: expect.stringContaining('addPendingRemoveList'),
-            payload: undefined,
-        }));
-    });
-
-    it('should not dispatch addPendingAppendAllItems if items array is empty', () => {
-        const { result } = renderHook(() => useUserItemLists());
-        result.current.addPendingAppendAllItems('list-id', []);
-
-        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
-            type: expect.stringContaining('addPendingAppendAllItems'),
-            payload: { listId: 'list-id', items: [] },
-        }));
-    });
-
-    it('should not dispatch addPendingRemoveAllItems if itemIds array is empty', () => {
-        const { result } = renderHook(() => useUserItemLists());
-        result.current.addPendingRemoveAllItems('list-id', []);
-
-        expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
-            type: expect.stringContaining('addPendingRemoveAllItems'),
-            payload: { listId: 'list-id', itemIds: [] },
-        }));
-    });
-
-    it('should expose error state if API hook returns error in findAll', () => {
-        const error = new Error('API failure');
-        const mockFindAllError = {
-            data: undefined,
-            error,
-            isLoading: false,
-            isError: true,
-        };
-
-        (useUserItemListsAPI as jest.Mock).mockReturnValue({
-            ...mockQueryAPI,
-            findAll: mockFindAllError,
+            expect(result.current.lists).toEqual(['list1', 'list2']);
+            expect(result.current.pendingChanges).toEqual(['change1']);
+            expect(result.current.findAll).toBe(mockQueryAPI.findAll);
+            expect(result.current.findOne).toBe(mockQueryAPI.findOne);
         });
 
-        const { result } = renderHook(() => useUserItemLists());
-        expect(result.current.findAll.error).toBe(error);
-    });
+        it('debería despachar addPendingCreateList correctamente', () => {
+            const mockList = { id: 'abc', name: 'Test List' } as UserItemList;
+            const { result } = renderHook(() => useUserItemLists());
 
-    it('should expose empty lists if Redux selector returns undefined', () => {
-        (useSelector as unknown as jest.Mock).mockImplementation((selectorFn: any) => {
-            return selectorFn({
-                itemLists: {
-                    lists: [],
-                    pendingChanges: [],
-                },
+            result.current.addPendingCreateList(mockList);
+            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: expect.stringContaining('addPendingCreateList'),
+                payload: mockList,
+            }));
+        });
+
+        it('debería despachar addPendingUpdateList correctamente', () => {
+            const { result } = renderHook(() => useUserItemLists());
+            result.current.addPendingUpdateList('list-id', 'New Name');
+
+            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: expect.stringContaining('addPendingUpdateList'),
+                payload: { listId: 'list-id', listNewName: 'New Name' },
+            }));
+        });
+
+        it('debería despachar addPendingRemoveList correctamente', () => {
+            const { result } = renderHook(() => useUserItemLists());
+            result.current.addPendingRemoveList('list-id');
+
+            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: expect.stringContaining('addPendingRemoveList'),
+                payload: 'list-id',
+            }));
+        });
+
+        it('debería despachar addPendingAppendAllItems correctamente', () => {
+            const { result } = renderHook(() => useUserItemLists());
+            result.current.addPendingAppendAllItems('list-id', [items]);
+
+            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: expect.stringContaining('addPendingAppendAllItems'),
+                payload: { listId: 'list-id', items: [items] },
+            }));
+        });
+
+        it('debería despachar addPendingRemoveAllItems correctamente', () => {
+            const { result } = renderHook(() => useUserItemLists());
+            result.current.addPendingRemoveAllItems('list-id', [items.id]);
+
+            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: expect.stringContaining('addPendingRemoveAllItems'),
+                payload: { listId: 'list-id', itemIds: [items.id] },
+            }));
+        });
+
+        it('debería despachar clearPendingChanges correctamente', () => {
+            const { result } = renderHook(() => useUserItemLists());
+            result.current.clearPendingChanges();
+
+            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: expect.stringContaining('clearPendingChanges'),
+            }));
+        });
+
+        // Finales negativos
+
+        it('no debería despachar addPendingCreateList si la lista es null', () => {
+            const { result } = renderHook(() => useUserItemLists());
+            result.current.addPendingCreateList(null as unknown as UserItemList);
+
+            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: expect.stringContaining('addPendingCreateList'),
+                payload: null,
+            }));
+        });
+
+        it('no debería despachar addPendingUpdateList si el ID o nombre están vacíos', () => {
+            const { result } = renderHook(() => useUserItemLists());
+            result.current.addPendingUpdateList('', '');
+
+            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: expect.stringContaining('addPendingUpdateList'),
+                payload: { listId: '', listNewName: '' },
+            }));
+        });
+
+        it('no debería despachar addPendingRemoveList si el ID es undefined', () => {
+            const { result } = renderHook(() => useUserItemLists());
+            result.current.addPendingRemoveList(undefined as unknown as string);
+
+            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: expect.stringContaining('addPendingRemoveList'),
+                payload: undefined,
+            }));
+        });
+
+        it('no debería despachar addPendingAppendAllItems si el array de ítems está vacío', () => {
+            const { result } = renderHook(() => useUserItemLists());
+            result.current.addPendingAppendAllItems('list-id', []);
+
+            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: expect.stringContaining('addPendingAppendAllItems'),
+                payload: { listId: 'list-id', items: [] },
+            }));
+        });
+
+        it('no debería despachar addPendingRemoveAllItems si el array de IDs está vacío', () => {
+            const { result } = renderHook(() => useUserItemLists());
+            result.current.addPendingRemoveAllItems('list-id', []);
+
+            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: expect.stringContaining('addPendingRemoveAllItems'),
+                payload: { listId: 'list-id', itemIds: [] },
+            }));
+        });
+
+        it('debería exponer error si el hook de API retorna error en findAll', () => {
+            const error = new Error('Fallo de API');
+            const mockFindAllError = {
+                data: undefined,
+                error,
+                isLoading: false,
+                isError: true,
+            };
+
+            (useUserItemListsAPI as jest.Mock).mockReturnValue({
+                ...mockQueryAPI,
+                findAll: mockFindAllError,
             });
+
+            const { result } = renderHook(() => useUserItemLists());
+            expect(result.current.findAll.error).toBe(error);
         });
 
-        const { result } = renderHook(() => useUserItemLists());
-        expect(result.current.lists).toEqual([]);
-        expect(result.current.pendingChanges).toEqual([]);
-    });
+        it('debería exponer listas vacías si el selector de Redux retorna estado vacío', () => {
+            (useSelector as unknown as jest.Mock).mockImplementation((selectorFn: any) => {
+                return selectorFn({
+                    itemLists: {
+                        lists: [],
+                        pendingChanges: [],
+                    },
+                });
+            });
 
+            const { result } = renderHook(() => useUserItemLists());
+            expect(result.current.lists).toEqual([]);
+            expect(result.current.pendingChanges).toEqual([]);
+        });
+    });
 });
