@@ -5,16 +5,18 @@
     "target": "ESNext",
     "useDefineForClassFields": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
+    "module": "esnext",
     "skipLibCheck": true,
     "paths": {
       "@/*": ["./src/*"]
     },
+    "types": ["jest", "@testing-library/jest-dom"],
+    "esModuleInterop": true,
 
     /* Bundler mode */
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
@@ -27,5 +29,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": [
+  "src",
+  "jest.setup.ts",
+  "global.d.ts"
+]
+
 }

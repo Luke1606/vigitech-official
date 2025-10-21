@@ -1,4 +1,4 @@
-import type { UUID } from 'crypto';
+import type { UUID } from '@/infrastructure';
 import { Trash2 } from 'lucide-react';
 import {
     DropdownMenu,

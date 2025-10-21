@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "types": ["jest", "@testing-library/jest-dom"]
+  },
+  "include": [
+  "src",
+  "jest.setup.ts"
+]
+
+}

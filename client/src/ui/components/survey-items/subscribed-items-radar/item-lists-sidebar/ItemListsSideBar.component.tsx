@@ -1,4 +1,4 @@
-import type { UUID } from 'crypto';
+import type { UUID } from '@/infrastructure';
 import { useState, useEffect } from 'react';
 import { EyeIcon, EyeOff, Plus } from 'lucide-react';
 import {
