@@ -6,16 +6,13 @@ echo ===============================================
 echo.
 
 echo [1/3] Levantando base de datos PostgreSQL...
-docker-compose up -d radar-db pgadmin
-
-echo Esperando a que la base de datos este lista...
-timeout /t 10 /nobreak >nul
+npm run dev:infra
+@REM no se si dev:infra o db:up
+@REM echo Esperando a que la base de datos este lista...
+@REM npm run db:wait
 
 echo [2/3] Aplicando migraciones de la base de datos...
 start cmd /k "npm run db:migrate:dev && exit"
-
-echo Esperando a que las migraciones de la base de datos esten listas...
-timeout /t 15 /nobreak >nul
 
 echo [3/3] Iniciando servidor NestJS en modo desarrollo...
 echo ====================================================

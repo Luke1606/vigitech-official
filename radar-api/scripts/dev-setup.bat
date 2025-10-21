@@ -8,7 +8,7 @@ echo Instalando dependencias...
 npm install
 
 echo Generando cliente de Prisma...
-start cmd /k "npx prisma generate"
+start cmd /k "npm run db:generate && exit"
 
 echo ===============================================
 echo    CONFIGURACION COMPLETADA!

@@ -5,7 +5,7 @@ echo    INICIANDO SOLO BASE DE DATOS
 echo ===============================================
 echo.
 
-docker-compose up -d radar-db pgadmin
+npm run db:up
 
 echo Base de datos iniciada!
 echo PostgreSQL disponible en: http://localhost:4000
@@ -17,4 +17,4 @@ echo Password: vigitech-dev-password-DO_NOT_TOUCH_4000
 echo.
 echo Presiona cualquier tecla para ver logs...
 pause
-docker-compose logs -f radar-db
+npm run db:logs

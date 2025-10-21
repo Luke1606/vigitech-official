@@ -5,10 +5,10 @@ echo ===============================================
 echo.
 
 echo Deteniendo contenedores...
-docker-compose down
+npm run db:down
 
 echo Limpiando recursos no utilizados...
-docker system prune -f
+npm run db:clean-resources
 
 echo ===============================================
 echo    ENTORNO DETENIDO CORRECTAMENTE

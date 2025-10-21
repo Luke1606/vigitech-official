@@ -12,16 +12,16 @@ set /p choice="Selecciona una opcion (1-4): "
 
 if "%choice%"=="1" (
     set /p name="Nombre de la migracion: "
-    npx prisma migrate dev --name %name%
+    npm run db:migrate:dev --name %name%
 ) else if "%choice%"=="2" (
-    npx prisma migrate deploy
+    npm run db:migrate:deploy
 ) else if "%choice%"=="3" (
-    npx prisma migrate status
+    npm run db:status
 ) else if "%choice%"=="4" (
     echo ESTA ACCION ELIMINARA TODOS LOS DATOS!
     set /p confirm="¿Estas seguro? (si/no): "
     if "%confirm%"=="si" (
-        npx prisma migrate reset --force
+        npm run db:reset
     )
 ) else (
     echo Opcion no valida
