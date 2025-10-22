@@ -13,7 +13,7 @@ export const SubscribedItemsRadar = () => {
     ] = useState<boolean>(true);
 
     return (
-        <div className="flex justify-between">
+        <div className="overflow-y-hidden overflow-x-hidden">
             <ItemListsSideBar
                 visible={itemListsSidebarVisible}
                 toggleVisible={
