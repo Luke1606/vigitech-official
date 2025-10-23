@@ -1,139 +1,14 @@
 import React from 'react';
+import { Blip, getRingColor, RadarQuadrant, RadarRing } from '../../../../../infrastructure';
+import { generateBlipPositions, ringBounds, quadrantLabels, isTextOverlapping } from '../../../../../infrastructure/utils/radar-helpers/helpers.util';
 
-type Ring = 'Adoptar' | 'Probar' | 'Evaluar' | 'Detener';
-type Quadrant =
-    | 'Soporte de Plataformas y Tecnologías'
-    | 'Inteligencia del Negocio'
-    | 'Escenario Científico'
-    | 'Lenguajes y Frameworks';
-interface Blip {
-    id: string;
-    name: string;
-    quadrant: Quadrant;
-    ring: Ring;
-}
-
-const blips: Blip[] = [
-    // Originales
-    { id: '1', name: 'TypeScript', quadrant: 'Soporte de Plataformas y Tecnologías', ring: 'Adoptar' },
-    { id: '2', name: 'Rust', quadrant: 'Soporte de Plataformas y Tecnologías', ring: 'Probar' },
-    { id: '3', name: 'Kotlin', quadrant: 'Soporte de Plataformas y Tecnologías', ring: 'Evaluar' },
-    { id: '4', name: 'Perl', quadrant: 'Soporte de Plataformas y Tecnologías', ring: 'Detener' },
-    { id: '5', name: 'React Query', quadrant: 'Inteligencia del Negocio', ring: 'Adoptar' },
-    { id: '6', name: 'Playwright', quadrant: 'Inteligencia del Negocio', ring: 'Probar' },
-    { id: '7', name: 'Vite', quadrant: 'Inteligencia del Negocio', ring: 'Evaluar' },
-    { id: '8', name: 'Gulp', quadrant: 'Inteligencia del Negocio', ring: 'Detener' },
-    { id: '9', name: 'Docker', quadrant: 'Escenario Científico', ring: 'Adoptar' },
-    { id: '10', name: 'Kubernetes', quadrant: 'Escenario Científico', ring: 'Probar' },
-    { id: '11', name: 'Nomad', quadrant: 'Escenario Científico', ring: 'Evaluar' },
-    { id: '12', name: 'FTP', quadrant: 'Escenario Científico', ring: 'Detener' },
-    { id: '13', name: 'Redux Toolkit', quadrant: 'Lenguajes y Frameworks', ring: 'Adoptar' },
-    { id: '14', name: 'Server Components', quadrant: 'Lenguajes y Frameworks', ring: 'Probar' },
-    { id: '15', name: 'Microfrontends', quadrant: 'Lenguajes y Frameworks', ring: 'Evaluar' },
-    { id: '16', name: 'jQuery Plugins', quadrant: 'Lenguajes y Frameworks', ring: 'Detener' },
-    // Nuevos
-    { id: '17', name: 'Go', quadrant: 'Soporte de Plataformas y Tecnologías', ring: 'Adoptar' },
-    { id: '18', name: 'Elm', quadrant: 'Soporte de Plataformas y Tecnologías', ring: 'Probar' },
-    { id: '19', name: 'Dart', quadrant: 'Soporte de Plataformas y Tecnologías', ring: 'Evaluar' },
-    { id: '20', name: 'Visual Basic', quadrant: 'Soporte de Plataformas y Tecnologías', ring: 'Detener' },
-    { id: '21', name: 'ESLint', quadrant: 'Inteligencia del Negocio', ring: 'Adoptar' },
-    { id: '22', name: 'Cypress', quadrant: 'Inteligencia del Negocio', ring: 'Probar' },
-    { id: '23', name: 'Snowpack', quadrant: 'Inteligencia del Negocio', ring: 'Evaluar' },
-    { id: '24', name: 'Bower', quadrant: 'Inteligencia del Negocio', ring: 'Detener' },
-    { id: '25', name: 'Terraform', quadrant: 'Escenario Científico', ring: 'Adoptar' },
-    { id: '26', name: 'Consul', quadrant: 'Escenario Científico', ring: 'Probar' },
-    { id: '27', name: 'Podman', quadrant: 'Escenario Científico', ring: 'Evaluar' },
-    { id: '28', name: 'Telnet', quadrant: 'Escenario Científico', ring: 'Detener' },
-    { id: '29', name: 'Atomic Design', quadrant: 'Lenguajes y Frameworks', ring: 'Adoptar' },
-    { id: '30', name: 'Feature Flags', quadrant: 'Lenguajes y Frameworks', ring: 'Probar' },
-    { id: '31', name: 'Serverless Patterns', quadrant: 'Lenguajes y Frameworks', ring: 'Evaluar' },
-    { id: '32', name: 'CSS Hacks', quadrant: 'Lenguajes y Frameworks', ring: 'Detener' },
-];
-
-const ringBounds: Record<Ring, [number, number]> = {
-    Adoptar: [0, 140],
-    Probar: [140, 230],
-    Evaluar: [230, 310],
-    Detener: [310, 380],
-};
-
-const ringColors: Record<Ring, string> = {
-    Adoptar: '#5ba300',
-    Probar: '#009eb0',
-    Evaluar: '#c7ba00',
-    Detener: '#e09b96',
-};
-
-const quadrantAngles: Record<Quadrant, [number, number]> = {
-    "Lenguajes y Frameworks": [0, Math.PI / 2],
-    "Escenario Científico": [Math.PI / 2, Math.PI],
-    "Inteligencia del Negocio": [Math.PI, (3 * Math.PI) / 2],
-    "Soporte de Plataformas y Tecnologías": [(3 * Math.PI) / 2, 2 * Math.PI],
-};
-
-function generateNonCollidingPosition(
-    ring: Ring,
-    quadrant: Quadrant,
-    existing: { x: number; y: number }[],
-    minDistance = 24,
-    maxAttempts = 100
-): { x: number; y: number } {
-    const [rMin, rMax] = ringBounds[ring];
-    const [aMin, aMax] = quadrantAngles[quadrant];
-    const safeRMin = rMin + 12;
-    const safeRMax = rMax - 12;
-    const safeAMin = aMin + 0.1;
-    const safeAMax = aMax - 0.1;
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const radius = Math.sqrt(Math.random() * (safeRMax ** 2 - safeRMin ** 2) + safeRMin ** 2);
-        const angle = Math.random() * (safeAMax - safeAMin) + safeAMin;
-        const x = radius * Math.cos(angle);
-        const y = radius * Math.sin(angle);
-
-        const tooClose = existing.some((p) => {
-            const dx = p.x - x;
-            const dy = p.y - y;
-            return Math.sqrt(dx * dx + dy * dy) < minDistance;
-        });
-
-        if (!tooClose) return { x, y };
-    }
-
-    return { x: 0, y: 0 };
-}
-
-function generateBlipPositions(blips: Blip[]): Record<string, { x: number; y: number }> {
-    const placed: { x: number; y: number }[] = [];
-    const positions: Record<string, { x: number; y: number }> = {};
-
-    for (const blip of blips) {
-        const pos = generateNonCollidingPosition(blip.ring, blip.quadrant, placed);
-        placed.push(pos);
-        positions[blip.id] = pos;
-    }
-
-    return positions;
-}
-
-function isTextOverlapping(x: number, y: number, existing: { x: number; y: number }[], threshold = 20): boolean {
-    return existing.some((p) => {
-        const dx = p.x - x;
-        const dy = p.y - y;
-        return Math.sqrt(dx * dx + dy * dy) < threshold;
-    });
-}
-
-const quadrantLabels: { label: Quadrant; x: number; y: number; align: 'start' | 'end' }[] = [
-    { label: 'Soporte de Plataformas y Tecnologías', x: 500, y: -300, align: 'start' },
-    { label: 'Inteligencia del Negocio', x: -825, y: -300, align: 'end' },
-    { label: 'Escenario Científico', x: -825, y: 100, align: 'end' },
-    { label: 'Lenguajes y Frameworks', x: 500, y: 100, align: 'start' },
-];
-
-export const Radar: React.FC = () => {
+export const Radar: React.FC<{
+    entries?: Blip[];
+    onBlipClick?: (blip: Blip, position: { x: number; y: number }) => void;
+    onBlipHover?: (blip: Blip) => void;
+}> = ({ entries, onBlipClick, onBlipHover }) => {
     const [hoveredBlipId, setHoveredBlipId] = React.useState<string | null>(null);
-    const blipPositions = React.useMemo(() => generateBlipPositions(blips), []);
+    const blipPositions = React.useMemo(() => generateBlipPositions(entries ?? []), [entries]);
     const labelPositions: { x: number; y: number }[] = [];
 
     return (
@@ -145,8 +20,8 @@ export const Radar: React.FC = () => {
                 style={{ border: '1px solid #ccc', background: '#f9f9f9' }}
             >
                 {/* Sombreado por anillo */}
-                {(Object.entries(ringBounds) as [Ring, [number, number]][]).map(([ring, [rMin, rMax]]) => {
-                    const color = ringColors[ring];
+                {(Object.entries(ringBounds) as [RadarRing, [number, number]][]).map(([ring, [rMin, rMax]]) => {
+                    const color = getRingColor(ring);
                     const labelRadius = (rMin + rMax) / 2;
 
                     return (
@@ -154,14 +29,14 @@ export const Radar: React.FC = () => {
                             {/* Sombreado */}
                             <path
                                 d={`
-          M ${rMax} 0
-          A ${rMax} ${rMax} 0 1 0 ${-rMax} 0
-          A ${rMax} ${rMax} 0 1 0 ${rMax} 0
-          M ${rMin} 0
-          A ${rMin} ${rMin} 0 1 1 ${-rMin} 0
-          A ${rMin} ${rMin} 0 1 1 ${rMin} 0
-          Z
-        `}
+                                    M ${rMax} 0
+                                    A ${rMax} ${rMax} 0 1 0 ${-rMax} 0
+                                    A ${rMax} ${rMax} 0 1 0 ${rMax} 0
+                                    M ${rMin} 0
+                                    A ${rMin} ${rMin} 0 1 1 ${-rMin} 0
+                                    A ${rMin} ${rMin} 0 1 1 ${rMin} 0
+                                    Z
+                                `}
                                 fill={color}
                                 opacity={0.08}
                             />
@@ -169,7 +44,7 @@ export const Radar: React.FC = () => {
                             {/* Etiqueta del anillo */}
                             <text
                                 x={0}
-                                y={ring === 'Adoptar' ? 0 : -labelRadius}
+                                y={ring === RadarRing.ADOPT ? 0 : -labelRadius}
                                 fontSize={36}
                                 fontWeight="bold"
                                 fill={color}
@@ -184,9 +59,9 @@ export const Radar: React.FC = () => {
 
 
                 {/* Anillos */}
-                {[140, 230, 310, 380].map((r, i) => {
-                    const ring = Object.keys(ringBounds)[i] as Ring;
-                    return <circle key={i} r={r} stroke={ringColors[ring]} fill="none" strokeWidth={2} />;
+                {[140, 230, 310, 380].map((radious, index) => {
+                    const ring = Object.keys(ringBounds)[index] as RadarRing;
+                    return <circle key={index} r={radious} stroke={getRingColor(ring)} fill="none" strokeWidth={2} />;
                 })}
 
                 {/* Líneas divisorias más largas y espaciadas */}
@@ -194,76 +69,47 @@ export const Radar: React.FC = () => {
                 <line x1={0} y1={-380} x2={0} y2={380} stroke="#999" strokeDasharray="6 6" />
 
                 {/* Etiquetas de cuadrantes y listas */}
-                {quadrantLabels.map((q) => {
-                    const quadrantBlips = blips.filter((b) => b.quadrant === q.label);
+                {quadrantLabels.map((quadrant) => {
+                    if (!entries) return null;
+                    const quadrantBlips = entries.filter((b) => b.quadrant === quadrant.label);
                     const column1 = quadrantBlips.slice(0, 10);
                     const column2 = quadrantBlips.slice(10);
 
-                    const items = blips
-                        .filter((b) => b.quadrant === q.label)
-                        .map((b, j) => {
-                            const isActive = hoveredBlipId === b.id;
-                            return (
-                                <g key={`${b.id}-label`}>
-                                    <circle
-                                        cx={q.align === 'end' ? q.x - 60 : q.x + 6}
-                                        cy={q.y + 20 + j * 20}
-                                        r={7}
-                                        fill={ringColors[b.ring]}
-                                    />
-                                    <text
-                                        x={q.align === 'end' ? q.x - 48 : q.x + 18}
-                                        y={q.y + 20 + j * 20}
-                                        fontSize={18}
-                                        fill={isActive ? '#000' : '#444'}
-                                        fontWeight={isActive ? 'bold' : 'normal'}
-                                        textAnchor="start"
-                                        alignmentBaseline="middle"
-                                        onMouseEnter={() => setHoveredBlipId(b.id)}
-                                        onMouseLeave={() => setHoveredBlipId(null)}
-                                        className="cursor-pointer transition-all duration-200"
-                                    >
-                                        {b.name}
-                                    </text>
-                                </g>
-                            );
-                        });
-
                     return (
-                        <g key={q.label}>
+                        <g key={quadrant.label}>
                             <text
                                 x={
-                                    q.label === 'Inteligencia del Negocio'
-                                        ? q.x + 60
+                                    quadrant.label === RadarQuadrant.BUSSINESS_INTEL
+                                        ? quadrant.x + 60
                                         :
-                                        q.label === "Escenario Científico"
+                                        quadrant.label === RadarQuadrant.SCIENTIFIC_STAGE
                                             ?
-                                            q.x + 135
-                                            : q.x
+                                            quadrant.x + 135
+                                            : quadrant.x
                                 }
-                                y={q.y}
+                                y={quadrant.y}
                                 fontSize={22}
                                 fill="#333"
                                 textAnchor={
-                                    q.label === 'Inteligencia del Negocio' ? 'middle' : q.align
+                                    quadrant.label === RadarQuadrant.BUSSINESS_INTEL ? 'middle' : quadrant.align
                                 }
                                 fontWeight="bold"
                             >
-                                {q.label}
+                                {quadrant.label}
                             </text>
 
                             {
                                 [column1, column2].map((column, colIndex) =>
                                     column.map((b, j) => {
                                         const isActive = hoveredBlipId === b.id;
-                                        const offsetX = colIndex === 0 ? 0 : 180; // separación horizontal entre columnas
-                                        const baseX = q.align === 'end' ? q.x - 60 + offsetX : q.x + 6 + offsetX;
-                                        const textX = q.align === 'end' ? q.x - 48 + offsetX : q.x + 18 + offsetX;
-                                        const y = q.y + 20 + j * 20;
+                                        const offsetX = colIndex === 0 ? 0 : 180;
+                                        const baseX = quadrant.align === 'end' ? quadrant.x - 60 + offsetX : quadrant.x + 6 + offsetX;
+                                        const textX = quadrant.align === 'end' ? quadrant.x - 48 + offsetX : quadrant.x + 18 + offsetX;
+                                        const y = quadrant.y + 20 + j * 20;
 
                                         return (
                                             <g key={`${b.id}-label`}>
-                                                <circle cx={baseX} cy={y} r={7} fill={ringColors[b.ring]} />
+                                                <circle cx={baseX} cy={y} r={7} fill={getRingColor(b.ring)} />
                                                 <text
                                                     x={textX}
                                                     y={y}
@@ -276,7 +122,7 @@ export const Radar: React.FC = () => {
                                                     onMouseLeave={() => setHoveredBlipId(null)}
                                                     className="cursor-pointer transition-all duration-200"
                                                 >
-                                                    {b.name}
+                                                {b.title}
                                                 </text>
                                             </g>
                                         );
@@ -289,12 +135,12 @@ export const Radar: React.FC = () => {
                 })}
 
                 {/* Blips en el radar */}
-                {blips.map((blip) => {
+                {(entries ?? []).map((blip) => {
                     const { x, y } = blipPositions[blip.id];
                     const isActive = hoveredBlipId === blip.id;
 
                     // Ajuste de posición del texto para evitar colisiones
-                    let labelX = 10;
+                    const labelX = 10;
                     let labelY = 4;
                     while (isTextOverlapping(x + labelX, y + labelY, labelPositions)) {
                         labelY += 12;
@@ -305,19 +151,25 @@ export const Radar: React.FC = () => {
                         ? `translate(${x}, ${y}) scale(1.5)`
                         : `translate(${x}, ${y})`;
 
-                    return (
+                        return (
                         <g
                             key={blip.id}
-                            transform={transform}
-                            onMouseEnter={() => setHoveredBlipId(blip.id)}
-                            onMouseLeave={() => setHoveredBlipId(null)}
-                            style={{ cursor: 'pointer', transition: 'transform 0.3s ease' }}
+                                transform={transform}
+                                onMouseEnter={() => {
+                                    setHoveredBlipId(blip.id);
+                                    onBlipHover?.(blip);
+                                }}
+                                onMouseLeave={() => {
+                                    setHoveredBlipId(null);
+                                }}
+                                onClick={() => onBlipClick?.(blip, { x, y })}
+                                style={{ cursor: 'pointer', transition: 'transform 0.3s ease' }}
                         >
                             <circle
                                 cx={0}
                                 cy={0}
                                 r={8}
-                                fill={ringColors[blip.ring]}
+                                fill={getRingColor(blip.ring)}
                                 stroke={isActive ? '#000' : '#333'}
                                 strokeWidth={isActive ? 2 : 1}
                             />
@@ -328,7 +180,7 @@ export const Radar: React.FC = () => {
                                 fill={isActive ? '#000' : '#000'}
                                 fontWeight={isActive ? 'bold' : '500'}
                             >
-                                {blip.name}
+                                {blip.title}
                             </text>
                         </g>
                     );

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { ItemListsSideBar, ChangeLogSideBar, Radar } from "../../../../components"
-import { useSurveyItems } from "../../../../../infrastructure";
+import { Blip, useSurveyItems } from "../../../../../infrastructure";
+import blipsFromMock from '../../../../../assets/data/radarMock';
+
+const blips: Blip[] = blipsFromMock as unknown as Blip[];
 
 export const SubscribedItemsRadar = () => {
     const [
@@ -23,7 +26,7 @@ export const SubscribedItemsRadar = () => {
                     () => setItemListsSidebarVisible(!itemListsSidebarVisible)
                 } />
 
-            <Radar />
+            <Radar entries={blips}/>
 
             <ChangeLogSideBar
                 visible={changeLogsSidebarVisible}
