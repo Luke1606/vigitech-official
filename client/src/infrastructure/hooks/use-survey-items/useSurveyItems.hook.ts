@@ -1,28 +1,30 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { 
+import {
 	type SurveyItemsState,
 	type SurveyItem,
 	addToSelectedItems,
 	removeFromSelectedItems,
 	addPendingSubscribes,
 	addPendingUnsubscribes,
-    addPendingRemoves,
-    clearPendingChanges
+	addPendingRemoves,
+	clearPendingChanges,
+	type AppDispatch,
+	type RootState
 } from '@/infrastructure';
 import { useSurveyItemsAPI } from './api/useSurveyItemsAPI.hook';
 
 export const useSurveyItems = () => {
-	const dispatch = useDispatch();
-	const selectedItems = useSelector((state: SurveyItemsState) => state.selectedItems);
-	const pendingChanges = useSelector((state: SurveyItemsState) => state.pendingChanges);
-	
+	const dispatch = useDispatch<AppDispatch>();
+	const selectedItems = useSelector((state: RootState) => state.surveyItems.selectedItems);
+	const pendingChanges = useSelector((state: RootState) => state.surveyItems.pendingChanges);
+
 	const query = useSurveyItemsAPI();
 
 	return {
 		...query,
 		selectedItems,
 		pendingChanges,
-		
+
 		addToSelectedItems: (
 			items: SurveyItem[]
 		) => dispatch(
@@ -34,13 +36,13 @@ export const useSurveyItems = () => {
 		) => dispatch(
 			removeFromSelectedItems(items)
 		),
-		
+
 		addPendingSubscribes: (
 			items: SurveyItem[]
 		) => dispatch(
 			addPendingSubscribes(items)
 		),
-		
+
 		addPendingUnsubscribes: (
 			items: SurveyItem[]
 		) => dispatch(
@@ -52,7 +54,7 @@ export const useSurveyItems = () => {
 		) => dispatch(
 			addPendingRemoves(items)
 		),
-		
+
 		clearPendingChanges: () => dispatch(
 			clearPendingChanges()
 		)

@@ -1,0 +1,7 @@
+export const getEnv = () => ({
+    VITE_SERVER_BASE_URL: import.meta.env.VITE_SERVER_BASE_URL,
+    VITE_SITE_BASE_URL: import.meta.env.VITE_SITE_BASE_URL,
+    VITE_NOVU_APPLICATION_ID: import.meta.env.VITE_NOVU_APPLICATION_ID,
+    VITE_NOVU_SECRET_KEY: import.meta.env.VITE_NOVU_SECRET_KEY,
+    VITE_CLERK_PUBLISHABLE_KEY: import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+});

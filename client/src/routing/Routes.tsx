@@ -1,8 +1,8 @@
 import { type RouteObject, Navigate } from "react-router-dom";
 import { PathOption } from '@/infrastructure';
 import { Layout, Error, ProtectedRoutes } from "@/ui/components";
-import { 
-    PortalHome, 
+import {
+    PortalHome,
     FAQ,
     About,
     TechnologyRadarHome,
@@ -42,8 +42,12 @@ export const routes: RouteObject[] = [
             },
             {
                 path: technologyRadarGlobalPrefix,
-                element: 
-                <TechnologyRadarHome />
+                element:
+                    <TechnologyRadarHome />
+            },
+            {
+                path: `${technologyRadarGlobalPrefix}subscribed-items-radar`,
+                element: <SubscribedItemsRadar />
             },
             {
                 element: <ProtectedRoutes />,
@@ -52,10 +56,7 @@ export const routes: RouteObject[] = [
                         path: `${technologyRadarGlobalPrefix}recommendations-feed`,
                         element: <RecommendationsFeed />
                     },
-                    {
-                        path: `${technologyRadarGlobalPrefix}subscribed-items-radar`,
-                        element: <SubscribedItemsRadar />
-                    },
+
                     {
                         path: `${technologyRadarGlobalPrefix}item-details/:item`,
                         element: <ItemDetails />
@@ -71,5 +72,6 @@ export const routes: RouteObject[] = [
                 errorTitle='Dirección no encontrada'
                 errorDescription='La ruta especificada no corresponde a ninguna dirección. Verifique la ruta.'
             />
-    )},
+        )
+    },
 ];

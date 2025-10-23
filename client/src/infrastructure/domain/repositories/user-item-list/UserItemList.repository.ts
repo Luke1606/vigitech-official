@@ -1,17 +1,19 @@
-import type { UUID } from "crypto";
+import type { UUID } from '@/infrastructure';
 import {
     AxiosConfiguredInstance,
     type UserItemListInterface,
     type UserItemList
 } from '@/infrastructure';
-
+import { getEnv } from '@/infrastructure/config/env';
 class UserItemListRepository implements UserItemListInterface {
     private readonly axios: AxiosConfiguredInstance;
 
     constructor() {
+
         this.axios = new AxiosConfiguredInstance(
-            `${import.meta.env.VITE_SERVER_BASE_URL}/item-lists/`
+            `${getEnv().VITE_SERVER_BASE_URL}/item-lists/`
         );
+
     }
 
     async findAll(): Promise<UserItemList[]> {

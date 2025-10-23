@@ -1,8 +1,8 @@
 export enum Trending {
-    UP,
-    DOWN,
-    STABLE,
-    UNSTABLE,
+    UP = 'UP',
+    DOWN = 'DOWN',
+    STABLE = 'STABLE',
+    UNSTABLE = 'UNSTABLE'
 };
 
 export enum AccesibilityLevel {

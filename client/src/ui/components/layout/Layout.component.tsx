@@ -22,7 +22,6 @@ export const Layout: React.FC = () => {
             PathOption.TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR
             ].includes(currentPath) &&
                 <Footer />}
-            <TechRadar />
         </div>
     )
 }

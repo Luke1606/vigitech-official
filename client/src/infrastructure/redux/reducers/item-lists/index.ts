@@ -1,13 +1,10 @@
 export {
     type ItemListState,
-    upsertList,
-    createList,
-    updateList,
-    removeList,
-    appendOneItem,
-    appendAllItems,
-    removeOneItem,
-    removeAllItems,
+    addPendingCreateList,
+    addPendingUpdateList,
+    addPendingRemoveList,
+    addPendingAppendAllItems,
+    addPendingRemoveAllItems,
     clearListPendingChanges,
     itemListReducer,
 } from './slice';

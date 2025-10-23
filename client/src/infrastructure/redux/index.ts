@@ -1,2 +1,6 @@
 export * from './reducers';
-export { store } from './store';
+export {
+    store,
+    type AppDispatch,
+    type RootState
+} from './store';

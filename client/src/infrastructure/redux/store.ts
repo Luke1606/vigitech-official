@@ -1,5 +1,5 @@
-import { configureStore } from "@reduxjs/toolkit";
-import { 
+import { configureStore, type Reducer } from "@reduxjs/toolkit";
+import {
     itemListReducer,
     changelogReducer,
     surveyItemsReducer
@@ -11,4 +11,8 @@ export const store = configureStore({
         changelog: changelogReducer,
         surveyItems: surveyItemsReducer,
     }
-})
+});
+
+export type RootState = ReturnType<typeof store.getState>;
+
+export type AppDispatch = typeof store.dispatch;

@@ -16,7 +16,7 @@ export const SubscribedItemsRadar = () => {
     const { recommended, subscribed } = useSurveyItems();
     console.log(recommended.data, subscribed.data);
     return (
-        <div className="flex justify-between">
+        <div className="overflow-y-hidden overflow-x-hidden">
             <ItemListsSideBar
                 visible={itemListsSidebarVisible}
                 toggleVisible={
