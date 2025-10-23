@@ -1,8 +1,9 @@
 import type { UUID } from 'crypto';
 import type { SurveyItem } from './SurveyItem.entitiy';
+import { Blip } from '../Blip.type';
 
 export type UserItemList = {
-    id: string | UUID;
+    id: UUID;
     name: string;
-    items: SurveyItem[];
+    items: SurveyItem[] | Blip[];
 };

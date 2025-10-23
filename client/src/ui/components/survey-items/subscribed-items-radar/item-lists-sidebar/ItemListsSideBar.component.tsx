@@ -1,13 +1,12 @@
-import type { UUID } from '../../../../../infrastructure';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { EyeIcon, EyeOff, Plus } from 'lucide-react';
 import {
+    Blip,
     getQuadrantColor,
     getQuadrantLightColor,
     getRingColor,
     getRingLightColor,
     useUserItemLists,
-    type SurveyItem,
     type UserItemList
 } from '../../../../../infrastructure';
 import {
@@ -30,7 +29,8 @@ import {
 } from '../../..';
 
 import { CustomItemsList } from './custom-item-list';
-import { availableItems } from './available-items';
+import { UUID } from 'crypto';
+import blips from '../../../../../assets/data/radarMock';
 
 export const ItemListsSideBar: React.FC<{
     visible: boolean
@@ -57,7 +57,7 @@ export const ItemListsSideBar: React.FC<{
             itemIds: UUID[]
         } | null>(null);
 
-        const [elements, setElements] = useState<SurveyItem[]>(availableItems);
+        const [elements, setElements] = useState<Blip[]>(blips);
 
         const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -78,7 +78,7 @@ export const ItemListsSideBar: React.FC<{
                 setElements(
                     prev =>
                         prev.filter(
-                            (element: SurveyItem) =>
+                            (element: Blip) =>
                                 !currentList.items.includes(element)
                         )
                 );
@@ -89,17 +89,17 @@ export const ItemListsSideBar: React.FC<{
             setRemoveElementTarget({ listId, itemIds });
         };
 
-        const getAvailableItemsForTarget = (target: UserItemList): SurveyItem[] => {
+        const getAvailableItemsForTarget = useCallback((target: UserItemList): Blip[] => {
             const usedIds = new Set(target.items.map(item => item.id));
-            return availableItems.filter(item => !usedIds.has(item.id));
-        };
+            return elements.filter(item => !usedIds.has(item.id));
+        }, [elements]);
 
         useEffect(() => {
             if (addTarget) {
                 setElements(getAvailableItemsForTarget(addTarget));
                 setSelectedItems([]);
             }
-        }, [addTarget]);
+        }, [addTarget, getAvailableItemsForTarget]);
 
 
         const listElements = !lists || lists.length === 0 ?
@@ -150,7 +150,7 @@ export const ItemListsSideBar: React.FC<{
                                 onClick={() => {
                                     if (newListName.trim()) {
                                         addPendingCreateList({
-                                            id: `id-local-${newListName}`,
+                                            id: `id-local-${newListName}` as UUID,
                                             name: newListName.trim(),
                                             items: []
                                         });
@@ -258,7 +258,7 @@ export const ItemListsSideBar: React.FC<{
                     />
 
                     <ul className="space-y-2" role="list">
-                        {elements.map((item: SurveyItem) => (
+                        {elements.map((item: Blip) => (
                             <li
                                 key={item.id}
                                 className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
@@ -314,8 +314,8 @@ export const ItemListsSideBar: React.FC<{
                         </Button>
                         <Button
                             onClick={() => {
-                                const updatedItems: SurveyItem[] = elements.filter(
-                                    (item: SurveyItem) =>
+                                const updatedItems: Blip[] = elements.filter(
+                                    (item: Blip) =>
                                         selectedItems.includes(item.id)
                                 )
 

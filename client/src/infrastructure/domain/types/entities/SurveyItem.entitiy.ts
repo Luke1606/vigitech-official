@@ -8,5 +8,5 @@ export type SurveyItem = {
     summary: string;
     radarQuadrant: RadarQuadrant;
     radarRing: RadarRing;
-    lastAnalysis: SurveyItemAnalysis;
+    lastAnalysis?: SurveyItemAnalysis;
 }
