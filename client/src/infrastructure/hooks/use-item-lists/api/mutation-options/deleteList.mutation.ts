@@ -1,8 +1,8 @@
 import { mutationOptions, useQueryClient } from '@tanstack/react-query';
-import { userItemListRepository } from '@/infrastructure';
+import { userItemListRepository } from '../../../..';
 import type { UUID } from 'crypto';
 import { userItemListsKey } from '../constants';
-import type { UserItemList } from '@/infrastructure';
+import type { UserItemList } from '../../../..';
 
 export const useDeleteListMutationOptions = () => {
     const queryClient = useQueryClient();

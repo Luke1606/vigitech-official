@@ -1,6 +1,6 @@
 import type { UUID } from "crypto";
 import { queryOptions } from "@tanstack/react-query";
-import { surveyItemsRepository } from "@/infrastructure";
+import { surveyItemsRepository } from "../../../..";
 import { surveyItemsKey } from "../constants";
 
 export const findOneQueryOptions = (itemId: UUID) => queryOptions({

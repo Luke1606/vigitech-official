@@ -8,8 +8,8 @@ import {
     NavigationMenuLink,
     NavigationMenuList,
     NavigationMenuTrigger
-} from "@/ui/components/shared/shadcn-ui/navigation-menu"
-import { PathOption } from '@/infrastructure';
+} from "../../shared/shadcn-ui/navigation-menu"
+import { PathOption } from '../../../../infrastructure';
 import { NotificationCenter } from '../../notification-center';
 import styles from './Header.styles';
 import { ServiceCard, type ServiceCardProps } from './service-card';

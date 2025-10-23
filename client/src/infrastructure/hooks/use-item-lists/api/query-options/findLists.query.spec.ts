@@ -1,10 +1,10 @@
 import { findAllQueryOptions, findOneQueryOptions } from './findLists.query';
-import { userItemListRepository } from '@/infrastructure';
+import { userItemListRepository } from '../../../..';
 import { userItemListsKey } from '../constants';
 import type { UUID } from 'crypto';
 import { QueryClient } from '@tanstack/react-query';
 
-jest.mock('@/infrastructure', () => ({
+jest.mock('../../../..', () => ({
     userItemListRepository: {
         findAll: jest.fn(),
         findOne: jest.fn(),

@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { useUserItemLists } from './useItemLists.hook';
 import { useDispatch, useSelector } from 'react-redux';
 import { useUserItemListsAPI } from './api/useUserItemListsAPI.hook';
-import { type UserItemList, type SurveyItem, RadarQuadrant, RadarRing, Trending } from '@/infrastructure';
+import { type UserItemList, type SurveyItem, RadarQuadrant, RadarRing, Trending } from '../..';
 
 // Mocks
 jest.mock('react-redux', () => ({
@@ -14,7 +14,7 @@ jest.mock('./api/useUserItemListsAPI.hook', () => ({
     useUserItemListsAPI: jest.fn(),
 }));
 
-jest.mock('@/infrastructure', () => {
+jest.mock('../..', () => {
     class MockAxiosConfiguredInstance {
         http = {
             get: jest.fn(),

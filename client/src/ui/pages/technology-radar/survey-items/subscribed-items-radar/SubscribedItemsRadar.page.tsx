@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ItemListsSideBar, ChangeLogSideBar, Radar } from "@/ui/components"
-import { useSurveyItems } from "@/infrastructure";
+import { ItemListsSideBar, ChangeLogSideBar, Radar } from "../../../../components"
+import { useSurveyItems } from "../../../../../infrastructure";
 
 export const SubscribedItemsRadar = () => {
     const [

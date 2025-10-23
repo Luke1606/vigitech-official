@@ -6,7 +6,7 @@ import {
 import { 
     userItemListRepository, 
     type UserItemList 
-} from '@/infrastructure';
+} from '../../../..';
 import { userItemListsKey } from '../constants';
 
 export const useRemoveAllItemsMutationOptions = () => {

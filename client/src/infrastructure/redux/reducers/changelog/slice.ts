@@ -1,4 +1,4 @@
-import type { ChangeLogEntry } from "@/infrastructure/domain";
+import type { ChangeLogEntry } from "../../../domain";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export interface ChangelogState {

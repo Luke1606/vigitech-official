@@ -1,10 +1,10 @@
 import { useDeleteListMutationOptions } from './deleteList.mutation';
-import { userItemListRepository } from '@/infrastructure';
+import { userItemListRepository } from '../../../..';
 import { useQueryClient } from '@tanstack/react-query';
 import { userItemListsKey } from '../constants';
-import type { UUID, UserItemList } from '@/infrastructure';
+import type { UUID, UserItemList } from '../../../..';
 
-jest.mock('@/infrastructure', () => ({
+jest.mock('../../../..', () => ({
     userItemListRepository: {
         removeList: jest.fn(),
     },

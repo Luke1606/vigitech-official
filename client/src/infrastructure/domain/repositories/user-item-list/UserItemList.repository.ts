@@ -1,10 +1,10 @@
-import type { UUID } from '@/infrastructure';
+import type { UUID } from '../../..';
 import {
     AxiosConfiguredInstance,
     type UserItemListInterface,
     type UserItemList
-} from '@/infrastructure';
-import { getEnv } from '@/infrastructure/config/env';
+} from '../../..';
+import { getEnv } from '../../../config/env';
 class UserItemListRepository implements UserItemListInterface {
     private readonly axios: AxiosConfiguredInstance;
 

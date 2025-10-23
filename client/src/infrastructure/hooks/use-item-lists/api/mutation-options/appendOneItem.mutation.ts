@@ -1,8 +1,8 @@
 import { mutationOptions, useQueryClient } from '@tanstack/react-query';
-import { userItemListRepository } from '@/infrastructure';
+import { userItemListRepository } from '../../../..';
 import type { UUID } from 'crypto';
 import { userItemListsKey } from '../constants';
-import type { SurveyItem, UserItemList } from '@/infrastructure';
+import type { SurveyItem, UserItemList } from '../../../..';
 
 export const useAppendOneItemMutationOptions = () => {
     const queryClient = useQueryClient();

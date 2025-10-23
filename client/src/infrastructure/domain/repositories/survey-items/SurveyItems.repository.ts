@@ -1,10 +1,10 @@
-import type { UUID } from '@/infrastructure';
+import type { UUID } from '../../..';
 import {
     AxiosConfiguredInstance,
     type SurveyItemsInterface,
     type SurveyItem
-} from '@/infrastructure';
-import { getEnv } from '@/infrastructure/config/env';
+} from '../../..';
+import { getEnv } from '../../../config/env';
 class SurveyItemsRepository implements SurveyItemsInterface {
     private readonly axios: AxiosConfiguredInstance;
 

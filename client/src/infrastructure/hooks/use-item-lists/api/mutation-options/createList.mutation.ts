@@ -1,7 +1,7 @@
 import { mutationOptions, useQueryClient } from '@tanstack/react-query';
-import { userItemListRepository } from '@/infrastructure';
+import { userItemListRepository } from '../../../..';
 import { userItemListsKey } from '../constants';
-import type { UserItemList } from '@/infrastructure';
+import type { UserItemList } from '../../../..';
 
 export const useCreateListMutationOptions = () => {
     const queryClient = useQueryClient();

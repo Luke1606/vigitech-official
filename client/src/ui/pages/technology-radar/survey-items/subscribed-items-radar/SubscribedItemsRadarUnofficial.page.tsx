@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { InfoIcon } from "lucide-react";
 
-import radar_visualization from '@/assets/radar/radar_visualization';
-import { useSurveyItems, type SurveyItem, PathOption, type RadarEntry, mapSurveyItemToRadarEntry } from "@/infrastructure";
+import radar_visualization from '../../../../../assets/radar/radar_visualization';
+import { useSurveyItems, type SurveyItem, PathOption, type RadarEntry, mapSurveyItemToRadarEntry } from "../../../../../infrastructure";
 import { 
     Alert,
     AlertDescription,
@@ -17,7 +17,7 @@ import {
     AlertDialogTitle,
     Button,
     RadarMenu,
-} from "@/ui/components";
+} from "../../../../components";
 
 type Position = {
     x: number;

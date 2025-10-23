@@ -1,9 +1,9 @@
 // __tests__/UserItemListRepository.spec.ts
-import { userItemListRepository } from '@/infrastructure/domain/repositories/user-item-list/UserItemList.repository';
-import { AxiosConfiguredInstance, RadarQuadrant, RadarRing, Trending } from '@/infrastructure';
-import type { SurveyItem, UserItemList, UUID } from '@/infrastructure';
+import { userItemListRepository } from './UserItemList.repository';
+import { AxiosConfiguredInstance, RadarQuadrant, RadarRing, Trending } from '../../..';
+import type { SurveyItem, UserItemList, UUID } from '../../..';
 
-jest.mock('@/infrastructure', () => {
+jest.mock('../../..', () => {
     const mockHttp = {
         get: jest.fn(),
         post: jest.fn(),

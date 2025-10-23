@@ -3,7 +3,7 @@ import {
     type SurveyItem, 
     RadarQuadrant, 
     RadarRing
-} from '@/infrastructure';
+} from '..';
 
 export const mapSurveyItemToRadarEntry = (
     item: SurveyItem, 

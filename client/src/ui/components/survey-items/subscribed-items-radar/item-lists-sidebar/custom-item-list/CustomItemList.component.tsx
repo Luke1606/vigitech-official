@@ -1,4 +1,4 @@
-import type { UUID } from '@/infrastructure';
+import type { UUID } from '../../../../../../infrastructure';
 import { Trash2 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -11,8 +11,8 @@ import {
     TooltipContent,
     TooltipTrigger,
     Button
-} from '@/ui/components';
-import type { UserItemList } from '@/infrastructure';
+} from '../../../..';
+import type { UserItemList } from '../../../../../../infrastructure';
 import styles from './CustomItemList.styles';
 
 export const CustomItemsList: React.FC<{

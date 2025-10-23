@@ -1,5 +1,5 @@
-import type { SurveyItem } from '@/infrastructure';
-import { Button } from "@/ui/components/shared";
+import type { SurveyItem } from '../../../../../../infrastructure';
+import { Button } from "../../../../shared";
 import { Maximize, Trash2, Minus } from 'lucide-react';
 
 interface RadarMenuProps {

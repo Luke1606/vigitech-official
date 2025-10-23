@@ -1,5 +1,5 @@
-import type { ChangeLogEntry } from "@/infrastructure/domain";
-import { type ChangelogState, addChangeLog, clearChangeLog } from "@/infrastructure/redux";
+import type { ChangeLogEntry } from "../../domain";
+import { type ChangelogState, addChangeLog, clearChangeLog } from "../../redux";
 import { useDispatch, useSelector } from "react-redux";
 
 export const useChangelog = () => {

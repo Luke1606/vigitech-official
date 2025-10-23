@@ -1,10 +1,10 @@
 import { useCreateListMutationOptions } from './createList.mutation';
-import { userItemListRepository } from '@/infrastructure';
+import { userItemListRepository } from '../../../..';
 import { useQueryClient } from '@tanstack/react-query';
 import { userItemListsKey } from '../constants';
-import type { UserItemList } from '@/infrastructure';
+import type { UserItemList } from '../../../..';
 
-jest.mock('@/infrastructure', () => ({
+jest.mock('../../../..', () => ({
     userItemListRepository: {
         createList: jest.fn(),
     },

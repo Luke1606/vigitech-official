@@ -1,6 +1,6 @@
 import { type RouteObject, Navigate } from "react-router-dom";
-import { PathOption } from '@/infrastructure';
-import { Layout, Error, ProtectedRoutes } from "@/ui/components";
+import { PathOption } from '../infrastructure';
+import { Layout, Error, ProtectedRoutes } from "../ui/components";
 import {
     PortalHome,
     FAQ,
@@ -9,7 +9,7 @@ import {
     SubscribedItemsRadar,
     RecommendationsFeed,
     ItemDetails
-} from "@/ui/pages";
+} from "../ui/pages";
 
 const vigitechGlobalPrefix: string = "vigitech";
 const portalGlobalPrefix: string = "portal/";

@@ -1,10 +1,10 @@
 import { useAppendAllItemsMutationOptions } from './appendAllItems.mutation';
-import { userItemListRepository } from '@/infrastructure';
+import { userItemListRepository } from '../../../..';
 import { userItemListsKey } from '../constants';
-import type { UUID, UserItemList } from '@/infrastructure';
+import type { UUID, UserItemList } from '../../../..';
 import { useQueryClient } from '@tanstack/react-query';
 
-jest.mock('@/infrastructure', () => ({
+jest.mock('../../../..', () => ({
     userItemListRepository: {
         appendAllItems: jest.fn(),
     },

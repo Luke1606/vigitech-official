@@ -2,7 +2,7 @@ import type { UUID } from "crypto";
 import React from "react";
 import { useParams } from "react-router-dom";
 import { InfoIcon } from "lucide-react";
-import { useSurveyItems } from "@/infrastructure";
+import { useSurveyItems } from "../../../../../infrastructure";
 import { 
     Alert, 
     AlertDescription,
@@ -11,7 +11,7 @@ import {
     CardHeader, 
     CardTitle,
     Skeleton
-} from "@/ui/components";
+} from "../../../../components";
 
 export const ItemDetails: React.FC = () => {
 	const { id } = useParams<{ id: string }>();

@@ -13,7 +13,7 @@ import {
     useRemoveOneItemMutationOptions,
     useRemoveAllItemsMutationOptions,
 } from './mutation-options';
-import { UUID } from '@/infrastructure/domain';
+import { UUID } from '../../../domain';
 
 jest.mock('@tanstack/react-query', () => ({
     useQuery: jest.fn(),

@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Inbox } from '@novu/react';
 import { useUser } from "@clerk/clerk-react";
-import { getEnv } from '@/infrastructure/config/env';
+import { getEnv } from '../../../infrastructure/config/env';
 
 export const NotificationCenter: React.FC = () => {
     const navigate = useNavigate();

@@ -11,7 +11,7 @@ import {
     clearPendingChanges,
     type RootState,
     type AppDispatch
-} from '@/infrastructure';
+} from '../..';
 import { useUserItemListsAPI } from './api/useUserItemListsAPI.hook';
 
 export const useUserItemLists = () => {

@@ -1,10 +1,10 @@
 import { useRemoveOneItemMutationOptions } from './removeOneItem.mutation';
-import { userItemListRepository } from '@/infrastructure';
+import { userItemListRepository } from '../../../..';
 import { useQueryClient } from '@tanstack/react-query';
 import { userItemListsKey } from '../constants';
-import { type UUID, type UserItemList, RadarQuadrant, RadarRing, Trending } from '@/infrastructure';
+import { type UUID, type UserItemList, RadarQuadrant, RadarRing, Trending } from '../../../..';
 
-jest.mock('@/infrastructure', () => {
+jest.mock('../../../..', () => {
     return {
         userItemListRepository: {
             removeOneItem: jest.fn(),

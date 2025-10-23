@@ -1,4 +1,4 @@
-import type { UUID } from '@/infrastructure';
+import type { UUID } from '../../../../../infrastructure';
 import { useState, useEffect } from 'react';
 import { EyeIcon, EyeOff, Plus } from 'lucide-react';
 import {
@@ -9,7 +9,7 @@ import {
     useUserItemLists,
     type SurveyItem,
     type UserItemList
-} from '@/infrastructure';
+} from '../../../../../infrastructure';
 import {
     Button,
     Sidebar,
@@ -27,7 +27,7 @@ import {
     DialogTitle,
     DialogFooter,
     Input
-} from '@/ui/components';
+} from '../../..';
 
 import { CustomItemsList } from './custom-item-list';
 import { availableItems } from './available-items';

@@ -1,7 +1,7 @@
 import type { UUID } from "crypto";
 import type React from "react";
 import { Plus, Trash2, View } from "lucide-react";
-import { type SurveyItem } from "@/infrastructure";
+import { type SurveyItem } from "../../../../../infrastructure";
 import { 
     Card, 
     CardHeader, 
@@ -9,7 +9,7 @@ import {
     CardDescription, 
     CardFooter, 
     Button
-} from "@/ui/components";
+} from "../../..";
 
 export const SurveyItemCard: React.FC<{
     key: UUID;

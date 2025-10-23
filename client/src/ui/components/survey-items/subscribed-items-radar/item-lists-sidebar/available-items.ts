@@ -1,4 +1,4 @@
-import { type SurveyItem, RadarQuadrant, RadarRing, type SurveyItemAnalysis } from "@/infrastructure";
+import { type SurveyItem, RadarQuadrant, RadarRing, type SurveyItemAnalysis } from "../../../../../infrastructure";
 import type { UUID } from "crypto";
 
 export const availableItems: SurveyItem[] = [

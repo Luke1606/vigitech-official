@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { SurveyItem } from '@/infrastructure';
+import type { SurveyItem } from '../../..';
 
 export interface SurveyItemsState {
     selectedItems: SurveyItem[];

@@ -8,8 +8,8 @@ import {
     SidebarGroupContent,
     SidebarGroupLabel,
     SidebarMenu,
-} from '@/ui/components';
-import { useChangelog } from '@/infrastructure/hooks/use-changelog';
+} from '../../..';
+import { useChangelog } from '../../../../../infrastructure/hooks/use-changelog';
 
 export const ChangeLogSideBar: React.FC<{
     visible: boolean

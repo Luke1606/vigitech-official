@@ -1,9 +1,9 @@
 
 import { Outlet, useLocation } from "react-router-dom"
-import { PathOption } from "@/infrastructure";
+import { PathOption } from "../../../infrastructure";
 import { Header } from "./header";
 import { Footer } from "./footer";
-import TechRadar from "@/TechRadar";
+import TechRadar from "../../../TechRadar";
 
 export const Layout: React.FC = () => {
 

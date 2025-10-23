@@ -1,5 +1,5 @@
 import type { UUID } from "crypto";
-import type { UserItemList, SurveyItem } from "@/infrastructure";
+import type { UserItemList, SurveyItem } from "../../..";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 type PendingItemChanges = {

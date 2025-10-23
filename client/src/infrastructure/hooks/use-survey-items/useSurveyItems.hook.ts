@@ -10,7 +10,7 @@ import {
 	clearPendingChanges,
 	type AppDispatch,
 	type RootState
-} from '@/infrastructure';
+} from '../..';
 import { useSurveyItemsAPI } from './api/useSurveyItemsAPI.hook';
 
 export const useSurveyItems = () => {

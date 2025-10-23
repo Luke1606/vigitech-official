@@ -1,6 +1,6 @@
 import type { UUID } from "crypto";
 import { mutationOptions, useQueryClient } from "@tanstack/react-query";
-import { surveyItemsRepository, type SurveyItem } from "@/infrastructure";
+import { surveyItemsRepository, type SurveyItem } from "../../../..";
 import { surveyItemsKey, subscribedKey } from "../constants";
 
 export const useUnsubscribeBatchMutationOptions = () => {
