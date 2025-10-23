@@ -1,9 +1,9 @@
-import type { UUID } from '../../..';
+import { UUID } from 'crypto';
 import {
-    AxiosConfiguredInstance,
     type SurveyItemsInterface,
     type SurveyItem
 } from '../../..';
+import { AxiosConfiguredInstance } from '../../../utils/AxiosConfiguredInstance.util';
 import { getEnv } from '../../../config/env';
 class SurveyItemsRepository implements SurveyItemsInterface {
     private readonly axios: AxiosConfiguredInstance;

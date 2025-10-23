@@ -1,9 +1,9 @@
-import type { UUID } from '../../..';
+import { UUID } from 'crypto';
 import {
-    AxiosConfiguredInstance,
     type UserItemListInterface,
     type UserItemList
 } from '../../..';
+import { AxiosConfiguredInstance } from '../../../utils/AxiosConfiguredInstance.util';
 import { getEnv } from '../../../config/env';
 class UserItemListRepository implements UserItemListInterface {
     private readonly axios: AxiosConfiguredInstance;

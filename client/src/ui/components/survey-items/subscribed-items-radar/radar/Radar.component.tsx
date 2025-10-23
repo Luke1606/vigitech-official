@@ -1,12 +1,31 @@
 import React from 'react';
-import { Blip, getRingColor, RadarQuadrant, RadarRing } from '../../../../../infrastructure';
-import { generateBlipPositions, ringBounds, quadrantLabels, isTextOverlapping } from '../../../../../infrastructure/utils/radar-helpers/helpers.util';
+import { 
+    Blip, 
+    getRingColor, 
+    RadarQuadrant, 
+    RadarRing,
+    generateBlipPositions, 
+    ringBounds, 
+    quadrantLabels, 
+    isTextOverlapping 
+} from '../../../../../infrastructure';
 
 export const Radar: React.FC<{
     entries?: Blip[];
-    onBlipClick?: (blip: Blip, position: { x: number; y: number }) => void;
-    onBlipHover?: (blip: Blip) => void;
-}> = ({ entries, onBlipClick, onBlipHover }) => {
+    onBlipClick?: (
+        blip: Blip,
+        position: {
+            x: number;
+            y: number
+        }) => void;
+    onBlipHover?: (
+        blip: Blip
+    ) => void;
+}> = ({ 
+    entries, 
+    onBlipClick, 
+    onBlipHover 
+}) => {
     const [hoveredBlipId, setHoveredBlipId] = React.useState<string | null>(null);
     const blipPositions = React.useMemo(() => generateBlipPositions(entries ?? []), [entries]);
     const labelPositions: { x: number; y: number }[] = [];
@@ -71,7 +90,7 @@ export const Radar: React.FC<{
                 {/* Etiquetas de cuadrantes y listas */}
                 {quadrantLabels.map((quadrant) => {
                     if (!entries) return null;
-                    const quadrantBlips = entries.filter((b) => b.quadrant === quadrant.label);
+                    const quadrantBlips = entries.filter((b) => b.radarQuadrant === quadrant.label);
                     const column1 = quadrantBlips.slice(0, 10);
                     const column2 = quadrantBlips.slice(10);
 
@@ -109,7 +128,7 @@ export const Radar: React.FC<{
 
                                         return (
                                             <g key={`${b.id}-label`}>
-                                                <circle cx={baseX} cy={y} r={7} fill={getRingColor(b.ring)} />
+                                                <circle cx={baseX} cy={y} r={7} fill={getRingColor(b.radarRing)} />
                                                 <text
                                                     x={textX}
                                                     y={y}
@@ -169,7 +188,7 @@ export const Radar: React.FC<{
                                 cx={0}
                                 cy={0}
                                 r={8}
-                                fill={getRingColor(blip.ring)}
+                                fill={getRingColor(blip.radarRing)}
                                 stroke={isActive ? '#000' : '#333'}
                                 strokeWidth={isActive ? 2 : 1}
                             />
