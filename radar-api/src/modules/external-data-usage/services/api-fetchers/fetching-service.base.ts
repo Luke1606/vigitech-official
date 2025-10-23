@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { SurveyItem } from '@prisma/client';
 import { BaseExternalActor } from '../external-actor.base';
 import { CreateSurveyItemType } from '../../../survey-items/types/create-survey-item.type';
-import { SurveyItem } from '@prisma/client';
 
 @Injectable()
 export abstract class BaseFetchingService extends BaseExternalActor {
@@ -17,5 +17,7 @@ export abstract class BaseFetchingService extends BaseExternalActor {
 
     abstract getTrendings(): Promise<CreateSurveyItemType[]>;
 
-    abstract getInfoFromItem(item: SurveyItem): Promise<object>;
+    abstract getInfoFromItem(
+        item: SurveyItem
+    ): Promise<Record<string, unknown>>;
 }

@@ -5,13 +5,13 @@ import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { SurveyItem } from '@prisma/client';
 
-import { CreateSurveyItemType } from '../../../../survey-items/types/create-survey-item.type';
-import { BaseFetchingService } from '../fetching-service.base';
+import { CreateSurveyItemType } from '../../../../../survey-items/types/create-survey-item.type';
+import { BaseFetchingService } from '../../fetching-service.base';
 import {
     OpenAlexResponse,
     OpenAlexTopic,
     OpenAlexWork,
-} from '../../../types/open-alex-responses.type';
+} from '../../../../types/api-responses/scientific-stage/open-alex-responses.type';
 
 @Injectable()
 export class OpenAlexService extends BaseFetchingService {

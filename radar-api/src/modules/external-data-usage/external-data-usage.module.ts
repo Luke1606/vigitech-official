@@ -3,7 +3,6 @@ import { HttpModule } from '@nestjs/axios';
 import {
     CrossRefService,
     OpenAlexService,
-    UnpaywallService,
 } from './services/api-fetchers';
 import {
     ChatGPTAgent,
@@ -28,8 +27,8 @@ import { ExternalDataUsageService } from './external-data-usage.service';
         DeepseekAgent,
         GeminiAgent,
         GrokAgent,
-        ExternalDataUsageService
+        ExternalDataUsageService,
     ],
-    exports: [ExternalDataUsageService]
+    exports: [ExternalDataUsageService],
 })
 export class ExternalDataUsageModule {}

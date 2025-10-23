@@ -4,13 +4,13 @@ import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import { SurveyItem } from '@prisma/client';
-import { BaseFetchingService } from '../fetching-service.base';
+import { BaseFetchingService } from '../../fetching-service.base';
 import {
     CrossRefParams,
     CrossRefResponse,
     CrossRefWork,
-} from '../../../types/cross-ref-responses.type';
-import { CreateSurveyItemType } from '../../../../survey-items/types/create-survey-item.type';
+} from '../../../../types/api-responses/scientific-stage/cross-ref-responses.type';
+import { CreateSurveyItemType } from '../../../../../survey-items/types/create-survey-item.type';
 
 @Injectable()
 export class CrossRefService extends BaseFetchingService {

@@ -22,8 +22,8 @@ import {
 } from './services/api-fetchers';
 
 import { CreateSurveyItemType } from '../survey-items/types/create-survey-item.type';
-import { CrossRefResponse } from './types/cross-ref-responses.type';
-import { OpenAlexResponse } from './types/open-alex-responses.type';
+import { CrossRefResponse } from './types/api-responses/scientific-stage/cross-ref-responses.type';
+import { OpenAlexResponse } from './types/api-responses/scientific-stage/open-alex-responses.type';
 import { UnpaywallResponse } from './types/unpaywall-responsestype';
 
 import {
