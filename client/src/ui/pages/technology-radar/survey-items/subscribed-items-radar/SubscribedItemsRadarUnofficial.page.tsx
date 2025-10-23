@@ -31,7 +31,7 @@ export const SubscribedItemsRadar = () => {
     const navigate = useNavigate();
 
     const { 
-        getSubscribed, 
+        subscribed: getSubscribed, 
         selectedItems,
         addToSelectedItems,
         removeFromSelectedItems,

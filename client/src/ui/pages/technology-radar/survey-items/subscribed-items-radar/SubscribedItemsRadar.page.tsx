@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ItemListsSideBar, ChangeLogSideBar, Radar } from "@/ui/components"
+import { useSurveyItems } from "@/infrastructure";
 
 export const SubscribedItemsRadar = () => {
     const [
@@ -12,6 +13,8 @@ export const SubscribedItemsRadar = () => {
         setChangeLogsSidebarVisible
     ] = useState<boolean>(true);
 
+    const { recommended, subscribed } = useSurveyItems();
+    console.log(recommended.data, subscribed.data);
     return (
         <div className="flex justify-between">
             <ItemListsSideBar

@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 export const RecommendationsFeed: React.FC = () => {
     const { 
         isLoading,
-        getRecommended,
+        recommended: getRecommended,
         selectedItems,
         addPendingRemoves,
         addToSelectedItems,

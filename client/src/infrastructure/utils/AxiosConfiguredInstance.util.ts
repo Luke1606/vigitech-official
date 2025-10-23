@@ -2,7 +2,6 @@ import axios, {
     AxiosError, 
     type AxiosInstance, 
     type AxiosResponse, 
-    type InternalAxiosRequestConfig 
 } from "axios";
 
 export class AxiosConfiguredInstance {
@@ -10,7 +9,6 @@ export class AxiosConfiguredInstance {
 
     constructor(
         baseURL: string,
-        bearer?: string,
         axiosInstance?: AxiosInstance
     ) {
         this.http = axiosInstance??
@@ -21,16 +19,6 @@ export class AxiosConfiguredInstance {
                     "Content-Type": "application/json",
                 }
             });
-        
-        if (bearer) {
-            this.http.interceptors.request.use(
-                (config: InternalAxiosRequestConfig) => {
-                    config.headers = config.headers?? {};
-                    config.headers.Authorization = `Bearer ${bearer}`;
-                    return config;
-                }
-            )
-        };
 
         this.http.interceptors.response.use(
             (response: AxiosResponse) => response.data,
