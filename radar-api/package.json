@@ -45,7 +45,7 @@
     "health:api": "npx wait-port localhost:3000 -t 30000"
   },
   "dependencies": {
-    "@clerk/backend": "^2.18.3",
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
@@ -54,6 +54,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/throttler": "^6.4.0",
     "axios": "^1.12.2",
+    "cookie-parser": "^1.4.7",
     "passport": "^0.7.0",
     "passport-custom": "^1.1.1",
     "reflect-metadata": "^0.2.2",
@@ -68,6 +69,7 @@
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/testing": "^11.0.1",
     "@prisma/client": "^6.16.1",
+    "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
