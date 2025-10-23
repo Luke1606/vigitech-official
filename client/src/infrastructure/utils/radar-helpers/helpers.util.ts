@@ -14,7 +14,7 @@ export const quadrantAngles: Record<RadarQuadrant, [number, number]> = {
     [RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES]: [(3 * Math.PI) / 2, 2 * Math.PI],
 };
 
-export const generateNonCollidingPosition = (
+const generateNonCollidingPosition = (
     ring: RadarRing,
     quadrant: RadarQuadrant,
     existing: { x: number; y: number }[],
@@ -53,7 +53,7 @@ export const generateBlipPositions = (
     const positions: Record<string, { x: number; y: number }> = {};
 
     for (const blip of blips) {
-        const pos = generateNonCollidingPosition(blip.ring, blip.quadrant, placed);
+        const pos = generateNonCollidingPosition(blip.radarRing, blip.radarQuadrant, placed);
         placed.push(pos);
         positions[blip.id] = pos;
     }

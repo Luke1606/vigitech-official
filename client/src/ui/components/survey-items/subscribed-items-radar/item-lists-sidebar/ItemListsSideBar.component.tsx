@@ -91,8 +91,8 @@ export const ItemListsSideBar: React.FC<{
 
         const getAvailableItemsForTarget = useCallback((target: UserItemList): Blip[] => {
             const usedIds = new Set(target.items.map(item => item.id));
-            return elements.filter(item => !usedIds.has(item.id));
-        }, [elements]);
+            return blips.filter(item => !usedIds.has(item.id));
+        }, []);
 
         useEffect(() => {
             if (addTarget) {
@@ -257,56 +257,58 @@ export const ItemListsSideBar: React.FC<{
 
                     />
 
-                    <ul className="space-y-2" role="list">
-                        {elements.map((item: Blip) => (
-                            <li
-                                key={item.id}
-                                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                                <label className="flex items-center gap-4 p-4 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedItems.includes(item.id)}
-                                        onChange={(e) => {
-                                            if (e.target.checked)
-                                                setSelectedItems(prev => [...prev, item.id]);
-                                            else
-                                                setSelectedItems(prev => prev.filter(id => id !== item.id));
-                                        }}
-                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                        aria-labelledby={`item-title-${item.id}`}
-                                    />
+                    <div className="max-h-64 overflow-y-auto">
+                        <ul className="space-y-2" role="list">
+                            {elements.map((item: Blip) => (
+                                <li
+                                    key={item.id}
+                                    className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                                    <label className="flex items-center gap-4 p-4 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedItems.includes(item.id)}
+                                            onChange={(e) => {
+                                                if (e.target.checked)
+                                                    setSelectedItems(prev => [...prev, item.id]);
+                                                else
+                                                    setSelectedItems(prev => prev.filter(id => id !== item.id));
+                                            }}
+                                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                            aria-labelledby={`item-title-${item.id}`}
+                                        />
 
-                                    <div className="flex-1 min-w-0">
-                                        <h3
-                                            id={`item-title-${item.id}`}
-                                            className="text-gray-900 font-medium truncate">
-                                            {item.title}
-                                        </h3>
-                                    </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3
+                                                id={`item-title-${item.id}`}
+                                                className="text-gray-900 font-medium truncate">
+                                                {item.title}
+                                            </h3>
+                                        </div>
 
-                                    <div className="flex items-center gap-2">
-                                        <span
-                                            className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium"
-                                            style={{
-                                                backgroundColor: getQuadrantLightColor(item.radarQuadrant),
-                                                color: getQuadrantColor(item.radarQuadrant)
-                                            }}>
-                                            {item.radarQuadrant}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span
+                                                className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium"
+                                                style={{
+                                                    backgroundColor: getQuadrantLightColor(item.radarQuadrant),
+                                                    color: getQuadrantColor(item.radarQuadrant)
+                                                }}>
+                                                {item.radarQuadrant}
+                                            </span>
 
-                                        <span
-                                            className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium"
-                                            style={{
-                                                backgroundColor: getRingLightColor(item.radarRing),
-                                                color: getRingColor(item.radarRing)
-                                            }}>
-                                            {item.radarRing}
-                                        </span>
-                                    </div>
-                                </label>
-                            </li>
-                        ))}
-                    </ul>
+                                            <span
+                                                className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium"
+                                                style={{
+                                                    backgroundColor: getRingLightColor(item.radarRing),
+                                                    color: getRingColor(item.radarRing)
+                                                }}>
+                                                {item.radarRing}
+                                            </span>
+                                        </div>
+                                    </label>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setAddTarget(null)}>
