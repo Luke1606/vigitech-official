@@ -1,5 +1,6 @@
-import { User } from '@prisma/client';
+import { UUID } from 'crypto';
+import { Request } from 'express';
 
 export type AuthenticatedRequest = Request & {
-    user: User;
+    userId?: UUID;
 };
