@@ -9,7 +9,7 @@ export abstract class BaseExternalActor {
         protected readonly httpService: HttpService,
         protected readonly loggerName: string,
         protected readonly baseURL: string,
-        protected readonly apiKey?: string
+        protected readonly apiKey?: string,
     ) {
         this.logger = new Logger(loggerName);
 
@@ -17,14 +17,13 @@ export abstract class BaseExternalActor {
             (config: InternalAxiosRequestConfig) => {
                 config.baseURL = this.baseURL;
 
-                if (this.apiKey)
-                    config.headers.Authorization = `Bearer ${this.apiKey}`;
+                if (this.apiKey) config.headers.Authorization = `Bearer ${this.apiKey}`;
 
                 config.headers['Content-Type'] = 'application/json';
 
                 return config;
             },
-            (error: Error) => Promise.reject(error)
+            (error: Error) => Promise.reject(error),
         );
 
         this.httpService.axiosRef.interceptors.response.use(
@@ -37,7 +36,7 @@ export abstract class BaseExternalActor {
                     data: error.response?.data,
                 });
                 return Promise.reject(error);
-            }
+            },
         );
 
         this.logger.log('Initialized');

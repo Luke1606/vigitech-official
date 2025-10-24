@@ -11,9 +11,7 @@ describe('UserItemListsController', () => {
             providers: [UserItemListsService],
         }).compile();
 
-        controller = module.get<UserItemListsController>(
-            UserItemListsController
-        );
+        controller = module.get<UserItemListsController>(UserItemListsController);
     });
 
     it('should be defined', () => {

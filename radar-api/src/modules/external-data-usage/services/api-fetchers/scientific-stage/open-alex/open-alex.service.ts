@@ -17,13 +17,11 @@ import {
 export class OpenAlexService extends BaseFetchingService {
     constructor(
         protected readonly httpService: HttpService,
-        private configService: ConfigService
+        private configService: ConfigService,
     ) {
         const loggerName: string = 'OpenAlexAPIFetcher';
 
-        const openAlexUrl: string =
-            configService.get<string>('OPEN_ALEX_API_URL') ||
-            'https://api.openalex.org';
+        const openAlexUrl: string = configService.get<string>('OPEN_ALEX_API_URL') || 'https://api.openalex.org';
 
         if (!openAlexUrl) {
             throw new Error('OpenALEX API URL is missing!');
@@ -40,26 +38,22 @@ export class OpenAlexService extends BaseFetchingService {
 
         try {
             // Obtener tópicos populares ordenados por cited_by_count
-            const response: AxiosResponse<OpenAlexResponse> =
-                await firstValueFrom(
-                    this.httpService.get('/topics', {
-                        params: {
-                            sort: 'cited_by_count:desc',
-                            per_page: 25,
-                            filter: 'works_count:>1000', // Filtramos tópicos con suficiente contenido
-                        },
-                    })
-                );
+            const response: AxiosResponse<OpenAlexResponse> = await firstValueFrom(
+                this.httpService.get('/topics', {
+                    params: {
+                        sort: 'cited_by_count:desc',
+                        per_page: 25,
+                        filter: 'works_count:>1000', // Filtramos tópicos con suficiente contenido
+                    },
+                }),
+            );
 
             const topics = response.data.results as OpenAlexTopic[];
 
             // Mapear los tópicos a CreateSurveyItemDto
             return topics.map((topic) => this.mapTopicToSurveyItemDto(topic));
         } catch (error) {
-            this.logger.error(
-                'Error fetching trending topics from OpenAlex',
-                error
-            );
+            this.logger.error('Error fetching trending topics from OpenAlex', error);
             throw new Error('Failed to fetch trending topics');
         }
     }
@@ -72,27 +66,24 @@ export class OpenAlexService extends BaseFetchingService {
 
         try {
             // Buscar works relacionados con el ítem por título o contenido
-            const response: AxiosResponse<OpenAlexResponse> =
-                await firstValueFrom(
-                    this.httpService.get('/works', {
-                        params: {
-                            search: item.title, // Buscar por título
-                            per_page: 10,
-                        },
-                    })
-                );
+            const response: AxiosResponse<OpenAlexResponse> = await firstValueFrom(
+                this.httpService.get('/works', {
+                    params: {
+                        search: item.title, // Buscar por título
+                        per_page: 10,
+                    },
+                }),
+            );
 
             const works = response.data.results as OpenAlexWork[];
 
             if (works.length === 0) {
-                throw new Error(
-                    'No se encontraron works relacionados con el ítem'
-                );
+                throw new Error('No se encontraron works relacionados con el ítem');
             }
 
             // Obtener el work más relevante (mayor número de citas)
             const mostRelevantWork = works.reduce((prev, current) =>
-                prev.cited_by_count > current.cited_by_count ? prev : current
+                prev.cited_by_count > current.cited_by_count ? prev : current,
             );
 
             return this.mapWorkToOpenAlexResult(mostRelevantWork, item);
@@ -105,28 +96,21 @@ export class OpenAlexService extends BaseFetchingService {
     /**
      * Método adicional para buscar works por tópico específico
      */
-    async getWorksByTopic(
-        topicId: string,
-        limit = 10
-    ): Promise<OpenAlexWork[] | undefined> {
+    async getWorksByTopic(topicId: string, limit = 10): Promise<OpenAlexWork[] | undefined> {
         try {
-            const response: AxiosResponse<OpenAlexResponse> =
-                await firstValueFrom(
-                    this.httpService.get('/works', {
-                        params: {
-                            filter: `topics.id:${topicId}`,
-                            sort: 'cited_by_count:desc',
-                            per_page: limit,
-                        },
-                    })
-                );
+            const response: AxiosResponse<OpenAlexResponse> = await firstValueFrom(
+                this.httpService.get('/works', {
+                    params: {
+                        filter: `topics.id:${topicId}`,
+                        sort: 'cited_by_count:desc',
+                        per_page: limit,
+                    },
+                }),
+            );
 
             return response.data.results as OpenAlexWork[];
         } catch (error) {
-            this.logger.error(
-                'Error fetching works by topic from OpenAlex',
-                error
-            );
+            this.logger.error('Error fetching works by topic from OpenAlex', error);
             throw new Error('Failed to fetch works by topic');
         }
     }
@@ -134,29 +118,22 @@ export class OpenAlexService extends BaseFetchingService {
     /**
      * Método para obtener tópicos relacionados basados en keywords
      */
-    async getRelatedTopics(
-        keywords: string[],
-        limit = 5
-    ): Promise<OpenAlexTopic[] | undefined> {
+    async getRelatedTopics(keywords: string[], limit = 5): Promise<OpenAlexTopic[] | undefined> {
         try {
             const keywordQuery = keywords.join('|');
-            const response: AxiosResponse<OpenAlexResponse> =
-                await firstValueFrom(
-                    this.httpService.get('/topics', {
-                        params: {
-                            search: keywordQuery,
-                            per_page: limit,
-                            sort: 'works_count:desc',
-                        },
-                    })
-                );
+            const response: AxiosResponse<OpenAlexResponse> = await firstValueFrom(
+                this.httpService.get('/topics', {
+                    params: {
+                        search: keywordQuery,
+                        per_page: limit,
+                        sort: 'works_count:desc',
+                    },
+                }),
+            );
 
             return response.data.results as OpenAlexTopic[];
         } catch (error) {
-            this.logger.error(
-                'Error fetching related topics from OpenAlex',
-                error
-            );
+            this.logger.error('Error fetching related topics from OpenAlex', error);
             throw new Error('Failed to fetch related topics');
         }
     }
@@ -164,9 +141,7 @@ export class OpenAlexService extends BaseFetchingService {
     /**
      * Mapea un tópico de OpenAlex a CreateSurveyItemDto
      */
-    private mapTopicToSurveyItemDto(
-        topic: OpenAlexTopic
-    ): CreateSurveyItemType {
+    private mapTopicToSurveyItemDto(topic: OpenAlexTopic): CreateSurveyItemType {
         return {
             title: topic.display_name,
             summary:
@@ -191,10 +166,7 @@ export class OpenAlexService extends BaseFetchingService {
     /**
      * Mapea un work de OpenAlex a CrossRefResultDto
      */
-    private mapWorkToOpenAlexResult(
-        work: OpenAlexWork,
-        originalItem: SurveyItem
-    ): OpenAlexResponse {
+    private mapWorkToOpenAlexResult(work: OpenAlexWork, originalItem: SurveyItem): OpenAlexResponse {
         return {
             title: work.title || work.display_name,
             abstract: work.abstract || '',

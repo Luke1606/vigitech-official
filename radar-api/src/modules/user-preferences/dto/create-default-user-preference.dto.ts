@@ -2,33 +2,22 @@ import type { UUID } from 'crypto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { NotificationChannelOption } from '../../../common/enums/notification-channel-options';
-import {
-    FrequencyValue,
-    LanguageValue,
-    ThemeValue,
-} from '../enum/user-preferences-options';
-import {
-    Frequency,
-    NotificationChannel,
-    Theme,
-    Language,
-} from '@prisma/client';
+import { FrequencyValue, LanguageValue, ThemeValue } from '../enum/user-preferences-options';
+import { Frequency, NotificationChannel, Theme, Language } from '@prisma/client';
 
 export class CreateDefaultUserPreferenceDto {
     @ApiProperty({ description: 'Referencia al usuario' })
     userId!: UUID;
 
     @ApiProperty({
-        description:
-            'Frecuencia en la que realizar el analisis de los items a los que el usuario sigue',
+        description: 'Frecuencia en la que realizar el analisis de los items a los que el usuario sigue',
     })
     @IsString()
     @IsEnum(Frequency)
     analysisFrequency?: Frequency = Frequency.WEEKLY;
 
     @ApiProperty({
-        description:
-            'Frecuencia en la que renovar las recomendaciones de items para el usuario',
+        description: 'Frecuencia en la que renovar las recomendaciones de items para el usuario',
     })
     @IsEnum(FrequencyValue, {
         message: `Los valores permitidos son ${FrequencyValue.join()}`,
@@ -52,8 +41,7 @@ export class CreateDefaultUserPreferenceDto {
     language?: Language = Language.ES;
 
     @ApiProperty({
-        description:
-            'Canal de notificaciones predeterminado preferido por el usuario',
+        description: 'Canal de notificaciones predeterminado preferido por el usuario',
     })
     @IsString()
     @IsOptional()

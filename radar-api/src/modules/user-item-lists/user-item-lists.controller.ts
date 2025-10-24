@@ -1,15 +1,5 @@
 import type { UUID } from 'crypto';
-import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Logger,
-    Param,
-    ParseUUIDPipe,
-    Patch,
-    Post,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 
 import { UserItemList } from '@prisma/client';
 import { UserItemListsService } from './user-item-lists.service';
@@ -30,9 +20,7 @@ export class UserItemListsController {
     }
 
     @Get(':id')
-    async findOne(
-        @Param(':id', ParseUUIDPipe) id: UUID
-    ): Promise<UserItemList> {
+    async findOne(@Param(':id', ParseUUIDPipe) id: UUID): Promise<UserItemList> {
         return await this.userItemListsService.findOne(id);
     }
 
@@ -44,47 +32,33 @@ export class UserItemListsController {
     @Patch(':id')
     async updateList(
         @Param(':id', ParseUUIDPipe) id: UUID,
-        @Body() data: UpdateUserItemListDto
+        @Body() data: UpdateUserItemListDto,
     ): Promise<UserItemList> {
         return await this.userItemListsService.updateList(id, data);
     }
 
     @Delete(':id')
-    async removeList(
-        @Param(':id', ParseUUIDPipe) id: UUID
-    ): Promise<UserItemList> {
+    async removeList(@Param(':id', ParseUUIDPipe) id: UUID): Promise<UserItemList> {
         return await this.userItemListsService.removeList(id);
     }
 
     @Patch(':listId')
-    async appendOneItem(
-        @Param(':listId') listId: UUID,
-        @Body() itemId: UUID
-    ): Promise<UserItemList> {
+    async appendOneItem(@Param(':listId') listId: UUID, @Body() itemId: UUID): Promise<UserItemList> {
         return await this.userItemListsService.appendOneItem(listId, itemId);
     }
 
     @Patch(':listId')
-    async appendAllItems(
-        @Param(':listId') id: UUID,
-        @Body() itemIds: UUID[]
-    ): Promise<UserItemList> {
+    async appendAllItems(@Param(':listId') id: UUID, @Body() itemIds: UUID[]): Promise<UserItemList> {
         return await this.userItemListsService.appendAllItems(id, itemIds);
     }
 
     @Patch(':listId')
-    async removeOneItem(
-        @Param(':listId') listId: UUID,
-        @Body() itemId: UUID
-    ): Promise<UserItemList> {
+    async removeOneItem(@Param(':listId') listId: UUID, @Body() itemId: UUID): Promise<UserItemList> {
         return await this.userItemListsService.removeOneItem(listId, itemId);
     }
 
     @Patch(':listId')
-    async removeAllItems(
-        @Param(':listId') id: UUID,
-        @Body() itemIds: UUID[]
-    ): Promise<UserItemList> {
+    async removeAllItems(@Param(':listId') id: UUID, @Body() itemIds: UUID[]): Promise<UserItemList> {
         return await this.userItemListsService.removeAllItems(id, itemIds);
     }
 }

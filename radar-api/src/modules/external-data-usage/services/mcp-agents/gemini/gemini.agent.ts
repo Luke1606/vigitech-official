@@ -10,16 +10,13 @@ import { CreateMetricsType } from '../../../types/create-analysis-metrics.type';
 export class GeminiAgent extends BaseMCPAgent {
     constructor(
         protected readonly httpService: HttpService,
-        private configService: ConfigService
+        private configService: ConfigService,
     ) {
         const loggerName: string = 'GeminiAgent';
 
-        const geminiUrl: string =
-            configService.get<string>('GEMINI_API_URL') ||
-            'https://gemini.google.com';
+        const geminiUrl: string = configService.get<string>('GEMINI_API_URL') || 'https://gemini.google.com';
 
-        const apiKey: string =
-            configService.get<string>('GEMINI_API_Key') || 'apikey';
+        const apiKey: string = configService.get<string>('GEMINI_API_Key') || 'apikey';
 
         if (!geminiUrl || !apiKey) {
             throw new Error('Gemini API URL is missing!');
@@ -27,10 +24,7 @@ export class GeminiAgent extends BaseMCPAgent {
         super(httpService, loggerName, geminiUrl, apiKey);
     }
 
-    getMetricsFromItemData(
-        _item: SurveyItem,
-        _data: GeneralSearchResult
-    ): Promise<CreateMetricsType> {
+    getMetricsFromItemData(_item: SurveyItem, _data: GeneralSearchResult): Promise<CreateMetricsType> {
         throw new Error('Method not implemented.');
     }
 }

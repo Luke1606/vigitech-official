@@ -10,15 +10,13 @@ import { CreateMetricsType } from '../../../types/create-analysis-metrics.type';
 export class ClaudeAgent extends BaseMCPAgent {
     constructor(
         protected readonly httpService: HttpService,
-        private configService: ConfigService
+        private configService: ConfigService,
     ) {
         const loggerName: string = 'ClaudeAgent';
 
-        const claudeUrl: string =
-            configService.get<string>('CLAUDE_API_URL') || 'https://claude.com';
+        const claudeUrl: string = configService.get<string>('CLAUDE_API_URL') || 'https://claude.com';
 
-        const apiKey: string =
-            configService.get<string>('CLAUDE_API_Key') || 'apikey';
+        const apiKey: string = configService.get<string>('CLAUDE_API_Key') || 'apikey';
 
         if (!claudeUrl || !apiKey) {
             throw new Error('Claude API URL is missing!');
@@ -26,10 +24,7 @@ export class ClaudeAgent extends BaseMCPAgent {
         super(httpService, loggerName, claudeUrl, apiKey);
     }
 
-    getMetricsFromItemData(
-        _item: SurveyItem,
-        _data: GeneralSearchResult
-    ): Promise<CreateMetricsType> {
+    getMetricsFromItemData(_item: SurveyItem, _data: GeneralSearchResult): Promise<CreateMetricsType> {
         throw new Error('Method not implemented.');
     }
 }

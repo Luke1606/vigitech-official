@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import {
     Injectable,
     Logger,
@@ -7,7 +6,7 @@ import {
 } from '@nestjs/common';
 
 import {
-    Metrics,
+    Insights,
     PrismaClient,
     SurveyItem,
     GeneralSearchResult,
@@ -15,16 +14,11 @@ import {
     AccesibilityLevel,
 } from '@prisma/client';
 
-import {
-    CrossRefService,
-    OpenAlexService,
-    UnpaywallService,
-} from './services/api-fetchers';
+import { CrossRefService, OpenAlexService } from './services/api-fetchers';
 
 import { CreateSurveyItemType } from '../survey-items/types/create-survey-item.type';
 import { CrossRefResponse } from './types/api-responses/scientific-stage/cross-ref-responses.type';
 import { OpenAlexResponse } from './types/api-responses/scientific-stage/open-alex-responses.type';
-import { UnpaywallResponse } from './types/unpaywall-responsestype';
 
 import {
     ChatGPTAgent,
@@ -45,7 +39,6 @@ export class ExternalDataUsageService
 
     constructor(
         private readonly crossRefFetcher: CrossRefService,
-        private readonly unpaywallFetcher: UnpaywallService,
         private readonly openAlexFetcher: OpenAlexService,
         private readonly chatGPTAgent: ChatGPTAgent,
         private readonly claudeAgent: ClaudeAgent,
@@ -72,13 +65,9 @@ export class ExternalDataUsageService
         const openAlexTrendings: CreateSurveyItemType[] =
             await this.openAlexFetcher.getTrendings();
 
-        const unpaywallTrendings: CreateSurveyItemType[] =
-            await this.unpaywallFetcher.getTrendings();
-
         return [
             ...crossRefTrendings,
             ...openAlexTrendings,
-            ...unpaywallTrendings,
         ] as CreateSurveyItemType[];
     }
 
@@ -89,14 +78,10 @@ export class ExternalDataUsageService
         const openAlexResult: OpenAlexResponse | undefined =
             await this.openAlexFetcher.getInfoFromItem(item);
 
-        const unpaywallResult: UnpaywallResponse | undefined =
-            await this.unpaywallFetcher.getInfoFromItem(item);
-
         return await this.generalSearchResult.create({
             data: {
                 crossRefResult: crossRefResult as unknown as object,
                 openAlexResult: openAlexResult as unknown as object,
-                unpaywallResult: unpaywallResult as unknown as object,
             },
         });
     }
@@ -104,30 +89,20 @@ export class ExternalDataUsageService
     async getSurveyItemMetricsFromData(
         item: SurveyItem,
         data: GeneralSearchResult
-    ): Promise<Metrics> {
-        const chatGptMetrics: CreateMetricsType = await this.chatGPTAgent.getMetricsFromItemData(
-            item,
-            data
-        );
-        const _claudeMetrics: CreateMetricsType = await this.claudeAgent.getMetricsFromItemData(
-            item,
-            data
-        );
-        const _codeGptMetrics: CreateMetricsType = await this.codeGPTAgent.getMetricsFromItemData(
-            item,
-            data
-        );
+    ): Promise<Insights> {
+        const chatGptMetrics: CreateMetricsType =
+            await this.chatGPTAgent.getMetricsFromItemData(item, data);
+        const _claudeMetrics: CreateMetricsType =
+            await this.claudeAgent.getMetricsFromItemData(item, data);
+        const _codeGptMetrics: CreateMetricsType =
+            await this.codeGPTAgent.getMetricsFromItemData(item, data);
         const _deepseekMetrics: CreateMetricsType =
             await this.deepseekAgent.getMetricsFromItemData(item, data);
 
-        const _geminiMetrics: CreateMetricsType = await this.geminiAgent.getMetricsFromItemData(
-            item,
-            data
-        );
-        const _grokMetrics: CreateMetricsType = await this.grokAgent.getMetricsFromItemData(
-            item,
-            data
-        );
+        const _geminiMetrics: CreateMetricsType =
+            await this.geminiAgent.getMetricsFromItemData(item, data);
+        const _grokMetrics: CreateMetricsType =
+            await this.grokAgent.getMetricsFromItemData(item, data);
 
         const citations: number = chatGptMetrics.citations;
         const downloads: number = chatGptMetrics.downloads;
@@ -136,7 +111,7 @@ export class ExternalDataUsageService
         const accesibilityLevel: AccesibilityLevel =
             chatGptMetrics.accesibilityLevel;
 
-        return await this.metrics.create({
+        return await this.insights.create({
             data: {
                 citations,
                 downloads,

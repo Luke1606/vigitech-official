@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 export type OpenAlexTopic = {
     id: string;
     display_name: string;
@@ -11,7 +10,7 @@ export type OpenAlexTopic = {
     cited_by_count: number;
     created_date: string;
     updated_date: string;
-}
+};
 
 export type OpenAlexWork = {
     id: string;
@@ -29,7 +28,7 @@ export type OpenAlexWork = {
     }[];
     abstract: string;
     related_works: string[];
-}
+};
 
 export type OpenAlexResponse = {
     results: OpenAlexTopic[] | OpenAlexWork[];
@@ -39,4 +38,4 @@ export type OpenAlexResponse = {
         page: number;
         per_page: number;
     };
-}
+};

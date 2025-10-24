@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import type { UUID } from 'crypto';
 import {
     Injectable,
@@ -9,7 +8,7 @@ import {
 
 import {
     GeneralSearchResult,
-    Metrics,
+    Insights,
     PrismaClient,
     ItemAnalysis,
     SurveyItem,
@@ -17,7 +16,6 @@ import {
 
 import { ExternalDataUsageService } from '../external-data-usage/external-data-usage.service.js';
 import { CreateItemAnalysisType } from './types/create-item-analysis.type.js';
-
 
 @Injectable()
 export class ItemAnalysisService
@@ -48,7 +46,7 @@ export class ItemAnalysisService
             const searchedData: GeneralSearchResult =
                 await this.externalDataUsageService.getSurveyItemData(item);
 
-            const analyzedMetrics: Metrics =
+            const analyzedMetrics: Insights =
                 await this.externalDataUsageService.getSurveyItemMetricsFromData(
                     item,
                     searchedData
@@ -86,9 +84,7 @@ export class ItemAnalysisService
             );
     }
 
-    async findLastAnalysisFromItem(
-        itemId: UUID
-    ): Promise<ItemAnalysis> {
+    async findLastAnalysisFromItem(itemId: UUID): Promise<ItemAnalysis> {
         return await this.itemAnalysis.findFirstOrThrow({
             where: { itemId },
             orderBy: { createdAt: 'desc' },

@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import type { UUID } from 'crypto';
 import {
     Body,
@@ -7,9 +6,11 @@ import {
     Logger,
     ParseDatePipe,
     ParseUUIDPipe,
+    Req,
 } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { AnalysisHistoryType } from './types/analysis-history.type';
+import type { AuthenticatedRequest } from '../../shared/types/authenticated-request.type';
 
 @Controller('reports')
 export class ReportsController {
@@ -23,8 +24,16 @@ export class ReportsController {
     async generate(
         @Body('itemIds', new ParseUUIDPipe()) itemIds: UUID[],
         @Body('startDate', new ParseDatePipe()) startDate: Date,
-        @Body('endDate', new ParseDatePipe()) endDate: Date
+        @Body('endDate', new ParseDatePipe()) endDate: Date,
+        @Req() request: AuthenticatedRequest
     ): Promise<AnalysisHistoryType[]> {
-        return await this.reportsService.generate(itemIds, startDate, endDate);
+        this.logger.log('Executed generate');
+        const userId: UUID = request.user.id as UUID;
+        return await this.reportsService.generate(
+            itemIds,
+            startDate,
+            endDate,
+            userId
+        );
     }
 }

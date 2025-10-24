@@ -8,13 +8,10 @@ export abstract class BaseMCPAgent extends BaseExternalActor {
         protected readonly httpService: HttpService,
         protected readonly loggerName: string,
         protected readonly baseURL: string,
-        protected readonly apiKey?: string
+        protected readonly apiKey?: string,
     ) {
         super(httpService, loggerName, baseURL, apiKey);
     }
 
-    abstract getMetricsFromItemData(
-        item: SurveyItem,
-        data: GeneralSearchResult
-    ): Promise<CreateMetricsType>;
+    abstract getMetricsFromItemData(item: SurveyItem, data: GeneralSearchResult): Promise<CreateMetricsType>;
 }

@@ -1,20 +1,12 @@
 import { UUID } from 'crypto';
-import {
-    Injectable,
-    Logger,
-    OnModuleDestroy,
-    OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 
 import { CreateDefaultUserPreferenceDto } from './dto/create-default-user-preference.dto';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { PrismaClient, User, UserPreferences } from '@prisma/client';
 
 @Injectable()
-export class UserPreferencesService
-    extends PrismaClient
-    implements OnModuleInit, OnModuleDestroy
-{
+export class UserPreferencesService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
     private readonly logger: Logger = new Logger('UserPreferencesService');
 
     async onModuleInit(): Promise<void> {
@@ -39,8 +31,7 @@ export class UserPreferencesService
             userId: currentUser.id as UUID,
         };
 
-        const preferences: UserPreferences | null =
-            await this.findActualUserPreferences();
+        const preferences: UserPreferences | null = await this.findActualUserPreferences();
 
         return this.userPreferences.upsert({
             where: { id: preferences?.id },

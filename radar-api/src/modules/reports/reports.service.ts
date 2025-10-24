@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { UUID } from 'crypto';
 import {
     Injectable,
@@ -6,10 +5,7 @@ import {
     OnModuleDestroy,
     Logger,
 } from '@nestjs/common';
-import {
-    PrismaClient,
-    ItemAnalysis,
-} from '@prisma/client';
+import { PrismaClient, ItemAnalysis } from '@prisma/client';
 import { ItemAnalysisService } from '../item-analysis/item-analysis.service';
 import { AnalysisHistoryType } from './types/analysis-history.type';
 import { SurveyItemsService } from '../survey-items/survey-items.service';
@@ -37,14 +33,16 @@ export class ReportsService
     async generate(
         itemIds: UUID[],
         startDate: Date,
-        endDate: Date
+        endDate: Date,
+        userId: UUID
     ): Promise<AnalysisHistoryType[]> {
         const analysisesByItem: AnalysisHistoryType[] = [];
-        
+
         for (let index = 0; index < itemIds.length; index++) {
             const id: UUID = itemIds[index];
-            const itemWithAnalysis: SurveyItemWithAnalysisType = await this.surveyItemsService.findOne(id);
-            
+            const itemWithAnalysis: SurveyItemWithAnalysisType =
+                await this.surveyItemsService.findOne(id, userId);
+
             if (!itemWithAnalysis) throw new Error(`Id ${id} not found`);
 
             const analysises: ItemAnalysis[] =
@@ -60,13 +58,13 @@ export class ReportsService
             });
         }
         await this.report.create({
-            data: { 
+            data: {
                 startDate,
                 endDate,
                 items: {
-                    connect: itemIds.map(id => ({ id }))
+                    connect: itemIds.map((id) => ({ id })),
                 },
-            }
+            },
         });
         return analysisesByItem;
     }

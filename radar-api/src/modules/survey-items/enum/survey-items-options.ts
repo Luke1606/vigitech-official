@@ -7,9 +7,4 @@ export const SurveyItemRadarQuadrant = [
     RadarQuadrant.LANGUAGES_AND_FRAMEWORKS,
 ];
 
-export const SurveyItemRadarRing = [
-    RadarRing.ADOPT,
-    RadarRing.TEST,
-    RadarRing.SUSTAIN,
-    RadarRing.HOLD,
-];
+export const SurveyItemRadarRing = [RadarRing.ADOPT, RadarRing.TEST, RadarRing.SUSTAIN, RadarRing.HOLD];

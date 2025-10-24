@@ -18,17 +18,13 @@ export class CrossRefService extends BaseFetchingService {
 
     constructor(
         protected readonly httpService: HttpService,
-        private configService: ConfigService
+        private configService: ConfigService,
     ) {
         const loggerName: string = 'CrossRefAPIFetcher';
 
-        const crossRefUrl: string =
-            configService.get<string>('CROSSREF_API_URL') ||
-            'https://api.crossref.org';
+        const crossRefUrl: string = configService.get<string>('CROSSREF_API_URL') || 'https://api.crossref.org';
 
-        const mailto: string =
-            configService.get<string>('CROSSREF_MAILTO') ||
-            'luisalbertohedzro@gmail.com';
+        const mailto: string = configService.get<string>('CROSSREF_MAILTO') || 'luisalbertohedzro@gmail.com';
 
         if (!crossRefUrl) {
             throw new Error('CrossRef API URL is missing!');
@@ -56,22 +52,16 @@ export class CrossRefService extends BaseFetchingService {
             // Añadir mailto si está configurado (para polite pool)
             if (this.mailto) params.mailto = this.mailto;
 
-            const response: AxiosResponse<CrossRefResponse> =
-                await firstValueFrom(
-                    this.httpService.get('/works', { params })
-                );
+            const response: AxiosResponse<CrossRefResponse> = await firstValueFrom(
+                this.httpService.get('/works', { params }),
+            );
 
             const works: CrossRefWork[] = response.data.message.items;
 
             // Mapear los works a CreateSurveyItemDto
-            return works.map((work: CrossRefWork) =>
-                this.mapWorkToSurveyItem(work)
-            );
+            return works.map((work: CrossRefWork) => this.mapWorkToSurveyItem(work));
         } catch (error) {
-            this.logger.error(
-                'Error fetching trending works from CrossRef',
-                error
-            );
+            this.logger.error('Error fetching trending works from CrossRef', error);
             throw new Error('Failed to fetch trending works');
         }
     }
@@ -92,25 +82,19 @@ export class CrossRefService extends BaseFetchingService {
                 params.mailto = this.mailto;
             }
 
-            const response: AxiosResponse<CrossRefResponse> =
-                await firstValueFrom(
-                    this.httpService.get('/works', { params })
-                );
+            const response: AxiosResponse<CrossRefResponse> = await firstValueFrom(
+                this.httpService.get('/works', { params }),
+            );
 
             const works = response.data.message.items;
 
             if (works.length === 0) {
-                throw new Error(
-                    'No se encontraron works relacionados con el ítem en CrossRef'
-                );
+                throw new Error('No se encontraron works relacionados con el ítem en CrossRef');
             }
 
             // Obtener el work más relevante (mayor número de citas)
             const mostRelevantWork = works.reduce((prev, current) =>
-                prev['is-referenced-by-count'] >
-                current['is-referenced-by-count']
-                    ? prev
-                    : current
+                prev['is-referenced-by-count'] > current['is-referenced-by-count'] ? prev : current,
             );
 
             return this.mapWorkToCrossRefResult(mostRelevantWork, item);
@@ -132,19 +116,15 @@ export class CrossRefService extends BaseFetchingService {
                 params.mailto = this.mailto;
             }
 
-            const response: AxiosResponse<{ message: CrossRefWork }> =
-                await firstValueFrom(
-                    this.httpService.get(`/works/${encodeURIComponent(doi)}`, {
-                        params,
-                    })
-                );
+            const response: AxiosResponse<{ message: CrossRefWork }> = await firstValueFrom(
+                this.httpService.get(`/works/${encodeURIComponent(doi)}`, {
+                    params,
+                }),
+            );
 
             return response.data.message;
         } catch (error) {
-            this.logger.error(
-                'Error fetching work by DOI from CrossRef',
-                error
-            );
+            this.logger.error('Error fetching work by DOI from CrossRef', error);
             throw new Error('Failed to fetch work by DOI');
         }
     }
@@ -164,17 +144,13 @@ export class CrossRefService extends BaseFetchingService {
                 params.mailto = this.mailto;
             }
 
-            const response: AxiosResponse<CrossRefResponse> =
-                await firstValueFrom(
-                    this.httpService.get('/works', { params })
-                );
+            const response: AxiosResponse<CrossRefResponse> = await firstValueFrom(
+                this.httpService.get('/works', { params }),
+            );
 
             return response.data.message.items;
         } catch (error) {
-            this.logger.error(
-                'Error fetching related works from CrossRef',
-                error
-            );
+            this.logger.error('Error fetching related works from CrossRef', error);
             throw new Error('Failed to fetch related works');
         }
     }
@@ -197,8 +173,7 @@ export class CrossRefService extends BaseFetchingService {
                 citationCount: work['is-referenced-by-count'] || 0,
                 referenceCount: work['reference-count'] || 0,
                 publicationDate:
-                    work.published?.['date-parts']?.[0]?.join('-') ||
-                    work.issued?.['date-parts']?.[0]?.join('-'),
+                    work.published?.['date-parts']?.[0]?.join('-') || work.issued?.['date-parts']?.[0]?.join('-'),
                 createdDate: work.created?.['date-time'],
                 depositedDate: work.deposited?.['date-time'],
             },
@@ -208,25 +183,19 @@ export class CrossRefService extends BaseFetchingService {
     /**
      * Mapea un work de CrossRef a CrossRefResultDto
      */
-    private mapWorkToCrossRefResult(
-        work: CrossRefWork,
-        originalItem: CreateSurveyItemType
-    ): CrossRefResponse {
+    private mapWorkToCrossRefResult(work: CrossRefWork, originalItem: CreateSurveyItemType): CrossRefResponse {
         return {
             title: work.title?.[0] || 'Sin título',
             abstract: work.abstract || '',
             authors:
                 work.author?.map((author) => ({
-                    name:
-                        author.name ||
-                        `${author.given} ${author.family}`.trim(),
+                    name: author.name || `${author.given} ${author.family}`.trim(),
                     givenName: author.given,
                     familyName: author.family,
                     orcid: author.ORCID,
                 })) || [],
             publication_date:
-                work.published?.['date-parts']?.[0]?.join('-') ||
-                work.issued?.['date-parts']?.[0]?.join('-'),
+                work.published?.['date-parts']?.[0]?.join('-') || work.issued?.['date-parts']?.[0]?.join('-'),
             publisher: work.publisher,
             topic: work.subject?.[0] || '',
             keywords: work.subject || [],

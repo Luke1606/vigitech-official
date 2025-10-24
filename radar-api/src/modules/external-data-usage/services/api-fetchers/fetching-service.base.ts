@@ -10,14 +10,12 @@ export abstract class BaseFetchingService extends BaseExternalActor {
         protected readonly httpService: HttpService,
         protected readonly loggerName: string,
         protected readonly baseURL: string,
-        protected readonly apiKey?: string
+        protected readonly apiKey?: string,
     ) {
         super(httpService, loggerName, baseURL, apiKey);
     }
 
     abstract getTrendings(): Promise<CreateSurveyItemType[]>;
 
-    abstract getInfoFromItem(
-        item: SurveyItem
-    ): Promise<Record<string, unknown>>;
+    abstract getInfoFromItem(item: SurveyItem): Promise<Record<string, unknown>>;
 }

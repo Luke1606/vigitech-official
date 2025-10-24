@@ -1,21 +1,13 @@
 /* eslint-disable @typescript-eslint/require-await */
 import type { UUID } from 'crypto';
-import {
-    Injectable,
-    Logger,
-    OnModuleDestroy,
-    OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 
 import { CreateUserItemListDto } from './dto/create-user-item-list.dto';
 import { PrismaClient, UserItemList } from '@prisma/client';
 import { UpdateUserItemListDto } from './dto/update-user-item-list.dto';
 
 @Injectable()
-export class UserItemListsService
-    extends PrismaClient
-    implements OnModuleInit, OnModuleDestroy
-{
+export class UserItemListsService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
     private readonly logger: Logger = new Logger('UserItemListService');
 
     async onModuleInit(): Promise<void> {
@@ -39,10 +31,7 @@ export class UserItemListsService
         });
     }
 
-    async updateList(
-        id: UUID,
-        data: UpdateUserItemListDto
-    ): Promise<UserItemList> {
+    async updateList(id: UUID, data: UpdateUserItemListDto): Promise<UserItemList> {
         return await this.userItemList.update({
             where: { id },
             data,

@@ -22,7 +22,7 @@ async function bootstrap() {
             whitelist: true,
             forbidNonWhitelisted: true,
             transform: true,
-        })
+        }),
     );
 
     app.useGlobalFilters(new HttpExceptionFilter());
@@ -32,7 +32,7 @@ async function bootstrap() {
     const config = new DocumentBuilder()
         .setTitle('Technologic Radar API')
         .setDescription(
-            'API para radar tecnologico, consta de recopilacion, analisis y obtencion de métricas sobre los objetivos tecnológicos'
+            'API para radar tecnologico, consta de recopilacion, analisis y obtencion de métricas sobre los objetivos tecnológicos',
         )
         .setVersion('1.0')
         .addTag('Radar')

@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type { UUID } from 'crypto';
 import {
     Injectable,
@@ -10,9 +6,15 @@ import {
     OnModuleInit,
 } from '@nestjs/common';
 
-import { PrismaClient, ItemAnalysis, SurveyItem } from '@prisma/client';
+import {
+    PrismaClient,
+    ItemAnalysis,
+    SurveyItem,
+    UserSubscribedItem,
+    UserHiddenItem,
+    RadarRing,
+} from '@prisma/client';
 
-import { UpdateSurveyItemDto } from './dto/update-survey-item.dto';
 import { SurveyItemWithAnalysisType } from './types/survey-item-with-analysis.type';
 import { ExternalDataUsageService } from '../external-data-usage/external-data-usage.service';
 import { CreateSurveyItemType } from './types/create-survey-item.type';
@@ -37,12 +39,31 @@ export class SurveyItemsService
         this.logger.log('Initialized and connected to database');
     }
 
-    async findAllRecommended(): Promise<SurveyItemWithAnalysisType[]> {
+    async findAllRecommended(
+        userId: UUID
+    ): Promise<SurveyItemWithAnalysisType[]> {
         this.logger.log('Executed findAllRecommended');
 
+        const subscribedItems = await this.userSubscribedItem.findMany({
+            where: { userId },
+            select: { itemId: true },
+        });
+
+        const hiddenItems = await this.userHiddenItem.findMany({
+            where: { userId },
+            select: { itemId: true },
+        });
+
+        const excludedItemIds = [
+            ...subscribedItems.map((si) => si.itemId),
+            ...hiddenItems.map((hi) => hi.itemId),
+        ];
+
         const items: SurveyItem[] = await this.surveyItem.findMany({
             where: {
-                subscribed: false,
+                id: {
+                    notIn: excludedItemIds,
+                },
             },
         });
 
@@ -65,39 +86,54 @@ export class SurveyItemsService
         return itemsWithAnalysis;
     }
 
-    async findAllSubscribed(): Promise<SurveyItemWithAnalysisType[]> {
+    async findAllSubscribed(
+        userId: UUID
+    ): Promise<SurveyItemWithAnalysisType[]> {
         this.logger.log('Executed findAllSubscribed');
 
-        const items: SurveyItem[] = await this.surveyItem.findMany({
-            where: {
-                subscribed: true,
-            },
+        const userSubscribedItems = await this.userSubscribedItem.findMany({
+            where: { userId },
+            include: { item: true },
         });
 
         const itemsWithAnalysis: SurveyItemWithAnalysisType[] = [];
 
-        for (let index = 0; index < items.length; index++) {
-            const item = items[index];
+        for (let index = 0; index < userSubscribedItems.length; index++) {
+            const userSubscribedItem = userSubscribedItems[index];
 
             const lastAnalysis: ItemAnalysis =
                 await this.itemAnalysisService.findLastAnalysisFromItem(
-                    item.id as UUID
+                    userSubscribedItem.itemId as UUID
                 );
 
             itemsWithAnalysis.push({
-                item,
+                item: userSubscribedItem.item,
                 lastAnalysis,
             });
         }
         return itemsWithAnalysis;
     }
 
-    async findOne(id: UUID): Promise<SurveyItemWithAnalysisType> {
+    async findOne(id: UUID, userId: UUID): Promise<SurveyItemWithAnalysisType> {
         this.logger.log(`Executed findOne of ${id}`);
 
         const item: SurveyItem = await this.surveyItem.findUniqueOrThrow({
             where: { id },
         });
+
+        // Verificar si el item está oculto para el usuario
+        const isHidden = await this.userHiddenItem.findUnique({
+            where: {
+                userId_itemId: {
+                    userId,
+                    itemId: id,
+                },
+            },
+        });
+
+        if (isHidden) {
+            throw new Error(`El item de id ${id} no está disponible`);
+        }
 
         const lastAnalysis: ItemAnalysis =
             await this.itemAnalysisService.findLastAnalysisFromItem(
@@ -105,8 +141,6 @@ export class SurveyItemsService
             );
 
         if (!item) throw new Error(`No existe el item de id ${id}`);
-        if (!item.active)
-            throw new Error(`El item de id ${id} no está disponible`);
 
         return {
             item,
@@ -114,107 +148,144 @@ export class SurveyItemsService
         };
     }
 
-    async subscribeOne(id: UUID): Promise<SurveyItem> {
+    async subscribeOne(id: UUID, userId: UUID): Promise<UserSubscribedItem> {
         this.logger.log(`Executed subscribe of ${id}`);
-        await this.findOne(id);
+        await this.findOne(id, userId);
 
-        return await this.updateSurveyItem(id, {
-            subscribed: true,
-            active: true,
+        await this.userHiddenItem.deleteMany({
+            where: {
+                userId,
+                itemId: id,
+            },
+        });
+
+        return await this.userSubscribedItem.create({
+            data: {
+                userId,
+                itemId: id,
+            },
         });
     }
 
-    async unsubscribeOne(id: UUID): Promise<SurveyItem> {
+    async unsubscribeOne(id: UUID, userId: UUID): Promise<void> {
         this.logger.log(`Executed unsubscribe of ${id}`);
-        await this.findOne(id);
 
-        return await this.updateSurveyItem(id, {
-            subscribed: false,
+        await this.userSubscribedItem.deleteMany({
+            where: {
+                userId,
+                itemId: id,
+            },
         });
     }
 
-    async removeOne(id: UUID): Promise<SurveyItem> {
+    async removeOne(id: UUID, userId: UUID): Promise<UserHiddenItem> {
         this.logger.log(`Executed remove of ${id}`);
-        return await this.updateSurveyItem(id, {
-            subscribed: false,
+
+        await this.userSubscribedItem.deleteMany({
+            where: {
+                userId,
+                itemId: id,
+            },
+        });
+
+        return await this.userHiddenItem.create({
+            data: {
+                userId,
+                itemId: id,
+            },
         });
     }
 
-    async subscribeBatch(ids: UUID[]): Promise<void> {
+    async subscribeBatch(ids: UUID[], userId: UUID): Promise<void> {
         this.logger.log(`Executed subscribe of ${ids.length} items`);
 
-        return await this.updateManySurveyItems(ids, {
-            subscribed: true,
-            active: true,
+        await this.userHiddenItem.deleteMany({
+            where: {
+                userId,
+                itemId: { in: ids },
+            },
         });
+
+        await Promise.all(
+            ids.map((itemId) =>
+                this.userSubscribedItem.upsert({
+                    where: {
+                        userId_itemId: {
+                            userId,
+                            itemId,
+                        },
+                    },
+                    create: {
+                        userId,
+                        itemId,
+                    },
+                    update: {},
+                })
+            )
+        );
     }
 
-    async unsubscribeBatch(ids: UUID[]): Promise<void> {
+    async unsubscribeBatch(ids: UUID[], userId: UUID): Promise<void> {
         this.logger.log(`Executed unsubscribe of ${ids.length} items`);
 
-        return await this.updateManySurveyItems(ids, {
-            subscribed: false,
+        await this.userSubscribedItem.deleteMany({
+            where: {
+                userId,
+                itemId: { in: ids },
+            },
         });
     }
 
-    async removeBatch(ids: UUID[]): Promise<void> {
+    async removeBatch(ids: UUID[], userId: UUID): Promise<void> {
         this.logger.log(`Executed remove of ${ids.length} items`);
 
-        return await this.updateManySurveyItems(ids, {
-            subscribed: false,
-            active: false,
-        });
-    }
-
-    private async updateSurveyItem(
-        id: UUID,
-        data: UpdateSurveyItemDto
-    ): Promise<SurveyItem> {
-        return await this.surveyItem.update({
-            where: { id },
-            data,
-        });
-    }
-
-    private async updateManySurveyItems(
-        ids: UUID[],
-        data: UpdateSurveyItemDto
-    ): Promise<void> {
-        await this.surveyItem.updateMany({
+        await this.userSubscribedItem.deleteMany({
             where: {
-                id: { in: ids },
+                userId,
+                itemId: { in: ids },
             },
-            data: data,
         });
+
+        await Promise.all(
+            ids.map((itemId) =>
+                this.userHiddenItem.upsert({
+                    where: {
+                        userId_itemId: {
+                            userId,
+                            itemId,
+                        },
+                    },
+                    create: {
+                        userId,
+                        itemId,
+                    },
+                    update: {},
+                })
+            )
+        );
     }
 
     // ejecutar periodicamente segun la config
-    private async renewItemRecommendations(): Promise<void> {
+    private async renewItemRecommendations(userId: UUID): Promise<void> {
         this.logger.log('Executed renewItems');
 
-        // borrar los desactivados
-        await this.surveyItem.deleteMany({
-            where: {
-                active: false,
-            },
+        // Obtener items suscritos del usuario
+        const userSubscribedItems = await this.userSubscribedItem.findMany({
+            where: { userId },
+            include: { item: true },
         });
 
-        const subscribedItems: CreateSurveyItemType[] = await this.surveyItem
-            .findMany({
-                where: {
-                    subscribed: true,
-                },
-            })
-            .then((items: SurveyItem[]) =>
-                items.map((item: SurveyItem) => {
-                    const { title, summary, radarQuadrant } = item;
-                    return {
-                        title,
-                        summary,
-                        radarQuadrant,
-                    } as CreateSurveyItemType;
-                })
-            );
+        const subscribedItems: CreateSurveyItemType[] = userSubscribedItems.map(
+            (userSubscribedItem) => {
+                const { title, summary, radarQuadrant } =
+                    userSubscribedItem.item;
+                return {
+                    title,
+                    summary,
+                    radarQuadrant,
+                } as CreateSurveyItemType;
+            }
+        );
 
         // obtener nuevos
         const trendingItems: CreateSurveyItemType[] =
@@ -224,40 +295,81 @@ export class SurveyItemsService
         const newTrendings: CreateSurveyItemType[] = [];
 
         trendingItems.forEach((trendingItem: CreateSurveyItemType) => {
-            if (subscribedItems.includes(trendingItem)) {
-                // hace falta ver como verificar que sea el mismo item aunque cambie alguna propiedad en las fuentes
-                // mediante la URI o algo asi, pq hasta la URL puede cambiar, y si algo en ese caso llamar a update
+            if (
+                subscribedItems.some(
+                    (subItem) =>
+                        subItem.title === trendingItem.title &&
+                        subItem.radarQuadrant === trendingItem.radarQuadrant
+                )
+            ) {
                 stillRelevant.push(trendingItem);
-                subscribedItems.filter((item) => item !== trendingItem);
-            } else newTrendings.push(trendingItem);
+            } else {
+                newTrendings.push(trendingItem);
+            }
         });
 
-        const notRelevantAnymore: CreateSurveyItemType[] = subscribedItems;
+        const notRelevantAnymore: CreateSurveyItemType[] =
+            subscribedItems.filter(
+                (subItem) =>
+                    !stillRelevant.some(
+                        (relItem) =>
+                            relItem.title === subItem.title &&
+                            relItem.radarQuadrant === subItem.radarQuadrant
+                    )
+            );
 
-        const createdNewTrendings: SurveyItem[] =
-            await this.surveyItem.createManyAndReturn({
-                data: newTrendings,
-                skipDuplicates: true,
-            });
+        // Crear nuevos items
+        const createdNewTrendings: SurveyItem[] = await Promise.all(
+            newTrendings.map((trendingItem) =>
+                this.surveyItem.create({
+                    data: {
+                        title: trendingItem.title,
+                        summary: trendingItem.summary,
+                        radarQuadrant: trendingItem.radarQuadrant,
+                        radarRing: RadarRing.UNKNOWN,
+                    },
+                })
+            )
+        );
 
         // insertar el primer analisis de cada uno
         await this.itemAnalysisService.createAndGetAnalysisesFromSurveyItems(
             createdNewTrendings
         );
 
-        // notificar los q ya no son relevantes
-        this.logger.log(notRelevantAnymore);
+        // Eliminar suscripciones de items no relevantes
+        const notRelevantItemIds = userSubscribedItems
+            .filter((userSubItem) =>
+                notRelevantAnymore.some(
+                    (nrItem) =>
+                        nrItem.title === userSubItem.item.title &&
+                        nrItem.radarQuadrant === userSubItem.item.radarQuadrant
+                )
+            )
+            .map((userSubItem) => userSubItem.itemId);
+
+        if (notRelevantItemIds.length > 0) {
+            await this.userSubscribedItem.deleteMany({
+                where: {
+                    userId,
+                    itemId: { in: notRelevantItemIds },
+                },
+            });
+        }
+
+        this.logger.log(
+            `Removed ${notRelevantAnymore.length} items that are no longer relevant`
+        );
     }
 
     // ejecutar periodicamente segun la config
-    private async renewItemAnalysises() {
-        const items: SurveyItem[] = await this.findAllSubscribed().then(
-            (itemsWithAnalysis: SurveyItemWithAnalysisType[]) =>
-                itemsWithAnalysis.map(
-                    (itemsWithAnalysis: SurveyItemWithAnalysisType) =>
-                        itemsWithAnalysis.item
-                )
-        );
+    private async renewItemAnalysises(userId: UUID) {
+        const userSubscribedItems = await this.userSubscribedItem.findMany({
+            where: { userId },
+            include: { item: true },
+        });
+
+        const items: SurveyItem[] = userSubscribedItems.map((usi) => usi.item);
 
         const newAnalysises: ItemAnalysis[] =
             await this.itemAnalysisService.createAndGetAnalysisesFromSurveyItems(
@@ -275,18 +387,16 @@ export class SurveyItemsService
         startDate: Date,
         endDate: Date
     ) {
-        return await this.itemAnalysis
-            .findMany({
-                where: { itemId },
-                orderBy: { createdAt: 'asc' },
-            })
-            .then((analysisFromItem: ItemAnalysis[]) =>
-                analysisFromItem.filter(
-                    (analysis) =>
-                        analysis.createdAt > startDate &&
-                        analysis.createdAt < endDate
-                )
-            );
+        return await this.itemAnalysis.findMany({
+            where: {
+                itemId,
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate,
+                },
+            },
+            orderBy: { createdAt: 'asc' },
+        });
     }
 
     async onModuleDestroy() {

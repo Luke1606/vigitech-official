@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { ItemAnalysis, SurveyItem } from '@prisma/client';
 
 export type AnalysisHistoryType = {

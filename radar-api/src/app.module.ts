@@ -6,12 +6,6 @@ import { UserItemListsModule } from './modules/user-item-lists/user-item-lists.m
 import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
-    imports: [
-        CommonModule,
-        ConfigModule,
-        AuthModule,
-        SurveyItemsModule,
-        UserItemListsModule,
-    ],
+    imports: [CommonModule, ConfigModule, AuthModule, SurveyItemsModule, UserItemListsModule],
 })
 export class AppModule {}
