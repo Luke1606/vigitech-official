@@ -1,13 +1,20 @@
-// @ts-nocheck
-/// <reference types="jest" />
+/// <reference types="@testing-library/jest-dom" />
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Error as ErrorComponent } from '../Error';
+import { useNavigate } from 'react-router-dom';
+
+jest.mock('react-router-dom', () => ({
+  useNavigate: jest.fn(),
+}));
 
 describe('Error component', () => {
   it('renders title, description and button', async () => {
     const user = userEvent.setup();
+    const navigate = jest.fn();
+    (useNavigate as jest.Mock).mockReturnValue(navigate);
+
     render(<ErrorComponent errorTitle="Oops" errorDescription="Something went wrong" />);
 
     expect(screen.getByText('Oops')).toBeInTheDocument();
@@ -16,11 +23,7 @@ describe('Error component', () => {
     const button = screen.getByRole('button', { name: /volver/i });
     expect(button).toBeInTheDocument();
 
-    // clicking changes location — assert the handler exists (mock window.location)
-    const original = window.location.href;
-    Object.defineProperty(window, 'location', { value: { href: '' }, writable: true });
     await user.click(button);
-    expect(window.location.href).toBe('/');
-    Object.defineProperty(window, 'location', { value: { href: original } });
+    expect(navigate).toHaveBeenCalledWith('/');
   });
 });

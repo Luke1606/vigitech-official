@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1761273367264" clover="3.2.0">
+  <project timestamp="1761273367265" name="All files">
+    <metrics statements="17" coveredstatements="16" conditionals="1" coveredconditionals="0" methods="9" coveredmethods="8" elements="27" coveredelements="24" complexity="0" loc="17" ncloc="17" packages="4" files="5" classes="5"/>
+    <package name="infrastructure.hooks.use-item-lists.api.constants">
+      <metrics statements="2" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+      <file name="constants.ts" path="D:\Proyectos\mios\vigitech\client\src\infrastructure\hooks\use-item-lists\api\constants\constants.ts">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+      </file>
+      <file name="index.ts" path="D:\Proyectos\mios\vigitech\client\src\infrastructure\hooks\use-item-lists\api\constants\index.ts">
+        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="1" count="8" type="stmt"/>
+      </file>
+    </package>
+    <package name="infrastructure.hooks.use-item-lists.api.query-options">
+      <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="4" coveredmethods="4"/>
+      <file name="findLists.query.ts" path="D:\Proyectos\mios\vigitech\client\src\infrastructure\hooks\use-item-lists\api\query-options\findLists.query.ts">
+        <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="4" coveredmethods="4"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="8" count="1" type="stmt"/>
+        <line num="11" count="2" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="ui.components.error">
+      <metrics statements="4" coveredstatements="3" conditionals="1" coveredconditionals="0" methods="2" coveredmethods="1"/>
+      <file name="Error.tsx" path="D:\Proyectos\mios\vigitech\client\src\ui\components\error\Error.tsx">
+        <metrics statements="4" coveredstatements="3" conditionals="1" coveredconditionals="0" methods="2" coveredmethods="1"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="36" count="0" type="stmt"/>
+      </file>
+    </package>
+    <package name="ui.components.layout.footer">
+      <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+      <file name="Footer.component.tsx" path="D:\Proyectos\mios\vigitech\client\src\ui\components\layout\footer\Footer.component.tsx">
+        <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="3" type="stmt"/>
+        <line num="16" count="18" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>
