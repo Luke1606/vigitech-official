@@ -204,5 +204,3 @@ model Report {
 
     items                          SurveyItem[]         @relation("ReportItems")
 }
-
-
