@@ -10,15 +10,16 @@ datasource db {
 }
 
 model User {
-	id                             String               @id @default(uuid())
-    clerkId                        String               @unique
-	name                           String
-    
-    createdAt                      DateTime             @default(now())
-    updatedAt                      DateTime             @updatedAt
-    
-    lists                          UserItemList[]
-    preferences                    UserPreferences?
+  id                             String               @id @default(uuid())
+  clerkId                        String               @unique
+  
+  createdAt                      DateTime             @default(now())
+  updatedAt                      DateTime             @updatedAt
+  
+  preferences                   UserPreferences?
+  subscribedItems               UserSubscribedItem[]
+  hiddenItems                   UserHiddenItem[]
+  lists                         UserItemList[]
 }
 
 
@@ -28,20 +29,6 @@ enum NotificationChannel {
     PUSH
     SMS
 }
-
-model UserItemList {
-    id                             String               @id @default(uuid())    
-    name                           String
-    preferredNotificationChannel   NotificationChannel  @default(IN_APP)
-
-    createdAt                      DateTime             @default(now())
-    updatedAt                      DateTime             @updatedAt
-    
-    ownerId                        String
-    owner                          User                 @relation(fields: [ownerId], references: [id])
-    items                          SurveyItem[]         @relation("ListItems")
-}
-
 
 enum Theme {
     DARK
@@ -97,30 +84,69 @@ enum RadarRing {
 }
 
 model SurveyItem {
-    id                             String               @id @default(uuid())
-    title                          String
-	summary                        String
-    subscribed                     Boolean              @default(false)
-    active                         Boolean              @default(false)
+  id                             String               @id @default(uuid())
+  title                          String
+  summary                        String
 
-    radarQuadrant                  RadarQuadrant
-    radarRing                      RadarRing            @default(UNKNOWN)
+  radarQuadrant                  RadarQuadrant
+  radarRing                      RadarRing            @default(UNKNOWN)
+
+  createdAt                      DateTime             @default(now())
+  updatedAt                      DateTime             @updatedAt
+
+  analysisHistory                ItemAnalysis[]  
+  lists                          UserItemList[]       @relation("ListItems")
+  reports                        Report[]             @relation("ReportItems")
+  
+  subscribedBy                  UserSubscribedItem[]
+  hiddenBy                      UserHiddenItem[]
+}
+
+
+model UserSubscribedItem {
+  id                             String               @id @default(uuid())
+  userId                         String
+  user                           User                 @relation(fields: [userId], references: [id])
+  itemId                         String
+  item                           SurveyItem           @relation(fields: [itemId], references: [id])
+  
+  createdAt                      DateTime             @default(now())
+  
+  @@unique([userId, itemId])
+}
+
+
+model UserHiddenItem {
+  id                             String               @id @default(uuid())
+  userId                         String
+  user                           User                 @relation(fields: [userId], references: [id])
+  itemId                         String
+  item                           SurveyItem           @relation(fields: [itemId], references: [id])
+  
+  createdAt                      DateTime             @default(now())
+  
+  @@unique([userId, itemId])
+}
+
+
+model UserItemList {
+    id                             String               @id @default(uuid())    
+    name                           String
+    preferredNotificationChannel   NotificationChannel  @default(IN_APP)
 
     createdAt                      DateTime             @default(now())
     updatedAt                      DateTime             @updatedAt
-
-    analysisHistory                ItemAnalysis[]  
-    lists                          UserItemList[]       @relation("ListItems")
-    reports                        Report[]             @relation("ReportItems")
+    
+    ownerId                        String
+    owner                          User                 @relation(fields: [ownerId], references: [id])
+    items                          SurveyItem[]         @relation("ListItems")
 }
-
 
 
 model GeneralSearchResult {
     id                            String               @id @default(uuid())
     crossRefResult                Json
     openAlexResult                Json
-    unpaywallResult               Json
 
     analysis                      ItemAnalysis?
 }
@@ -138,7 +164,7 @@ enum AccesibilityLevel {
     PAID
 }
 
-model Metrics {
+model Insights {
     id                            String               @id @default(uuid())
     citations                     Int
     downloads                     Int
@@ -162,10 +188,9 @@ model ItemAnalysis {
 	searchedData                   GeneralSearchResult  @relation(fields: [dataId], references: [id])
 
     metricsId                      String               @unique
-    analyzedMetrics                Metrics              @relation(fields: [metricsId], references: [id])
+    analyzedMetrics                Insights              @relation(fields: [metricsId], references: [id])
 
     item                           SurveyItem           @relation(fields: [itemId], references: [id])
-	@@map("SubscribedItemAnalysis")
 }
 
 
