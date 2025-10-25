@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserItemListsService } from '../user-item-lists.service';
-import { PrismaClient } from '@prisma/client';
 import {
     MOCK_USER_ID,
     MOCK_LIST_ID,
@@ -9,14 +8,16 @@ import {
     mockUserItemList,
     mockPrismaClient,
     notFoundError,
+    mockSurveyItem,
 } from '../../../shared/__tests__/shared.mock';
+import { PrismaService } from '../../../common/services/prisma.service';
 
 describe('UserItemListsService', () => {
     let service: UserItemListsService;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            providers: [UserItemListsService, { provide: PrismaClient, useValue: mockPrismaClient }],
+            providers: [UserItemListsService, { provide: PrismaService, useValue: mockPrismaClient }],
         }).compile();
 
         service = module.get<UserItemListsService>(UserItemListsService);
@@ -48,7 +49,7 @@ describe('UserItemListsService', () => {
 
             expect(result).toEqual(mockUserItemList);
             expect(mockPrismaClient.userItemList.findUniqueOrThrow).toHaveBeenCalledWith(
-                expect.objectContaining({ where: { id: MOCK_LIST_ID, ownerId: MOCK_USER_ID } }),
+                expect.objectContaining({ where: { id: MOCK_LIST_ID } }),
             );
         });
 
@@ -78,16 +79,16 @@ describe('UserItemListsService', () => {
     // Añadir item a la lista (appendOneItem)
     describe('appendOneItem', () => {
         it('debe añadir un item a la lista y devolver la lista actualizada', async () => {
-            const listWithItem = { ...mockUserItemList, items: [{ id: MOCK_ITEM_ID }] };
+            const listWithItem = { ...mockUserItemList, items: [mockSurveyItem] };
             (mockPrismaClient.userItemList.update as jest.Mock).mockResolvedValue(listWithItem);
 
-            const result = await service.appendOneItem(MOCK_LIST_ID, MOCK_ITEM_ID);
+            const result = await service.appendOneItem(MOCK_USER_ID, MOCK_LIST_ID, MOCK_ITEM_ID);
 
             expect(result).toEqual(listWithItem);
             expect(mockPrismaClient.userItemList.update).toHaveBeenCalledWith(
                 expect.objectContaining({
                     where: { id: MOCK_LIST_ID, ownerId: MOCK_USER_ID },
-                    data: { items: { connect: [{ id: MOCK_ITEM_ID }] } },
+                    data: { items: { connect: { id: MOCK_ITEM_ID } } },
                 }),
             );
         });

@@ -1,21 +1,19 @@
 import { UUID } from 'crypto';
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { CreateDefaultUserPreferenceDto } from './dto/create-default-user-preference.dto';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
-import { PrismaClient, UserPreferences } from '@prisma/client';
+import { UserPreferences } from '@prisma/client';
+import { PrismaService } from '../../common/services/prisma.service';
 
 @Injectable()
-export class UserPreferencesService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class UserPreferencesService {
     private readonly logger: Logger = new Logger('UserPreferencesService');
 
-    async onModuleInit(): Promise<void> {
-        await this.$connect();
-        this.logger.log('Initialized and connected to database');
-    }
+    constructor(private readonly prisma: PrismaService) {}
 
     async findActualUserPreferences(userId: UUID): Promise<UserPreferences | null> {
-        return this.userPreferences.findFirstOrThrow({
+        return this.prisma.userPreferences.findFirstOrThrow({
             where: { userId },
         });
     }
@@ -27,7 +25,7 @@ export class UserPreferencesService extends PrismaClient implements OnModuleInit
 
         const preferences: UserPreferences | null = await this.findActualUserPreferences(userId);
 
-        return await this.userPreferences.upsert({
+        return await this.prisma.userPreferences.upsert({
             where: { id: preferences?.id },
             create: defaultPreferences,
             update: {
@@ -38,16 +36,11 @@ export class UserPreferencesService extends PrismaClient implements OnModuleInit
     }
 
     async update(newPreferences: UpdateUserPreferenceDto) {
-        return this.userPreferences.update({
+        return this.prisma.userPreferences.update({
             where: {
                 id: newPreferences.id,
             },
             data: newPreferences,
         });
-    }
-
-    async onModuleDestroy(): Promise<void> {
-        await this.$disconnect();
-        this.logger.log('Disconnected from database');
     }
 }

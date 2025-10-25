@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaClient } from '@prisma/client';
 import { ItemAnalysisService } from '../../item-analysis/item-analysis.service';
 import { SurveyItemsService } from '../../survey-items/survey-items.service';
 import { ReportsService } from '../reports.service';
@@ -14,6 +13,7 @@ import {
     mockItemAnalysisService,
     mockSurveyItemsService,
 } from '../../../shared/__tests__/shared.mock';
+import { PrismaService } from '../../../common/services/prisma.service';
 
 describe('ReportsService', () => {
     let service: ReportsService;
@@ -22,7 +22,7 @@ describe('ReportsService', () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ReportsService,
-                { provide: PrismaClient, useValue: mockPrismaClient },
+                { provide: PrismaService, useValue: mockPrismaClient },
                 { provide: ItemAnalysisService, useValue: mockItemAnalysisService },
                 { provide: SurveyItemsService, useValue: mockSurveyItemsService },
             ],

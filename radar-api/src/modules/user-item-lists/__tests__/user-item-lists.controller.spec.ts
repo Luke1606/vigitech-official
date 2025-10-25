@@ -54,10 +54,14 @@ describe('UserItemListsController', () => {
             const listWithItem = { ...mockUserItemList, items: [{ id: MOCK_ITEM_ID }] };
             mockUserItemListsService.appendOneItem.mockResolvedValue(listWithItem);
 
-            const result = await controller.appendOneItem(MOCK_LIST_ID, MOCK_ITEM_ID);
+            const result = await controller.appendOneItem(MOCK_LIST_ID, MOCK_ITEM_ID, mockAuthenticatedRequest);
 
             expect(result).toEqual(listWithItem);
-            expect(mockUserItemListsService.appendOneItem).toHaveBeenCalledWith(MOCK_LIST_ID, MOCK_ITEM_ID);
+            expect(mockUserItemListsService.appendOneItem).toHaveBeenCalledWith(
+                MOCK_USER_ID,
+                MOCK_LIST_ID,
+                MOCK_ITEM_ID,
+            );
         });
     });
 });

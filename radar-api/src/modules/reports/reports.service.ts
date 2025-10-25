@@ -1,26 +1,21 @@
 import { UUID } from 'crypto';
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { PrismaClient, ItemAnalysis } from '@prisma/client';
+import { Injectable, Logger } from '@nestjs/common';
+import { ItemAnalysis } from '@prisma/client';
 import { ItemAnalysisService } from '../item-analysis/item-analysis.service';
-import { AnalysisHistoryType } from './types/analysis-history.type';
-import { SurveyItemsService } from '../survey-items/survey-items.service';
 import { SurveyItemWithAnalysisType } from '../survey-items/types/survey-item-with-analysis.type';
+import { SurveyItemsService } from '../survey-items/survey-items.service';
+import { AnalysisHistoryType } from './types/analysis-history.type';
+import { PrismaService } from '../../common/services/prisma.service';
 
 @Injectable()
-export class ReportsService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class ReportsService {
     private readonly logger: Logger = new Logger('ReportsService');
 
     constructor(
         private readonly itemAnalysisService: ItemAnalysisService,
         private readonly surveyItemsService: SurveyItemsService,
-    ) {
-        super();
-    }
-
-    async onModuleInit() {
-        await this.$connect();
-        this.logger.log('Initialized and connected to database');
-    }
+        private readonly prisma: PrismaService,
+    ) {}
 
     async generate(itemIds: UUID[], startDate: Date, endDate: Date, userId: UUID): Promise<AnalysisHistoryType[]> {
         const analysisesByItem: AnalysisHistoryType[] = [];
@@ -42,7 +37,7 @@ export class ReportsService extends PrismaClient implements OnModuleInit, OnModu
                 analysises,
             });
         }
-        await this.report.create({
+        await this.prisma.report.create({
             data: {
                 startDate,
                 endDate,
@@ -52,10 +47,5 @@ export class ReportsService extends PrismaClient implements OnModuleInit, OnModu
             },
         });
         return analysisesByItem;
-    }
-
-    async onModuleDestroy() {
-        await this.$disconnect();
-        this.logger.log('Disconnected from database');
     }
 }

@@ -36,32 +36,58 @@ export class UserItemListsController {
     async updateList(
         @Param(':id', ParseUUIDPipe) id: UUID,
         @Body() data: UpdateUserItemListDto,
+        @Req() request: AuthenticatedRequest,
     ): Promise<UserItemList> {
-        return await this.userItemListsService.updateList(id, data);
+        const userId: UUID = request.userId as UUID;
+        return await this.userItemListsService.updateList(userId, id, data);
     }
 
     @Delete(':id')
-    async removeList(@Param(':id', ParseUUIDPipe) id: UUID): Promise<UserItemList> {
-        return await this.userItemListsService.removeList(id);
+    async removeList(
+        @Param(':id', ParseUUIDPipe) id: UUID,
+        @Req() request: AuthenticatedRequest,
+    ): Promise<UserItemList> {
+        const userId: UUID = request.userId as UUID;
+        return await this.userItemListsService.removeList(userId, id);
     }
 
     @Patch(':listId')
-    async appendOneItem(@Param(':listId') listId: UUID, @Body() itemId: UUID): Promise<UserItemList> {
-        return await this.userItemListsService.appendOneItem(listId, itemId);
+    async appendOneItem(
+        @Param(':listId') listId: UUID,
+        @Body() itemId: UUID,
+        @Req() request: AuthenticatedRequest,
+    ): Promise<UserItemList> {
+        const userId: UUID = request.userId as UUID;
+        return await this.userItemListsService.appendOneItem(userId, listId, itemId);
     }
 
     @Patch('batch/:listId')
-    async appendAllItems(@Param(':listId') id: UUID, @Body() itemIds: UUID[]): Promise<UserItemList> {
-        return await this.userItemListsService.appendAllItems(id, itemIds);
+    async appendAllItems(
+        @Param(':listId') id: UUID,
+        @Body() itemIds: UUID[],
+        @Req() request: AuthenticatedRequest,
+    ): Promise<UserItemList> {
+        const userId: UUID = request.userId as UUID;
+        return await this.userItemListsService.appendAllItems(userId, id, itemIds);
     }
 
     @Patch(':listId')
-    async removeOneItem(@Param(':listId') listId: UUID, @Body() itemId: UUID): Promise<UserItemList> {
-        return await this.userItemListsService.removeOneItem(listId, itemId);
+    async removeOneItem(
+        @Param(':listId') listId: UUID,
+        @Body() itemId: UUID,
+        @Req() request: AuthenticatedRequest,
+    ): Promise<UserItemList> {
+        const userId: UUID = request.userId as UUID;
+        return await this.userItemListsService.removeOneItem(userId, listId, itemId);
     }
 
     @Patch('batch/:listId')
-    async removeAllItems(@Param(':listId') id: UUID, @Body() itemIds: UUID[]): Promise<UserItemList> {
-        return await this.userItemListsService.removeAllItems(id, itemIds);
+    async removeAllItems(
+        @Param(':listId') id: UUID,
+        @Body() itemIds: UUID[],
+        @Req() request: AuthenticatedRequest,
+    ): Promise<UserItemList> {
+        const userId: UUID = request.userId as UUID;
+        return await this.userItemListsService.removeAllItems(userId, id, itemIds);
     }
 }

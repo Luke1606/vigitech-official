@@ -1,45 +1,40 @@
 import type { UUID } from 'crypto';
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
-import { PrismaClient, ItemAnalysis, SurveyItem, UserSubscribedItem, UserHiddenItem, RadarRing } from '@prisma/client';
+import { ItemAnalysis, SurveyItem, UserSubscribedItem, UserHiddenItem, RadarRing } from '@prisma/client';
 
 import { SurveyItemWithAnalysisType } from './types/survey-item-with-analysis.type';
 import { ExternalDataUsageService } from '../external-data-usage/external-data-usage.service';
 import { CreateSurveyItemType } from './types/create-survey-item.type';
 import { ItemAnalysisService } from '../item-analysis/item-analysis.service';
+import { PrismaService } from '../../common/services/prisma.service';
 
 @Injectable()
-export class SurveyItemsService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class SurveyItemsService {
     private readonly logger: Logger = new Logger('SurveyItemsService');
 
     constructor(
         private readonly externalDataUsageService: ExternalDataUsageService,
         private readonly itemAnalysisService: ItemAnalysisService,
-    ) {
-        super();
-    }
-
-    async onModuleInit() {
-        await this.$connect();
-        this.logger.log('Initialized and connected to database');
-    }
+        private readonly prisma: PrismaService,
+    ) {}
 
     async findAllRecommended(userId: UUID): Promise<SurveyItemWithAnalysisType[]> {
         this.logger.log('Executed findAllRecommended');
 
-        const subscribedItems = await this.userSubscribedItem.findMany({
+        const subscribedItems = await this.prisma.userSubscribedItem.findMany({
             where: { userId },
             select: { itemId: true },
         });
 
-        const hiddenItems = await this.userHiddenItem.findMany({
+        const hiddenItems = await this.prisma.userHiddenItem.findMany({
             where: { userId },
             select: { itemId: true },
         });
 
         const excludedItemIds = [...subscribedItems.map((si) => si.itemId), ...hiddenItems.map((hi) => hi.itemId)];
 
-        const items: SurveyItem[] = await this.surveyItem.findMany({
+        const items: SurveyItem[] = await this.prisma.surveyItem.findMany({
             where: {
                 id: {
                     notIn: excludedItemIds,
@@ -66,7 +61,7 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
     async findAllSubscribed(userId: UUID): Promise<SurveyItemWithAnalysisType[]> {
         this.logger.log('Executed findAllSubscribed');
 
-        const userSubscribedItems = await this.userSubscribedItem.findMany({
+        const userSubscribedItems = await this.prisma.userSubscribedItem.findMany({
             where: { userId },
             include: { item: true },
         });
@@ -91,12 +86,12 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
     async findOne(id: UUID, userId: UUID): Promise<SurveyItemWithAnalysisType> {
         this.logger.log(`Executed findOne of ${id}`);
 
-        const item: SurveyItem = await this.surveyItem.findUniqueOrThrow({
+        const item: SurveyItem = await this.prisma.surveyItem.findUniqueOrThrow({
             where: { id },
         });
 
         // Verificar si el item está oculto para el usuario
-        const isHidden = await this.userHiddenItem.findUnique({
+        const isHidden = await this.prisma.userHiddenItem.findUnique({
             where: {
                 userId_itemId: {
                     userId,
@@ -123,14 +118,14 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
         this.logger.log(`Executed subscribe of ${id}`);
         await this.findOne(id, userId);
 
-        await this.userHiddenItem.deleteMany({
+        await this.prisma.userHiddenItem.deleteMany({
             where: {
                 userId,
                 itemId: id,
             },
         });
 
-        return await this.userSubscribedItem.create({
+        return await this.prisma.userSubscribedItem.create({
             data: {
                 userId,
                 itemId: id,
@@ -141,7 +136,7 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
     async unsubscribeOne(id: UUID, userId: UUID): Promise<void> {
         this.logger.log(`Executed unsubscribe of ${id}`);
 
-        await this.userSubscribedItem.deleteMany({
+        await this.prisma.userSubscribedItem.deleteMany({
             where: {
                 userId,
                 itemId: id,
@@ -152,14 +147,14 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
     async removeOne(id: UUID, userId: UUID): Promise<UserHiddenItem> {
         this.logger.log(`Executed remove of ${id}`);
 
-        await this.userSubscribedItem.deleteMany({
+        await this.prisma.userSubscribedItem.deleteMany({
             where: {
                 userId,
                 itemId: id,
             },
         });
 
-        return await this.userHiddenItem.create({
+        return await this.prisma.userHiddenItem.create({
             data: {
                 userId,
                 itemId: id,
@@ -170,7 +165,7 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
     async subscribeBatch(ids: UUID[], userId: UUID): Promise<void> {
         this.logger.log(`Executed subscribe of ${ids.length} items`);
 
-        await this.userHiddenItem.deleteMany({
+        await this.prisma.userHiddenItem.deleteMany({
             where: {
                 userId,
                 itemId: { in: ids },
@@ -179,7 +174,7 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
 
         await Promise.all(
             ids.map((itemId) =>
-                this.userSubscribedItem.upsert({
+                this.prisma.userSubscribedItem.upsert({
                     where: {
                         userId_itemId: {
                             userId,
@@ -199,7 +194,7 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
     async unsubscribeBatch(ids: UUID[], userId: UUID): Promise<void> {
         this.logger.log(`Executed unsubscribe of ${ids.length} items`);
 
-        await this.userSubscribedItem.deleteMany({
+        await this.prisma.userSubscribedItem.deleteMany({
             where: {
                 userId,
                 itemId: { in: ids },
@@ -210,7 +205,7 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
     async removeBatch(ids: UUID[], userId: UUID): Promise<void> {
         this.logger.log(`Executed remove of ${ids.length} items`);
 
-        await this.userSubscribedItem.deleteMany({
+        await this.prisma.userSubscribedItem.deleteMany({
             where: {
                 userId,
                 itemId: { in: ids },
@@ -219,7 +214,7 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
 
         await Promise.all(
             ids.map((itemId) =>
-                this.userHiddenItem.upsert({
+                this.prisma.userHiddenItem.upsert({
                     where: {
                         userId_itemId: {
                             userId,
@@ -241,7 +236,7 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
         this.logger.log('Executed renewItems');
 
         // Obtener items suscritos del usuario
-        const userSubscribedItems = await this.userSubscribedItem.findMany({
+        const userSubscribedItems = await this.prisma.userSubscribedItem.findMany({
             where: { userId },
             include: { item: true },
         });
@@ -284,7 +279,7 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
         // Crear nuevos items
         const createdNewTrendings: SurveyItem[] = await Promise.all(
             newTrendings.map((trendingItem) =>
-                this.surveyItem.create({
+                this.prisma.surveyItem.create({
                     data: {
                         title: trendingItem.title,
                         summary: trendingItem.summary,
@@ -310,7 +305,7 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
             .map((userSubItem) => userSubItem.itemId);
 
         if (notRelevantItemIds.length > 0) {
-            await this.userSubscribedItem.deleteMany({
+            await this.prisma.userSubscribedItem.deleteMany({
                 where: {
                     userId,
                     itemId: { in: notRelevantItemIds },
@@ -323,7 +318,7 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
 
     // ejecutar periodicamente segun la config
     private async renewItemAnalysises(userId: UUID) {
-        const userSubscribedItems = await this.userSubscribedItem.findMany({
+        const userSubscribedItems = await this.prisma.userSubscribedItem.findMany({
             where: { userId },
             include: { item: true },
         });
@@ -338,7 +333,7 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
     }
 
     async findAllInsideIntervalFromObjective(itemId: UUID, startDate: Date, endDate: Date) {
-        return await this.itemAnalysis.findMany({
+        return await this.prisma.itemAnalysis.findMany({
             where: {
                 itemId,
                 createdAt: {
@@ -348,10 +343,5 @@ export class SurveyItemsService extends PrismaClient implements OnModuleInit, On
             },
             orderBy: { createdAt: 'asc' },
         });
-    }
-
-    async onModuleDestroy() {
-        await this.$disconnect();
-        this.logger.log('Disconnected from database');
     }
 }

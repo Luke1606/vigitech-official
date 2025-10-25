@@ -1,23 +1,20 @@
 import type { UUID } from 'crypto';
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
-import { GeneralSearchResult, Insights, PrismaClient, ItemAnalysis, SurveyItem } from '@prisma/client';
+import { GeneralSearchResult, Insights, ItemAnalysis, SurveyItem } from '@prisma/client';
 
 import { ExternalDataUsageService } from '../external-data-usage/external-data-usage.service';
 import { CreateItemAnalysisType } from './types/create-item-analysis.type';
+import { PrismaService } from '../../common/services/prisma.service';
 
 @Injectable()
-export class ItemAnalysisService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class ItemAnalysisService {
     private readonly logger: Logger = new Logger('ItemAnalysisService');
 
-    constructor(private readonly externalDataUsageService: ExternalDataUsageService) {
-        super();
-    }
-
-    async onModuleInit() {
-        await this.$connect();
-        this.logger.log('Initialized and connected to database');
-    }
+    constructor(
+        private readonly externalDataUsageService: ExternalDataUsageService,
+        private readonly prisma: PrismaService,
+    ) {}
 
     async createAndGetAnalysisesFromSurveyItems(items: SurveyItem[]): Promise<ItemAnalysis[]> {
         const analysises: CreateItemAnalysisType[] = [];
@@ -39,14 +36,14 @@ export class ItemAnalysisService extends PrismaClient implements OnModuleInit, O
             });
         }
 
-        return await this.itemAnalysis.createManyAndReturn({
+        return await this.prisma.itemAnalysis.createManyAndReturn({
             data: analysises,
             skipDuplicates: false,
         });
     }
 
     async findAllInsideIntervalFromObjective(itemId: UUID, startDate: Date, endDate: Date): Promise<ItemAnalysis[]> {
-        return await this.itemAnalysis
+        return await this.prisma.itemAnalysis
             .findMany({
                 where: { itemId },
                 orderBy: { createdAt: 'asc' },
@@ -57,14 +54,9 @@ export class ItemAnalysisService extends PrismaClient implements OnModuleInit, O
     }
 
     async findLastAnalysisFromItem(itemId: UUID): Promise<ItemAnalysis> {
-        return await this.itemAnalysis.findFirstOrThrow({
+        return await this.prisma.itemAnalysis.findFirstOrThrow({
             where: { itemId },
             orderBy: { createdAt: 'desc' },
         });
-    }
-
-    async onModuleDestroy() {
-        await this.$disconnect();
-        this.logger.log('Disconnected from database');
     }
 }

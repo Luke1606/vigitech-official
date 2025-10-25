@@ -130,6 +130,12 @@ export const mockUserItemListsService = {
     removeAllItems: jest.fn(),
 };
 
+export const mockUserPreferencesService = {
+    findActualUserPreferences: jest.fn(),
+    createOrReturnToDefault: jest.fn(),
+    update: jest.fn(),
+};
+
 // ===========================================
 // 5. MOCKS DE SISTEMA/FRAMEWORK (Corregido para Jest/TS)
 // ===========================================
@@ -153,7 +159,6 @@ export const mockPrismaClient = {
     $disconnect: jest.fn(),
     $transaction: jest.fn(),
 
-    // Métodos para ItemAnalysisService y ReportsService
     itemAnalysis: {
         findFirstOrThrow: jest.fn(),
         findMany: jest.fn(),

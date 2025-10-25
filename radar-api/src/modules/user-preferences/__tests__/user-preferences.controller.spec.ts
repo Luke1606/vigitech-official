@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserPreferencesController } from '../user-preferences.controller';
 import { UserPreferencesService } from '../user-preferences.service';
+import { mockUserPreferencesService } from '../../../shared/__tests__/shared.mock';
 
 describe('UserPreferencesController', () => {
     let controller: UserPreferencesController;
@@ -8,10 +9,11 @@ describe('UserPreferencesController', () => {
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             controllers: [UserPreferencesController],
-            providers: [UserPreferencesService],
+            providers: [{ provide: UserPreferencesService, useValue: mockUserPreferencesService }],
         }).compile();
 
-        controller = module.get<UserPreferencesController>(UserPreferencesController);
+        controller = module.get<UserPreferencesController>(UserPreferencesService);
+        jest.clearAllMocks();
     });
 
     it('should be defined', () => {
