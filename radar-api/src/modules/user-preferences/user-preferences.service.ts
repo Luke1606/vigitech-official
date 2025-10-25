@@ -3,7 +3,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 
 import { CreateDefaultUserPreferenceDto } from './dto/create-default-user-preference.dto';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
-import { PrismaClient, User, UserPreferences } from '@prisma/client';
+import { PrismaClient, UserPreferences } from '@prisma/client';
 
 @Injectable()
 export class UserPreferencesService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -14,26 +14,20 @@ export class UserPreferencesService extends PrismaClient implements OnModuleInit
         this.logger.log('Initialized and connected to database');
     }
 
-    async findActualUserPreferences(): Promise<UserPreferences | null> {
-        const currentUser = {} as User;
-        if (!currentUser) return null;
-
+    async findActualUserPreferences(userId: UUID): Promise<UserPreferences | null> {
         return this.userPreferences.findFirstOrThrow({
-            where: { user: currentUser },
+            where: { userId },
         });
     }
 
-    async createDefault() {
-        const currentUser = {} as User;
-        if (!currentUser) return;
-
+    async createOrReturnToDefault(userId: UUID) {
         const defaultPreferences: CreateDefaultUserPreferenceDto = {
-            userId: currentUser.id as UUID,
+            userId,
         };
 
-        const preferences: UserPreferences | null = await this.findActualUserPreferences();
+        const preferences: UserPreferences | null = await this.findActualUserPreferences(userId);
 
-        return this.userPreferences.upsert({
+        return await this.userPreferences.upsert({
             where: { id: preferences?.id },
             create: defaultPreferences,
             update: {

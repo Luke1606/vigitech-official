@@ -1,13 +1,5 @@
 import type { UUID } from 'crypto';
-import {
-    Body,
-    Controller,
-    Get,
-    Logger,
-    ParseDatePipe,
-    ParseUUIDPipe,
-    Req,
-} from '@nestjs/common';
+import { Body, Controller, Get, Logger, ParseDatePipe, ParseUUIDPipe, Req } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { AnalysisHistoryType } from './types/analysis-history.type';
 import type { AuthenticatedRequest } from '../../shared/types/authenticated-request.type';
@@ -25,15 +17,10 @@ export class ReportsController {
         @Body('itemIds', new ParseUUIDPipe()) itemIds: UUID[],
         @Body('startDate', new ParseDatePipe()) startDate: Date,
         @Body('endDate', new ParseDatePipe()) endDate: Date,
-        @Req() request: AuthenticatedRequest
+        @Req() request: AuthenticatedRequest,
     ): Promise<AnalysisHistoryType[]> {
         this.logger.log('Executed generate');
-        const userId: UUID = request.user.id as UUID;
-        return await this.reportsService.generate(
-            itemIds,
-            startDate,
-            endDate,
-            userId
-        );
+        const userId: UUID = request.userId as UUID;
+        return await this.reportsService.generate(itemIds, startDate, endDate, userId);
     }
 }

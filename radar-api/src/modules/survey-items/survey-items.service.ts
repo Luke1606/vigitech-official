@@ -1,19 +1,7 @@
 import type { UUID } from 'crypto';
-import {
-    Injectable,
-    Logger,
-    OnModuleDestroy,
-    OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 
-import {
-    PrismaClient,
-    ItemAnalysis,
-    SurveyItem,
-    UserSubscribedItem,
-    UserHiddenItem,
-    RadarRing,
-} from '@prisma/client';
+import { PrismaClient, ItemAnalysis, SurveyItem, UserSubscribedItem, UserHiddenItem, RadarRing } from '@prisma/client';
 
 import { SurveyItemWithAnalysisType } from './types/survey-item-with-analysis.type';
 import { ExternalDataUsageService } from '../external-data-usage/external-data-usage.service';
@@ -21,15 +9,12 @@ import { CreateSurveyItemType } from './types/create-survey-item.type';
 import { ItemAnalysisService } from '../item-analysis/item-analysis.service';
 
 @Injectable()
-export class SurveyItemsService
-    extends PrismaClient
-    implements OnModuleInit, OnModuleDestroy
-{
+export class SurveyItemsService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
     private readonly logger: Logger = new Logger('SurveyItemsService');
 
     constructor(
         private readonly externalDataUsageService: ExternalDataUsageService,
-        private readonly itemAnalysisService: ItemAnalysisService
+        private readonly itemAnalysisService: ItemAnalysisService,
     ) {
         super();
     }
@@ -39,9 +24,7 @@ export class SurveyItemsService
         this.logger.log('Initialized and connected to database');
     }
 
-    async findAllRecommended(
-        userId: UUID
-    ): Promise<SurveyItemWithAnalysisType[]> {
+    async findAllRecommended(userId: UUID): Promise<SurveyItemWithAnalysisType[]> {
         this.logger.log('Executed findAllRecommended');
 
         const subscribedItems = await this.userSubscribedItem.findMany({
@@ -54,10 +37,7 @@ export class SurveyItemsService
             select: { itemId: true },
         });
 
-        const excludedItemIds = [
-            ...subscribedItems.map((si) => si.itemId),
-            ...hiddenItems.map((hi) => hi.itemId),
-        ];
+        const excludedItemIds = [...subscribedItems.map((si) => si.itemId), ...hiddenItems.map((hi) => hi.itemId)];
 
         const items: SurveyItem[] = await this.surveyItem.findMany({
             where: {
@@ -72,10 +52,7 @@ export class SurveyItemsService
         for (let index = 0; index < items.length; index++) {
             const item = items[index];
 
-            const lastAnalysis: ItemAnalysis =
-                await this.itemAnalysisService.findLastAnalysisFromItem(
-                    item.id as UUID
-                );
+            const lastAnalysis: ItemAnalysis = await this.itemAnalysisService.findLastAnalysisFromItem(item.id as UUID);
 
             itemsWithAnalysis.push({
                 item,
@@ -86,9 +63,7 @@ export class SurveyItemsService
         return itemsWithAnalysis;
     }
 
-    async findAllSubscribed(
-        userId: UUID
-    ): Promise<SurveyItemWithAnalysisType[]> {
+    async findAllSubscribed(userId: UUID): Promise<SurveyItemWithAnalysisType[]> {
         this.logger.log('Executed findAllSubscribed');
 
         const userSubscribedItems = await this.userSubscribedItem.findMany({
@@ -101,10 +76,9 @@ export class SurveyItemsService
         for (let index = 0; index < userSubscribedItems.length; index++) {
             const userSubscribedItem = userSubscribedItems[index];
 
-            const lastAnalysis: ItemAnalysis =
-                await this.itemAnalysisService.findLastAnalysisFromItem(
-                    userSubscribedItem.itemId as UUID
-                );
+            const lastAnalysis: ItemAnalysis = await this.itemAnalysisService.findLastAnalysisFromItem(
+                userSubscribedItem.itemId as UUID,
+            );
 
             itemsWithAnalysis.push({
                 item: userSubscribedItem.item,
@@ -135,10 +109,7 @@ export class SurveyItemsService
             throw new Error(`El item de id ${id} no está disponible`);
         }
 
-        const lastAnalysis: ItemAnalysis =
-            await this.itemAnalysisService.findLastAnalysisFromItem(
-                item.id as UUID
-            );
+        const lastAnalysis: ItemAnalysis = await this.itemAnalysisService.findLastAnalysisFromItem(item.id as UUID);
 
         if (!item) throw new Error(`No existe el item de id ${id}`);
 
@@ -220,8 +191,8 @@ export class SurveyItemsService
                         itemId,
                     },
                     update: {},
-                })
-            )
+                }),
+            ),
         );
     }
 
@@ -260,8 +231,8 @@ export class SurveyItemsService
                         itemId,
                     },
                     update: {},
-                })
-            )
+                }),
+            ),
         );
     }
 
@@ -275,21 +246,17 @@ export class SurveyItemsService
             include: { item: true },
         });
 
-        const subscribedItems: CreateSurveyItemType[] = userSubscribedItems.map(
-            (userSubscribedItem) => {
-                const { title, summary, radarQuadrant } =
-                    userSubscribedItem.item;
-                return {
-                    title,
-                    summary,
-                    radarQuadrant,
-                } as CreateSurveyItemType;
-            }
-        );
+        const subscribedItems: CreateSurveyItemType[] = userSubscribedItems.map((userSubscribedItem) => {
+            const { title, summary, radarQuadrant } = userSubscribedItem.item;
+            return {
+                title,
+                summary,
+                radarQuadrant,
+            } as CreateSurveyItemType;
+        });
 
         // obtener nuevos
-        const trendingItems: CreateSurveyItemType[] =
-            await this.externalDataUsageService.getNewTrendings();
+        const trendingItems: CreateSurveyItemType[] = await this.externalDataUsageService.getNewTrendings();
 
         const stillRelevant: CreateSurveyItemType[] = [];
         const newTrendings: CreateSurveyItemType[] = [];
@@ -298,8 +265,7 @@ export class SurveyItemsService
             if (
                 subscribedItems.some(
                     (subItem) =>
-                        subItem.title === trendingItem.title &&
-                        subItem.radarQuadrant === trendingItem.radarQuadrant
+                        subItem.title === trendingItem.title && subItem.radarQuadrant === trendingItem.radarQuadrant,
                 )
             ) {
                 stillRelevant.push(trendingItem);
@@ -308,15 +274,12 @@ export class SurveyItemsService
             }
         });
 
-        const notRelevantAnymore: CreateSurveyItemType[] =
-            subscribedItems.filter(
-                (subItem) =>
-                    !stillRelevant.some(
-                        (relItem) =>
-                            relItem.title === subItem.title &&
-                            relItem.radarQuadrant === subItem.radarQuadrant
-                    )
-            );
+        const notRelevantAnymore: CreateSurveyItemType[] = subscribedItems.filter(
+            (subItem) =>
+                !stillRelevant.some(
+                    (relItem) => relItem.title === subItem.title && relItem.radarQuadrant === subItem.radarQuadrant,
+                ),
+        );
 
         // Crear nuevos items
         const createdNewTrendings: SurveyItem[] = await Promise.all(
@@ -328,14 +291,12 @@ export class SurveyItemsService
                         radarQuadrant: trendingItem.radarQuadrant,
                         radarRing: RadarRing.UNKNOWN,
                     },
-                })
-            )
+                }),
+            ),
         );
 
         // insertar el primer analisis de cada uno
-        await this.itemAnalysisService.createAndGetAnalysisesFromSurveyItems(
-            createdNewTrendings
-        );
+        await this.itemAnalysisService.createAndGetAnalysisesFromSurveyItems(createdNewTrendings);
 
         // Eliminar suscripciones de items no relevantes
         const notRelevantItemIds = userSubscribedItems
@@ -343,8 +304,8 @@ export class SurveyItemsService
                 notRelevantAnymore.some(
                     (nrItem) =>
                         nrItem.title === userSubItem.item.title &&
-                        nrItem.radarQuadrant === userSubItem.item.radarQuadrant
-                )
+                        nrItem.radarQuadrant === userSubItem.item.radarQuadrant,
+                ),
             )
             .map((userSubItem) => userSubItem.itemId);
 
@@ -357,9 +318,7 @@ export class SurveyItemsService
             });
         }
 
-        this.logger.log(
-            `Removed ${notRelevantAnymore.length} items that are no longer relevant`
-        );
+        this.logger.log(`Removed ${notRelevantAnymore.length} items that are no longer relevant`);
     }
 
     // ejecutar periodicamente segun la config
@@ -372,21 +331,13 @@ export class SurveyItemsService
         const items: SurveyItem[] = userSubscribedItems.map((usi) => usi.item);
 
         const newAnalysises: ItemAnalysis[] =
-            await this.itemAnalysisService.createAndGetAnalysisesFromSurveyItems(
-                items
-            );
+            await this.itemAnalysisService.createAndGetAnalysisesFromSurveyItems(items);
 
         const changes: number = 0;
-        this.logger.log(
-            `Analysises renewed. It has ${changes} changes in ${newAnalysises.length} items`
-        );
+        this.logger.log(`Analysises renewed. It has ${changes} changes in ${newAnalysises.length} items`);
     }
 
-    async findAllInsideIntervalFromObjective(
-        itemId: UUID,
-        startDate: Date,
-        endDate: Date
-    ) {
+    async findAllInsideIntervalFromObjective(itemId: UUID, startDate: Date, endDate: Date) {
         return await this.itemAnalysis.findMany({
             where: {
                 itemId,

@@ -1,8 +1,9 @@
-import { Get, Post, Body, Patch, Param, Logger, Controller, ParseUUIDPipe } from '@nestjs/common';
+import type { UUID } from 'crypto';
+import { Get, Post, Body, Patch, Param, Logger, Controller, ParseUUIDPipe, Req } from '@nestjs/common';
 
 import { UserPreferencesService } from './user-preferences.service';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
-import type { UUID } from 'crypto';
+import type { AuthenticatedRequest } from '../../shared/types/authenticated-request.type';
 
 @Controller('preferences')
 export class UserPreferencesController {
@@ -13,13 +14,15 @@ export class UserPreferencesController {
     }
 
     @Post()
-    create() {
-        return this.userPreferencesService.createDefault();
+    createOrReturnToDefault(@Req() request: AuthenticatedRequest) {
+        const userId: UUID = request.userId as UUID;
+        return this.userPreferencesService.createOrReturnToDefault(userId);
     }
 
     @Get()
-    findActualUserPreferences() {
-        return this.userPreferencesService.findActualUserPreferences();
+    findActualUserPreferences(@Req() request: AuthenticatedRequest) {
+        const userId: UUID = request.userId as UUID;
+        return this.userPreferencesService.findActualUserPreferences(userId);
     }
 
     @Patch(':id')

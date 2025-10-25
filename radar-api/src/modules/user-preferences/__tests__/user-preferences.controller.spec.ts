@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserPreferencesController } from './user-preferences.controller';
-import { UserPreferencesService } from './user-preferences.service';
+import { UserPreferencesController } from '../user-preferences.controller';
+import { UserPreferencesService } from '../user-preferences.service';
 
 describe('UserPreferencesController', () => {
     let controller: UserPreferencesController;

@@ -1,10 +1,23 @@
-/* eslint-disable @typescript-eslint/require-await */
 import type { UUID } from 'crypto';
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Prisma, PrismaClient, UserItemList } from '@prisma/client';
 
 import { CreateUserItemListDto } from './dto/create-user-item-list.dto';
-import { PrismaClient, UserItemList } from '@prisma/client';
 import { UpdateUserItemListDto } from './dto/update-user-item-list.dto';
+
+const itemSelection = {
+    id: true,
+    title: true,
+    summary: true,
+    radarQuadrant: true,
+    radarRing: true,
+} satisfies Prisma.SurveyItemSelect;
+
+const listIncludeItems = {
+    items: {
+        select: itemSelection,
+    },
+} satisfies Prisma.UserItemListInclude;
 
 @Injectable()
 export class UserItemListsService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -15,17 +28,24 @@ export class UserItemListsService extends PrismaClient implements OnModuleInit, 
         this.logger.log('Initialized and connected to database');
     }
 
-    async findAll(): Promise<UserItemList[]> {
-        return await this.userItemList.findMany();
+    async findAll(ownerId: UUID): Promise<UserItemList[]> {
+        return await this.userItemList.findMany({
+            where: { ownerId },
+            include: listIncludeItems,
+        });
     }
 
     async findOne(id: UUID): Promise<UserItemList> {
-        return await this.userItemList.findUniqueOrThrow({ where: { id } });
+        return await this.userItemList.findUniqueOrThrow({
+            where: { id },
+            include: listIncludeItems,
+        });
     }
 
-    async createList(data: CreateUserItemListDto): Promise<UserItemList> {
+    async createList(ownerId: UUID, data: CreateUserItemListDto): Promise<UserItemList> {
         return this.userItemList.create({
             data: {
+                ownerId,
                 ...data,
             },
         });
@@ -35,6 +55,7 @@ export class UserItemListsService extends PrismaClient implements OnModuleInit, 
         return await this.userItemList.update({
             where: { id },
             data,
+            include: listIncludeItems,
         });
     }
 
@@ -44,24 +65,82 @@ export class UserItemListsService extends PrismaClient implements OnModuleInit, 
         });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async appendOneItem(id: UUID, itemId: UUID): Promise<UserItemList> {
-        return {} as UserItemList;
+    async appendOneItem(listId: UUID, itemId: UUID): Promise<UserItemList> {
+        await this.surveyItem.findUniqueOrThrow({ where: { id: itemId } });
+
+        return await this.userItemList.update({
+            where: { id: listId },
+            data: {
+                items: {
+                    connect: { id: itemId },
+                },
+            },
+            include: listIncludeItems,
+        });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async appendAllItems(listId: UUID, itemIds: UUID[]): Promise<UserItemList> {
-        return {} as UserItemList;
+        const items = await this.surveyItem.findMany({
+            where: { id: { in: itemIds } },
+        });
+
+        if (items.length !== itemIds.length) {
+            throw new NotFoundException('Uno o más items (SurveyItem) no existen en la base de datos.');
+        }
+
+        return await this.userItemList.update({
+            where: { id: listId },
+            data: {
+                items: {
+                    connect: itemIds.map((id) => ({ id })),
+                },
+            },
+            include: listIncludeItems,
+        });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async removeOneItem(id: UUID, itemId: UUID): Promise<UserItemList> {
-        return {} as UserItemList;
+    async removeOneItem(listId: UUID, itemId: UUID): Promise<UserItemList> {
+        return await this.userItemList.update({
+            where: { id: listId },
+            data: {
+                items: {
+                    disconnect: { id: itemId },
+                },
+            },
+            include: listIncludeItems,
+        });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async removeAllItems(listId: UUID, itemIds: UUID[]): Promise<UserItemList> {
-        return {} as UserItemList;
+        return await this.userItemList.update({
+            where: { id: listId },
+            data: {
+                items: {
+                    disconnect: itemIds.map((id) => ({ id })),
+                },
+            },
+            include: listIncludeItems,
+        });
+    }
+
+    async getListItems(listId: UUID) {
+        return await this.userItemList.findUnique({
+            where: { id: listId },
+            select: listIncludeItems,
+        });
+    }
+
+    async isItemInList(listId: UUID, itemId: UUID): Promise<boolean> {
+        const count = await this.userItemList.count({
+            where: {
+                id: listId,
+                items: {
+                    some: { id: itemId },
+                },
+            },
+        });
+
+        return count > 0;
     }
 
     async onModuleDestroy(): Promise<void> {
