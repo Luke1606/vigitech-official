@@ -17,6 +17,7 @@ model User {
   updatedAt                      DateTime             @updatedAt
   
   preferences                   UserPreferences?
+  insertedItems                 SurveyItem[]
   subscribedItems               UserSubscribedItem[]
   hiddenItems                   UserHiddenItem[]
   lists                         UserItemList[]
@@ -98,8 +99,10 @@ model SurveyItem {
   lists                          UserItemList[]       @relation("ListItems")
   reports                        Report[]             @relation("ReportItems")
   
-  subscribedBy                  UserSubscribedItem[]
-  hiddenBy                      UserHiddenItem[]
+  insertedBy                     User?                @relation(fields: [insertedById], references: [id])
+  insertedById                   String?
+  subscribedBy                   UserSubscribedItem[]
+  hiddenBy                       UserHiddenItem[]
 }
 
 
