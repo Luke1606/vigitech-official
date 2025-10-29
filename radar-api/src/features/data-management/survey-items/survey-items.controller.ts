@@ -1,7 +1,7 @@
 import type { UUID } from 'crypto';
 import { Get, Body, Patch, Param, Logger, Delete, Controller, ParseUUIDPipe, Req } from '@nestjs/common';
 
-import { UserSubscribedItem, UserHiddenItem } from '@prisma/client';
+import { UserSubscribedItem, UserHiddenItem, SurveyItem } from '@prisma/client';
 import { SurveyItemsService } from './survey-items.service';
 import { SurveyItemWithAnalysisType } from './types/survey-item-with-analysis.type';
 import type { AuthenticatedRequest } from '../../../shared/types/authenticated-request.type';
@@ -40,7 +40,7 @@ export class SurveyItemsController {
     }
 
     @Patch('create')
-    async create(@Body() data: CreateSurveyItemDto, @Req() request: AuthenticatedRequest): Promise<UserSubscribedItem> {
+    async create(@Body() data: CreateSurveyItemDto, @Req() request: AuthenticatedRequest): Promise<SurveyItem> {
         this.logger.log('Executed create');
         const userId: UUID = request.userId as UUID;
         return await this.surveyItemsService.create(data, userId);

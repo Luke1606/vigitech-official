@@ -125,6 +125,8 @@ export class SurveyItemsService {
         });
 
         await this.subscribeOne(item.id as UUID, insertedById);
+
+        return item;
     }
 
     async subscribeOne(id: UUID, userId: UUID): Promise<UserSubscribedItem> {
