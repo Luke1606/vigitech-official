@@ -20,8 +20,8 @@ import {
     ChangeLogSideBar,
     Radar,
 } from '../../../../components';
-    ItemListsSideBar,
-    ChangeLogSideBar
+ItemListsSideBar
+ChangeLogSideBar
 
 type Position = { x: number; y: number };
 export const SubscribedItemsRadar = () => {
@@ -93,14 +93,14 @@ export const SubscribedItemsRadar = () => {
         removeFromSelectedItems(selectedItems);
     };
 
-    if (getSubscribed.isLoading) return <div>Loading subscribed items...</div>;
+    if (getSubscribed.isLoading) return <div>Cargando elementos suscritos...</div>;
 
     if (getSubscribed.error)
         return (
             <Alert variant="destructive">
                 <InfoIcon className="h-4 w-4" />
                 <AlertDescription>
-                    Error loading subscribed items: {getSubscribed.error.message}
+                    Ocurrió un error al cargar los elementos suscritos: {getSubscribed.error.message}
                 </AlertDescription>
             </Alert>
         );
@@ -109,10 +109,10 @@ export const SubscribedItemsRadar = () => {
         return (
             <div className="text-center py-12">
                 <h3 className="text-lg font-medium text-muted-foreground">
-                    You haven't subscribed to any surveys yet
+                    No te has suscrito a ningún elemento aún.
                 </h3>
                 <p className="text-sm text-muted-foreground mt-2">
-                    Subscribe to surveys from the recommendations to see them
+                    Suscríbete a los elementos recomendados para poder visualizarlos.
                     <span
                         className="cursor-pointer text-primary underline"
                         onClick={() => navigate(PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED)}
@@ -158,11 +158,11 @@ export const SubscribedItemsRadar = () => {
                             removeFromSelectedItems(selectedItems);
                         }}
                     >
-                        Unsubscribe all selected
+                        Cancelar suscripción de los elementos seleccionados.
                     </Button>
 
                     <Button type="button" onClick={() => setHasItemsToRemove(true)}>
-                        Remove all selected
+                        Remover las selecciones.
                     </Button>
                 </div>
 
@@ -176,17 +176,17 @@ export const SubscribedItemsRadar = () => {
             <AlertDialog open={hasItemsToRemove} onOpenChange={() => setHasItemsToRemove(false)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Estás absolutamente seguro?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete all data associated with this
-                            survey item from our servers.
+                            Esta acción no se puede deshacer. 
+                            Esto eliminará permanentemente todos los datos asociados a este elemento de nuestros servidores.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
 
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={confirmRemove}>
-                            Continue
+                            Continuar
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

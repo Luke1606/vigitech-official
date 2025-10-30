@@ -69,6 +69,7 @@ export const CustomItemsList: React.FC<{
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button
+                                            name='cesto'
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => onRemoveItem?.(id, [item.id])}

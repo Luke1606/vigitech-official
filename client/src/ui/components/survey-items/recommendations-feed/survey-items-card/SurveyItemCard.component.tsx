@@ -55,21 +55,21 @@ export const SurveyItemCard: React.FC<{
                     className="mr-2"
                     onClick={() => onViewDetails()}
                     disabled={isLoading.subscribeOne}>
-                    <View className="w-4 h-4 mr-2" /> Details
+                    <View className="w-4 h-4 mr-2" /> Detalles
                 </Button>
 
                 <Button
                     className="mr-2"
                     onClick={() => onSubscribe()}
                     disabled={isLoading.subscribeOne}>
-                    <Plus className="w-4 h-4 mr-2" /> Subscribe
+                    <Plus className="w-4 h-4 mr-2" /> Suscribirse
                 </Button>
 
                 <Button
                     variant="destructive"
                     onClick={() => onRemove()}
                     disabled={isLoading.removeOne}>
-                    <Trash2 className="w-4 h-4 mr-2" /> Remove
+                    <Trash2 className="w-4 h-4 mr-2" /> Remover
                 </Button>
             </CardFooter>
         </Card>)

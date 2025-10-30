@@ -39,14 +39,14 @@ export const RecommendationsFeed: React.FC = () => {
     if (recommended.isLoading)
         return (
             <div className="flex items-center justify-center py-12">
-                <p className="text-sm text-muted-foreground">Loading recommendations...</p>
+                <p className="text-sm text-muted-foreground">Cargando recomendaciones...</p>
             </div>
         );
 
     if (recommended.error)
         return (
             <div className="flex items-center justify-center py-12">
-                <p className="text-sm text-destructive">Error loading recommendations: {recommended.error.message}</p>
+                <p className="text-sm text-destructive">Error al cargar las recomendaciones: {recommended.error.message}</p>
             </div>
         );
 
@@ -54,16 +54,16 @@ export const RecommendationsFeed: React.FC = () => {
         return (
             <div className="text-center py-12">
                 <h3 className="text-lg font-medium text-muted-foreground">
-                    There are no recommendations yet. Wait for them to renew.
+                    No hya recomendaciones aún. Espere un momento a que se renueven.
                 </h3>
                 <p className="text-sm text-muted-foreground mt-2">
-                    Meanwhile you can watch for changes or manage your suscriptions
+                    Mientras tanto, puedes estar atento a los cambios o gestionar tus suscripciones.
                     <span
                         className="text-primary underline ml-1 cursor-pointer"
                         onClick={() =>
                             navigate(PathOption.TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR)
                         }>
-                        here
+                        aquí
                     </span>.
                 </p>
             </div>
@@ -72,7 +72,7 @@ export const RecommendationsFeed: React.FC = () => {
 
     return (
         <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Recommendations</h2>
+            <h2 className="text-2xl font-bold">Recomendaciones</h2>
 
             <div className="flex flex-wrap items-center gap-2">
                 {/* Select and unselect*/}
@@ -97,7 +97,7 @@ export const RecommendationsFeed: React.FC = () => {
                         if (isMultipleSelection) setMultipleSelection(true);
                         removeFromSelectedItems(selectedItems);
                     }}>
-                    Subscribe all selected
+                    Suscribirse a todos los elementos seleccionados.
                 </Button>
 
                 {/* Remove */}
@@ -109,7 +109,7 @@ export const RecommendationsFeed: React.FC = () => {
                         if (isMultipleSelection) setMultipleSelection(true);
                         removeFromSelectedItems(selectedItems);
                     }}>
-                    Remove all selected
+                    Remover suscripciones
                 </Button>
             </div>
 

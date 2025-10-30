@@ -105,7 +105,7 @@ export const ItemListsSideBar: React.FC<{
         const listElements = !lists || lists.length === 0 ?
             (
                 <SidebarMenuItem key="none">
-                    <p>No lists here</p>
+                    <p>No hay listas</p>
                 </SidebarMenuItem>
             ) : (
                 lists.map((list: UserItemList) => (
@@ -128,25 +128,26 @@ export const ItemListsSideBar: React.FC<{
                         <SidebarMenuButton asChild className='mt-5'>
                             <Button>
                                 <Plus />
-                                Create
+                                Crear
                             </Button>
                         </SidebarMenuButton>
                     </DialogTrigger>
 
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Create new list</DialogTitle>
+                            <DialogTitle>Crear lista</DialogTitle>
                         </DialogHeader>
 
                         <Input
                             id='create-list-name'
-                            placeholder="Name of the list"
+                            placeholder="Nombre de la lista"
                             value={newListName}
                             onChange={(e) => setNewListName(e.target.value)}
                         />
 
                         <DialogFooter>
                             <Button
+                                name='crearLista'
                                 onClick={() => {
                                     if (newListName.trim()) {
                                         addPendingCreateList({
@@ -158,7 +159,7 @@ export const ItemListsSideBar: React.FC<{
                                         setOpen(false);
                                     }
                                 }}>
-                                Save
+                                Crear
                             </Button>
                         </DialogFooter>
                     </DialogContent>
@@ -170,7 +171,7 @@ export const ItemListsSideBar: React.FC<{
             <Dialog open={true} onOpenChange={() => setRenameTarget(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Rename list</DialogTitle>
+                        <DialogTitle>Renombrar lista</DialogTitle>
                     </DialogHeader>
 
                     <Input
@@ -182,6 +183,7 @@ export const ItemListsSideBar: React.FC<{
 
                     <DialogFooter>
                         <Button
+                            name='renombrarLista'
                             onClick={() => {
                                 if (newListName.trim()) {
                                     addPendingUpdateList(renameTarget, newListName.trim());
@@ -190,7 +192,7 @@ export const ItemListsSideBar: React.FC<{
                                 }
                             }}
                         >
-                            Save
+                            Renombrar
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -205,27 +207,28 @@ export const ItemListsSideBar: React.FC<{
                 }>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete list?</DialogTitle>
+                        <DialogTitle>Eliminar lista?</DialogTitle>
                     </DialogHeader>
 
                     <p className="text-sm text-muted-foreground">
-                        This action cannot be undone. The contained elements won't be removed from the screen. ¿Are you sure you want to delete <strong>{deleteTarget}</strong>?
+                        ¿Esta acción no se puede deshacer. Los elementos contenidos no se eliminarán de la pantalla. ¿Estás seguro de que deseas eliminar <strong>{deleteTarget}</strong>?
                     </p>
 
                     <DialogFooter>
                         <Button
                             variant="outline"
                             onClick={() => setDeleteTarget(null)}>
-                            Cancel
+                            Cancelar
                         </Button>
                         <Button
+                            name='eliminarLista'
                             variant="destructive"
                             onClick={() => {
                                 addPendingRemoveList(deleteTarget);
                                 setDeleteTarget(null);
                             }}
                         >
-                            Delete
+                            Eliminar
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -236,13 +239,13 @@ export const ItemListsSideBar: React.FC<{
             <Dialog open={true} onOpenChange={() => setAddTarget(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add elements to {addTarget.name}</DialogTitle>
+                        <DialogTitle>Agregar elementos a <span className='text-blue-800 font-bold'>{addTarget.name}</span></DialogTitle>
                     </DialogHeader>
 
                     <Input
                         id='search-elements'
                         type="text"
-                        placeholder="Search by name..."
+                        placeholder="Busca por nombre..."
                         onChange={(e) => {
                             const query = e.target.value.toLowerCase();
                             const available = getAvailableItemsForTarget(addTarget);
@@ -312,9 +315,10 @@ export const ItemListsSideBar: React.FC<{
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setAddTarget(null)}>
-                            Cancel
+                            Cancelar
                         </Button>
                         <Button
+                            name='agregarElementos'
                             onClick={() => {
                                 const updatedItems: Blip[] = elements.filter(
                                     (item: Blip) =>
@@ -328,7 +332,7 @@ export const ItemListsSideBar: React.FC<{
 
                             }
                             }>
-                            Save
+                            Agregar
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -339,18 +343,19 @@ export const ItemListsSideBar: React.FC<{
             <Dialog open={true} onOpenChange={() => setRemoveElementTarget(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Remove element?</DialogTitle>
+                        <DialogTitle>Remover elementos</DialogTitle>
                     </DialogHeader>
                     <p className="text-sm text-muted-foreground">
-                        ¿Are you sure you want to remove this element from <strong>{
+                        ¿Está seguro de que quiere remover <strong>{
                             lists.find((list: UserItemList) => list.id === removeElementTarget.listId)?.name
-                        }</strong>?
+                        }</strong> de la lista?
                     </p>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setRemoveElementTarget(null)}>
-                            Cancel
+                            Cancelar
                         </Button>
                         <Button
+                            name='eliminarElemento'
                             variant="destructive"
                             onClick={() => {
                                 addPendingRemoveAllItems(
@@ -359,7 +364,7 @@ export const ItemListsSideBar: React.FC<{
                                 );
                                 setRemoveElementTarget(null);
                             }}>
-                            Remove
+                            Remover
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -381,7 +386,7 @@ export const ItemListsSideBar: React.FC<{
                     <SidebarContent>
                         <SidebarGroup>
                             <SidebarGroupLabel className="font-semibold text-xl pt-4">
-                                Custom Item Lists
+                                Listas personalizadas
                             </SidebarGroupLabel>
 
                             <SidebarGroupContent>

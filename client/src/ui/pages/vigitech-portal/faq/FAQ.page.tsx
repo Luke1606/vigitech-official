@@ -46,13 +46,13 @@ export const FAQ: React.FC = () => {
                     {/* Títulos centrales */}
                     <section className="text-center">
                         <h1 className="text-4xl sm:text-6xl font-extrabold mb-4 tracking-tight">
-                            Need Help? FAQ Center
+                            Necesitas ayuda? Centro FAQ 
                         </h1>
                         <p className="text-lg sm:text-xl text-white/80 mb-8">
-                            Let’s clear up your doubts in a blink.
+                            Aclaremos tus dudas en un abrir y cerrar de ojos.
                         </p>
                         <p className="uppercase text-xl sm:text-2xl font-semibold text-cyan-300">
-                            Select an option below to continue
+                            Selecciona una de las opciones debajo.
                         </p>
                     </section>
 
@@ -63,9 +63,9 @@ export const FAQ: React.FC = () => {
                         className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mt-10">
                         {[
                             { icon: "/radar_faq.png", label: "Radar", gradient: "from-fuchsia-400 via-violet-500 to-cyan-400" },
-                            { icon: "/notificacion_faq.png", label: "Notifications", gradient: "from-indigo-500 via-purple-600 to-sky-400" },
-                            { icon: "/configuration_faq.png", label: "Settings", gradient: "from-purple-500 via-fuchsia-500 to-cyan-400" },
-                            { icon: "/heart_faq.png", label: "Give us a compliment", gradient: "from-cyan-400 via-blue-500 to-indigo-600" }
+                            { icon: "/notificacion_faq.png", label: "Notificaciones", gradient: "from-indigo-500 via-purple-600 to-sky-400" },
+                            { icon: "/configuration_faq.png", label: "Configuraciones", gradient: "from-purple-500 via-fuchsia-500 to-cyan-400" },
+                            { icon: "/heart_faq.png", label: "Danos un cumplido", gradient: "from-cyan-400 via-blue-500 to-indigo-600" }
                         ].map(({ icon, label, gradient }, index) => (
                             <div
                                 key={index}
