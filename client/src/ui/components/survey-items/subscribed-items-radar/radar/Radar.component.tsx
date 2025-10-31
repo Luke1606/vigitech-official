@@ -7,7 +7,8 @@ import {
     generateBlipPositions,
     ringBounds,
     quadrantLabels,
-    isTextOverlapping
+    isTextOverlapping,
+    useSurveyItems
 } from '../../../../../infrastructure';
 import { RadarMenu } from './radar-menu/RadarMenu.component'; // Ajusta la ruta según tu estructura
 import type { SurveyItem } from '../../../../../infrastructure'; // Ajusta la ruta
@@ -30,6 +31,7 @@ export const Radar: React.FC<{
     onBlipHover
 }) => {
         const navigate = useNavigate();
+        const { addPendingUnsubscribes, addPendingRemoves } = useSurveyItems();
         const [hoveredBlipId, setHoveredBlipId] = React.useState<string | null>(null);
         const [menuOpen, setMenuOpen] = React.useState(false);
         const [selectedBlip, setSelectedBlip] = React.useState<Blip | null>(null);
@@ -52,13 +54,15 @@ export const Radar: React.FC<{
             setMenuOpen(false);
         };
 
-        const handleUnsubscribe = (item: SurveyItem) => {
-            console.log('Dejar de seguir:', item);
+        const handleUnsubscribe = (items: SurveyItem[]) => {
+            console.log('Dejar de seguir:', items);
+            addPendingUnsubscribes(items);
             setMenuOpen(false);
         };
 
-        const handleRemove = (item: SurveyItem) => {
-            console.log('Eliminar:', item);
+        const handleRemove = (items: SurveyItem[]) => {
+            console.log('Eliminar:', items);
+            addPendingRemoves(items);
             setMenuOpen(false);
         };
 

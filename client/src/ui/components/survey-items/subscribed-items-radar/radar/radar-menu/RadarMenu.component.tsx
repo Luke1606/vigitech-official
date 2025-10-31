@@ -11,8 +11,8 @@ interface RadarMenuProps {
 	item: SurveyItem;
 	position: { x: number; y: number };
 	onViewDetails: (item: SurveyItem) => void;
-	onUnsubscribe: (item: SurveyItem) => void;
-	onRemove: (item: SurveyItem) => void;
+	onUnsubscribe: (items: SurveyItem[]) => void;
+	onRemove: (items: SurveyItem[]) => void;
 	onSelect: (item: SurveyItem) => void;
 	onUnselect: (item: SurveyItem) => void;
 	isSelected: boolean;
@@ -39,7 +39,7 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 					<Maximize className="h-4 w-4 mr-2" />
 					Ver detalles
 				</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => onUnsubscribe(item)}>
+				<DropdownMenuItem onClick={() => onUnsubscribe([item])}>
 					<Minus className="h-4 w-4 mr-2" />
 					Dejar de seguir
 				</DropdownMenuItem>
@@ -47,7 +47,7 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 					{isSelected ? 'Deseleccionar' : 'Seleccionar'}
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem onClick={() => onRemove(item)} className="text-destructive">
+				<DropdownMenuItem onClick={() => onRemove([item])} className="text-destructive">
 					<Trash2 className="h-4 w-4 mr-2" />
 					Eliminar
 				</DropdownMenuItem>
