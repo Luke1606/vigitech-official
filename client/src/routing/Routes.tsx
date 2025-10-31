@@ -58,7 +58,7 @@ export const routes: RouteObject[] = [
                     },
 
                     {
-                        path: `${technologyRadarGlobalPrefix}item-details/:item`,
+                        path: `${technologyRadarGlobalPrefix}item-details/:string`,
                         element: <ItemDetails />
                     }
                 ]

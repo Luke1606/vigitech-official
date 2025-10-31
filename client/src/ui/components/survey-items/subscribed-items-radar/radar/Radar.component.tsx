@@ -11,6 +11,7 @@ import {
 } from '../../../../../infrastructure';
 import { RadarMenu } from './radar-menu/RadarMenu.component'; // Ajusta la ruta según tu estructura
 import type { SurveyItem } from '../../../../../infrastructure'; // Ajusta la ruta
+import { useNavigate } from 'react-router-dom';
 
 export const Radar: React.FC<{
     entries?: Blip[];
@@ -28,6 +29,7 @@ export const Radar: React.FC<{
     onBlipClick,
     onBlipHover
 }) => {
+        const navigate = useNavigate();
         const [hoveredBlipId, setHoveredBlipId] = React.useState<string | null>(null);
         const [menuOpen, setMenuOpen] = React.useState(false);
         const [selectedBlip, setSelectedBlip] = React.useState<Blip | null>(null);
@@ -46,6 +48,7 @@ export const Radar: React.FC<{
         // Manejadores para las acciones del menú
         const handleViewDetails = (item: SurveyItem) => {
             console.log('Ver detalles:', item);
+            navigate(`/vigitech/technology-radar/item-details/${item.id}`)
             setMenuOpen(false);
         };
 
