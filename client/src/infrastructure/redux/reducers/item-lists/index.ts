@@ -6,5 +6,5 @@ export {
     addPendingAppendAllItems,
     addPendingRemoveAllItems,
     clearListPendingChanges,
-    itemListReducer,
+    userItemListsReducer,
 } from './slice';

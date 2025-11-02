@@ -41,6 +41,7 @@ export const ItemListsSideBar: React.FC<{
 }) => {
         const {
             lists,
+            query,
             addPendingCreateList,
             addPendingUpdateList,
             addPendingRemoveList,
@@ -50,7 +51,7 @@ export const ItemListsSideBar: React.FC<{
         const [newListName, setNewListName] = useState('');
         const [open, setOpen] = useState(false);
         const [renameTarget, setRenameTarget] = useState<string | null>(null);
-        const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+        const [deleteTarget, setDeleteTarget] = useState<UUID | null>(null);
         const [addTarget, setAddTarget] = useState<UserItemList | null>(null);
         const [removeElementTarget, setRemoveElementTarget] = useState<{
             listId: string;
@@ -66,7 +67,7 @@ export const ItemListsSideBar: React.FC<{
             setNewListName(name);
         };
 
-        const openDeleteDialog = (id: string) => {
+        const openDeleteDialog = (id: UUID) => {
             setDeleteTarget(id);
         };
 

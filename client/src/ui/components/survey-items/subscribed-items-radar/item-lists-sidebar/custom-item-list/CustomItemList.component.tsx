@@ -1,4 +1,4 @@
-import type { UUID } from '../../../../../../infrastructure';
+import type { UUID } from 'crypto';
 import { Trash2 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -20,7 +20,7 @@ export const CustomItemsList: React.FC<{
     onRename?: (id: string, listNewName: string) => void;
     onAddItem?: (name: string) => void;
     onRemoveItem?: (listid: string, itemIds: UUID[]) => void;
-    onDeleteList?: (id: string) => void;
+    onDeleteList?: (id: UUID) => void;
 }> = ({
     list,
     onRename,

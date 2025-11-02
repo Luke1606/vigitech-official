@@ -17,13 +17,13 @@ import { useUserItemListsAPI } from './api/useUserItemListsAPI.hook';
 export const useUserItemLists = () => {
     const dispatch = useDispatch<AppDispatch>();
 
-    const lists = useSelector((state: RootState) => state.itemLists.lists);
-    const pendingChanges = useSelector((state: RootState) => state.itemLists.pendingChanges);
+    const lists = useSelector((state: RootState) => state.userItemLists.lists);
+    const pendingChanges = useSelector((state: RootState) => state.userItemLists.pendingChanges);
 
     const query = useUserItemListsAPI();
 
     return {
-        ...query,
+        query,
         lists,
         pendingChanges,
 

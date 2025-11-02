@@ -5,15 +5,16 @@ import { userItemListsKey } from '../constants';
 import type { UserItemList } from '../../../..';
 
 export const useDeleteListMutationOptions = () => {
+
     const queryClient = useQueryClient();
+    
 
     return mutationOptions({
         mutationFn: (listId: UUID) => userItemListRepository.removeList(listId),
 
         onMutate: async (listId: UUID) => {
-            await queryClient.cancelQueries({ queryKey: [userItemListsKey] });
-
             const previousLists = queryClient.getQueryData<UserItemList[]>([userItemListsKey]);
+            await queryClient.cancelQueries({ queryKey: [userItemListsKey] });
 
             if (previousLists) {
                 queryClient.setQueryData<UserItemList[]>(
@@ -23,6 +24,7 @@ export const useDeleteListMutationOptions = () => {
             }
 
             return { previousLists };
+
         },
 
         onError: (_error, _listId, context) => {

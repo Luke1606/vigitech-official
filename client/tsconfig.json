@@ -10,7 +10,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-  "types": ["vite/client"],
+    "types": ["vite/client"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "jsx": "react-jsx",

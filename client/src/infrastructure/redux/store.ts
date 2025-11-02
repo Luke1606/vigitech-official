@@ -1,18 +1,38 @@
-import { configureStore, type Reducer } from "@reduxjs/toolkit";
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import {
-    itemListReducer,
+    userItemListsReducer,
     changelogReducer,
     surveyItemsReducer
 } from "./reducers";
+import storage from 'redux-persist/lib/storage';
+import persistReducer from "redux-persist/es/persistReducer";
+import { persistStore } from "redux-persist";
 
-export const store = configureStore({
-    reducer: {
-        itemLists: itemListReducer,
-        changelog: changelogReducer,
-        surveyItems: surveyItemsReducer,
-    }
+const surveyItemsPersistConfig = {
+    key: 'surveyItems',
+    storage
+}
+
+const userItemListsPersistConfig = {
+    key: 'userItemLists',
+    storage
+}
+
+const changeLogPersistConfig = {
+    key: 'changeLog',
+    storage
+}
+
+const rootReducer = combineReducers({
+    surveyItems: persistReducer(surveyItemsPersistConfig, surveyItemsReducer),
+    userItemLists: persistReducer(userItemListsPersistConfig, userItemListsReducer),
+    changeLog: persistReducer(changeLogPersistConfig, changelogReducer)
 });
 
-export type RootState = ReturnType<typeof store.getState>;
+export const store = configureStore({
+    reducer: rootReducer
+});
 
+export const persistor = persistStore(store);
+export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

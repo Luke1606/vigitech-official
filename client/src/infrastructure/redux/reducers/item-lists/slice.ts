@@ -29,7 +29,7 @@ const initialState: ItemListState = {
 };
 
 const itemListSlice = createSlice({
-    name: 'itemLists',
+    name: 'userItemLists',
     initialState,
     reducers: {
         addPendingCreateList(
@@ -150,4 +150,4 @@ export const {
     clearListPendingChanges
 } = itemListSlice.actions;
 
-export const itemListReducer = itemListSlice.reducer;
+export const userItemListsReducer = itemListSlice.reducer;
