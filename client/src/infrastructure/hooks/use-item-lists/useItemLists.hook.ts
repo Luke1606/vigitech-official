@@ -8,10 +8,10 @@ import {
     addPendingRemoveList,
     addPendingAppendAllItems,
     addPendingRemoveAllItems,
-    clearPendingChanges,
+    clearListPendingChanges,
     type RootState,
     type AppDispatch
-} from '../..';
+} from '../../';
 import { useUserItemListsAPI } from './api/useUserItemListsAPI.hook';
 
 export const useUserItemLists = () => {
@@ -19,6 +19,7 @@ export const useUserItemLists = () => {
 
     const lists = useSelector((state: RootState) => state.userItemLists.lists);
     const pendingChanges = useSelector((state: RootState) => state.userItemLists.pendingChanges);
+    const synchronized = useSelector((state: RootState) => state.userItemLists.synchronized)
 
     const query = useUserItemListsAPI();
 
@@ -26,24 +27,25 @@ export const useUserItemLists = () => {
         query,
         lists,
         pendingChanges,
-
+        synchronized,
+        
         addPendingCreateList: (
             list: UserItemList
         ) =>
             dispatch(addPendingCreateList(list)),
 
         addPendingUpdateList: (
-            listId: string, listNewName: string
+            listId: UUID, listNewName: string
         ) =>
             dispatch(addPendingUpdateList({ listId, listNewName })),
 
         addPendingRemoveList: (
-            listId: string
+            listId: UUID
         ) =>
             dispatch(addPendingRemoveList(listId)),
 
         addPendingAppendAllItems: (
-            listId: string, items: SurveyItem[]
+            listId: UUID, items: SurveyItem[]
         ) =>
             dispatch(addPendingAppendAllItems({ listId, items })),
 
@@ -52,8 +54,8 @@ export const useUserItemLists = () => {
         ) =>
             dispatch(addPendingRemoveAllItems({ listId, itemIds })),
 
-        clearPendingChanges: () => dispatch(
-            clearPendingChanges()
+        clearListPendingChanges: () => dispatch(
+            clearListPendingChanges()
         )
     };
 };

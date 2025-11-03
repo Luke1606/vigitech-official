@@ -3,7 +3,7 @@ import type { UserItemList, SurveyItem } from "../../..";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 type PendingItemChanges = {
-    listId: string;
+    listId: UUID;
     items: UUID[]
 }
 export interface ItemListState {
@@ -14,7 +14,8 @@ export interface ItemListState {
         toUpdateLists: UserItemList[];
         toAppendItems: PendingItemChanges[];
         toRemoveItems: PendingItemChanges[];
-    }
+    },
+    synchronized: boolean
 }
 
 const initialState: ItemListState = {
@@ -25,7 +26,8 @@ const initialState: ItemListState = {
         toUpdateLists: [],
         toAppendItems: [],
         toRemoveItems: [],
-    }
+    },
+    synchronized: false,
 };
 
 const itemListSlice = createSlice({
@@ -36,41 +38,56 @@ const itemListSlice = createSlice({
             state: ItemListState,
             action: PayloadAction<UserItemList>
         ) {
-            state.lists.push(action.payload);
-            state.pendingChanges.toCreateLists.push(action.payload);
+            const existList = state.lists.find(l => l.name === action.payload.name)
+            if (!existList) state.lists.push(action.payload);
+            else alert(`La lista ${existList.name} ya existe`)
+
+            const isPendingList = state.pendingChanges.toCreateLists.find(l => l.name === action.payload.name)
+            if (!isPendingList) {
+                state.pendingChanges.toCreateLists.push(action.payload);
+                state.synchronized = false;
+            }
         },
 
-        addPendingUpdateList(state, action: PayloadAction<{ listId: string; listNewName: string }>) {
-            state.lists.forEach(
-                (list: UserItemList) => {
-                    if (list.id === action.payload.listId)
-                        list.name = action.payload.listNewName;
-                }
+        addPendingUpdateList(state, action: PayloadAction<{ listId: UUID; listNewName: string }>) {
 
-            );
+            const existListName = state.lists.find(l => l.name === action.payload.listNewName);
+            const listIndex = state.lists.findIndex(l => l.id === action.payload.listId);
 
-            // const toAppendChangeList = state.pendingChanges.toCreateLists.find(
-            //     (list: UserItemList) => list.id === action.payload.listId
-            // );
+            if (existListName?.id === state.lists[listIndex].id) {
+                alert(`La lista ya tiene el nombre ${action.payload.listNewName}.`);
+                return;
+            }
+            else if (existListName) {
+                alert(`Ya existe una lista nombre ${action.payload.listNewName}.`);
+                return;
+            }
 
-            // if (toAppendChangeList)
-            //     state.pendingChanges.toUpdateLists.push({
-            //         id: action.payload.listId,
-            //         name: action.payload.listNewName,
-            //         items: toUpdatelist.items
-            //     });
+            if (listIndex !== -1) state.lists[listIndex].name = action.payload.listNewName;
 
+            const pendingList = state.pendingChanges.toUpdateLists.find(l => l.id === action.payload.listId)
+
+            if (pendingList) {
+                const pendingListIndex = state.pendingChanges.toUpdateLists.findIndex(l => l.id === action.payload.listId)
+                state.pendingChanges.toUpdateLists[pendingListIndex].name = action.payload.listNewName;
+            }
+            state.pendingChanges.toUpdateLists.push({ id: action.payload.listId, name: action.payload.listNewName, items: [] })
+            state.synchronized = false;
         },
 
-        addPendingRemoveList(state, action: PayloadAction<string>) {
+        addPendingRemoveList(
+            state,
+            action: PayloadAction<UUID>
+        ) {
             const list = state.lists.find(l => l.id === action.payload);
             if (list) {
                 state.pendingChanges.toDeleteLists.push(list);
                 state.lists = state.lists.filter(l => l.id !== action.payload);
+                state.synchronized = false;
             }
         },
 
-        addPendingAppendAllItems(state, action: PayloadAction<{ listId: string; items: SurveyItem[] }>) {
+        addPendingAppendAllItems(state, action: PayloadAction<{ listId: UUID; items: SurveyItem[] }>) {
             const list = state.lists.find(l => l.id === action.payload.listId);
             if (list) {
                 const newIds: UUID[] = [];
@@ -129,14 +146,9 @@ const itemListSlice = createSlice({
             );
         },
 
-        clearListPendingChanges(state) {
-            state.pendingChanges = {
-                toCreateLists: [],
-                toUpdateLists: [],
-                toDeleteLists: [],
-                toAppendItems: [],
-                toRemoveItems: [],
-            };
+        clearListPendingChanges(state: ItemListState) {
+            state.pendingChanges = { ...initialState.pendingChanges };
+            state.synchronized = true;
         },
     },
 });

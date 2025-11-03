@@ -17,7 +17,7 @@ import styles from './CustomItemList.styles';
 
 export const CustomItemsList: React.FC<{
     list: UserItemList
-    onRename?: (id: string, listNewName: string) => void;
+    onRename?: (id: UUID, listNewName: string) => void;
     onAddItem?: (name: string) => void;
     onRemoveItem?: (listid: string, itemIds: UUID[]) => void;
     onDeleteList?: (id: UUID) => void;

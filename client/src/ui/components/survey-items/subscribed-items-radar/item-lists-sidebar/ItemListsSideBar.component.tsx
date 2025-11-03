@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { EyeIcon, EyeOff, Plus } from 'lucide-react';
+import { EyeIcon, EyeOff, Plus, Rotate3D, RotateCw } from 'lucide-react';
 import {
     Blip,
     getQuadrantColor,
@@ -42,15 +42,17 @@ export const ItemListsSideBar: React.FC<{
         const {
             lists,
             query,
+            synchronized,
             addPendingCreateList,
             addPendingUpdateList,
             addPendingRemoveList,
             addPendingAppendAllItems,
             addPendingRemoveAllItems,
+            clearListPendingChanges
         } = useUserItemLists();
         const [newListName, setNewListName] = useState('');
         const [open, setOpen] = useState(false);
-        const [renameTarget, setRenameTarget] = useState<string | null>(null);
+        const [renameTarget, setRenameTarget] = useState<UUID | null>(null);
         const [deleteTarget, setDeleteTarget] = useState<UUID | null>(null);
         const [addTarget, setAddTarget] = useState<UserItemList | null>(null);
         const [removeElementTarget, setRemoveElementTarget] = useState<{
@@ -62,7 +64,7 @@ export const ItemListsSideBar: React.FC<{
 
         const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-        const openRenameDialog = (id: string, name: string) => {
+        const openRenameDialog = (id: UUID, name: string) => {
             setRenameTarget(id);
             setNewListName(name);
         };
@@ -151,8 +153,9 @@ export const ItemListsSideBar: React.FC<{
                                 name='crearLista'
                                 onClick={() => {
                                     if (newListName.trim()) {
+                                        const tempId: UUID = crypto.randomUUID()
                                         addPendingCreateList({
-                                            id: `id-local-${newListName}` as UUID,
+                                            id: tempId,
                                             name: newListName.trim(),
                                             items: []
                                         });
@@ -386,8 +389,12 @@ export const ItemListsSideBar: React.FC<{
                     className={`my-12 transition-all duration-300 ${visible ? 'w-80' : 'w-0'}`}>
                     <SidebarContent>
                         <SidebarGroup>
-                            <SidebarGroupLabel className="font-semibold text-xl pt-4">
+                            <SidebarGroupLabel className="font-semibold text-xl pt-4 flex justify-between">
                                 Listas personalizadas
+                                <Button onClick={() => clearListPendingChanges()} size={'sm'}
+                                    className={`${synchronized ? 'bg-green-500' : 'bg-red-600'} hover:bg-green-500`}>
+                                    <Rotate3D size={32} color="white"></Rotate3D>
+                                </Button>
                             </SidebarGroupLabel>
 
                             <SidebarGroupContent>
