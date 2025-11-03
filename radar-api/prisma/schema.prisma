@@ -1,13 +1,16 @@
 generator client {
 	provider = "prisma-client-js"
-    output = "../node_modules/.prisma/client"
+  output = "../node_modules/.prisma/client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
 	provider  = "postgresql"
 	url       = env("DATABASE_URL")
     directUrl = env("DIRECT_URL")
+    schemas   = ["public", "user_data", "tech_survey"]
 }
+
 
 model User {
   id                             String               @id @default(uuid())
@@ -21,6 +24,8 @@ model User {
   subscribedItems               UserSubscribedItem[]
   hiddenItems                   UserHiddenItem[]
   lists                         UserItemList[]
+
+  @@schema("user_data")
 }
 
 
@@ -29,17 +34,23 @@ enum NotificationChannel {
     EMAIL
     PUSH
     SMS
+
+    @@schema("user_data")
 }
 
 enum Theme {
     DARK
     LIGHT
     SYSTEM
+
+    @@schema("user_data")
 }
 
 enum Language {
     EN
     ES
+
+    @@schema("user_data")
 }
 
 enum Frequency {
@@ -51,6 +62,8 @@ enum Frequency {
     EVERY_TWO_DAYS
     EVERY_FOUR_DAYS
     WEEKLY
+
+    @@schema("user_data")
 }
 
 model UserPreferences {
@@ -66,14 +79,76 @@ model UserPreferences {
 
 	userId                         String               @unique
     user                           User?                @relation(fields: [userId], references: [id])
+
+    @@schema("user_data")
 }
 
 
+model UserSubscribedItem {
+  id                             String               @id @default(uuid())
+  userId                         String
+  user                           User                 @relation(fields: [userId], references: [id])
+  itemId                         String
+  item                           SurveyItem           @relation(fields: [itemId], references: [id])
+  
+  createdAt                      DateTime             @default(now())
+  
+  @@unique([userId, itemId])
+  @@schema("user_data")
+}
+
+
+model UserHiddenItem {
+  id                             String               @id @default(uuid())
+  userId                         String
+  user                           User                 @relation(fields: [userId], references: [id])
+  itemId                         String
+  item                           SurveyItem           @relation(fields: [itemId], references: [id])
+  
+  createdAt                      DateTime             @default(now())
+  
+  @@unique([userId, itemId])
+  @@schema("user_data")
+}
+
+
+model UserItemList {
+    id                             String               @id @default(uuid())    
+    name                           String
+    preferredNotificationChannel   NotificationChannel  @default(IN_APP)
+
+    createdAt                      DateTime             @default(now())
+    updatedAt                      DateTime             @updatedAt
+    
+    ownerId                        String
+    owner                          User                 @relation(fields: [ownerId], references: [id])
+    items                          SurveyItem[]         @relation("ListItems")
+
+    @@schema("user_data")
+}
+
+model Report {
+    id                             String               @id @default(uuid())
+    startDate                      DateTime
+    endDate                        DateTime             @default(now())
+    
+    createdAt                      DateTime             @default(now())
+    updatedAt                      DateTime             @updatedAt
+
+    items                          SurveyItem[]         @relation("ReportItems")
+
+    @@schema("user_data")
+}
+
+
+// Modelos para el schema 'tech_survey'
 enum RadarQuadrant {
     BUSSINESS_INTEL
     SCIENTIFIC_STAGE
     SUPPORT_PLATTFORMS_AND_TECHNOLOGIES
     LANGUAGES_AND_FRAMEWORKS
+
+    @@schema("tech_survey")
 }
 
 enum RadarRing {
@@ -82,12 +157,23 @@ enum RadarRing {
     SUSTAIN
     HOLD
     UNKNOWN
+
+    @@schema("tech_survey")
 }
 
 model SurveyItem {
   id                             String               @id @default(uuid())
   title                          String
   summary                        String
+  
+  // Almacena un array de IExternalReference. Permite múltiples IDs por fuente.
+  externalReferences             Json                 @default("[]") // Changed to default "[]" for empty array
+  
+  // Almacena la metadata consolidada del cuadrante antes de la clasificación AI
+  consolidatedMetadata           Json                 @default("{}") 
+  
+  // Almacena los insights finales proporcionados por el Agente AI
+  insights                       Json                 @default("{}")
 
   radarQuadrant                  RadarQuadrant
   radarRing                      RadarRing            @default(UNKNOWN)
@@ -103,107 +189,77 @@ model SurveyItem {
   insertedById                   String?
   subscribedBy                   UserSubscribedItem[]
   hiddenBy                       UserHiddenItem[]
+
+  @@schema("tech_survey")
 }
 
 
-model UserSubscribedItem {
-  id                             String               @id @default(uuid())
-  userId                         String
-  user                           User                 @relation(fields: [userId], references: [id])
-  itemId                         String
-  item                           SurveyItem           @relation(fields: [itemId], references: [id])
-  
-  createdAt                      DateTime             @default(now())
-  
-  @@unique([userId, itemId])
+// Stores the raw, merged metadata from all APIs in a quadrant for a specific analysis run
+model ItemMetadata {
+  id           String       @id @default(uuid())
+  fetchedAt    DateTime     @default(now())
+  mergedData   Json
+
+  analysis     ItemAnalysis?
+
+  @@schema("tech_survey")
 }
-
-
-model UserHiddenItem {
-  id                             String               @id @default(uuid())
-  userId                         String
-  user                           User                 @relation(fields: [userId], references: [id])
-  itemId                         String
-  item                           SurveyItem           @relation(fields: [itemId], references: [id])
-  
-  createdAt                      DateTime             @default(now())
-  
-  @@unique([userId, itemId])
-}
-
-
-model UserItemList {
-    id                             String               @id @default(uuid())    
-    name                           String
-    preferredNotificationChannel   NotificationChannel  @default(IN_APP)
-
-    createdAt                      DateTime             @default(now())
-    updatedAt                      DateTime             @updatedAt
-    
-    ownerId                        String
-    owner                          User                 @relation(fields: [ownerId], references: [id])
-    items                          SurveyItem[]         @relation("ListItems")
-}
-
-
-model GeneralSearchResult {
-    id                            String               @id @default(uuid())
-    crossRefResult                Json
-    openAlexResult                Json
-
-    analysis                      ItemAnalysis?
-}
-
 
 enum Trending {
     UP
     DOWN
     STABLE
     UNSTABLE
+
+    @@schema("tech_survey")
 }
 
 enum AccesibilityLevel {
     FREE
     PAID
+
+    @@schema("tech_survey")
 }
 
-model Insights {
-    id                            String               @id @default(uuid())
-    citations                     Int
-    downloads                     Int
-    relevance                     Float
-    accesibilityLevel             AccesibilityLevel
-    trending                      Trending
+// Stores the merged insights from all AI agents for a specific analysis run
+model QuadrantInsights {
+  id                String            @id @default(uuid())
+  citations         Int
+  downloads         Int
+  relevance         Float
+  accesibilityLevel AccesibilityLevel
+  trending          Trending
 
-    analysis                      ItemAnalysis?
+  analysis          ItemAnalysis?
+
+  @@schema("tech_survey")
 }
 
-
+// Represents a single analysis run for a SurveyItem at a point in time
 model ItemAnalysis {
-	id                             String               @id @default(uuid())
-    
-    createdAt                      DateTime             @default(now())
-    updatedAt                      DateTime             @updatedAt
+  id         String   @id @default(uuid())
+  analyzedAt DateTime @default(now())
 
-	itemId                         String
+  itemId     String
+  item       SurveyItem @relation(fields: [itemId], references: [id])
 
-    dataId                         String               @unique
-	searchedData                   GeneralSearchResult  @relation(fields: [dataId], references: [id])
+  metadataId String       @unique
+  metadata   ItemMetadata @relation(fields: [metadataId], references: [id])
 
-    metricsId                      String               @unique
-    analyzedMetrics                Insights              @relation(fields: [metricsId], references: [id])
+  insightsId String           @unique
+  insights   QuadrantInsights @relation(fields: [insightsId], references: [id])
 
-    item                           SurveyItem           @relation(fields: [itemId], references: [id])
+  @@schema("tech_survey")
 }
 
+// Nuevo modelo para almacenar datos brutos de las APIs
+model RawData {
+  id          String    @id @default(uuid())
+  source      String    
+  dataType    String    
+  content     Json      
+  processedAt DateTime? 
+  createdAt   DateTime  @default(now())
 
-model Report {
-    id                             String               @id @default(uuid())
-    startDate                      DateTime
-    endDate                        DateTime             @default(now())
-    
-    createdAt                      DateTime             @default(now())
-    updatedAt                      DateTime             @updatedAt
-
-    items                          SurveyItem[]         @relation("ReportItems")
+  @@schema("tech_survey")
 }
