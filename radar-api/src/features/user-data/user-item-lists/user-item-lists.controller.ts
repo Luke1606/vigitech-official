@@ -9,9 +9,10 @@ import type { AuthenticatedRequest } from '../../../shared/types/authenticated-r
 
 @Controller('item-lists')
 export class UserItemListsController {
-    private readonly logger: Logger = new Logger('UserItemListsController');
+    private readonly logger: Logger;
 
     constructor(private readonly userItemListsService: UserItemListsService) {
+        this.logger = new Logger(this.constructor.name);
         this.logger.log('Initialized');
     }
 

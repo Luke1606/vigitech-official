@@ -22,9 +22,12 @@ const listIncludeItems = {
 
 @Injectable()
 export class UserItemListsService {
-    private readonly logger: Logger = new Logger('UserItemListService');
+    private readonly logger: Logger;
 
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) {
+        this.logger = new Logger(this.constructor.name);
+        this.logger.log('Initialized');
+    }
 
     async findAll(ownerId: UUID): Promise<UserItemList[]> {
         return await this.prisma.userItemList.findMany({

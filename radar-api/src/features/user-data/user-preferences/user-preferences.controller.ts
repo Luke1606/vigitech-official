@@ -7,9 +7,10 @@ import type { AuthenticatedRequest } from '../../../shared/types/authenticated-r
 
 @Controller('preferences')
 export class UserPreferencesController {
-    private readonly logger: Logger = new Logger('UserPreferencesController');
+    private readonly logger: Logger;
 
     constructor(private readonly userPreferencesService: UserPreferencesService) {
+        this.logger = new Logger(this.constructor.name);
         this.logger.log('Initialized');
     }
 

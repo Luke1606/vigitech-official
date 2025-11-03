@@ -8,9 +8,12 @@ import { PrismaService } from '../../../common/services/prisma.service';
 
 @Injectable()
 export class UserPreferencesService {
-    private readonly logger: Logger = new Logger('UserPreferencesService');
+    private readonly logger: Logger;
 
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) {
+        this.logger = new Logger(this.constructor.name);
+        this.logger.log('Initialized');
+    }
 
     async findActualUserPreferences(userId: UUID): Promise<UserPreferences | null> {
         return this.prisma.userPreferences.findFirstOrThrow({

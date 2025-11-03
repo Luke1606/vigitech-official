@@ -12,7 +12,6 @@ import {
     UserHiddenItem,
 } from '@prisma/client';
 import { AuthenticatedRequest } from '../../../shared/types/authenticated-request.type';
-import { SurveyItemWithAnalysisType } from '../survey-items/types/survey-item-with-analysis.type';
 
 // ===========================================
 // 1. CONSTANTES Y DATOS BASE
@@ -53,7 +52,7 @@ export const mockItemAnalysis = {
 export const mockSurveyItemWithAnalysis = {
     item: mockSurveyItem,
     lastAnalysis: mockItemAnalysis,
-} as SurveyItemWithAnalysisType;
+};
 
 export const mockUserItemList = {
     id: MOCK_LIST_ID,
@@ -99,10 +98,6 @@ export const mockItemAnalysisService = {
     findAllInsideIntervalFromObjective: jest.fn(),
     findLastAnalysisFromItem: jest.fn(),
     createAndGetAnalysisesFromSurveyItems: jest.fn(),
-};
-
-export const mockReportsService = {
-    generate: jest.fn(),
 };
 
 export const mockSurveyItemsService = {
