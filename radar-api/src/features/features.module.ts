@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
-import { DataManagementModule } from './data-management/data-management.module';
+import { UserDataModule } from './user-data/user-data.module';
 
 @Module({
-    imports: [AuthModule, DataManagementModule],
+    imports: [AuthModule, UserDataModule],
 })
 export class FeaturesModule {}

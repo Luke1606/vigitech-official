@@ -2,7 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ClerkAuthGuard } from './guards/clerk-auth.guard';
 import { ClerkClientProvider } from './providers/clerk.provider';
-import { UsersModule } from '../data-management/users/users.module';
+import { UsersModule } from '../user-data/users/users.module';
 
 @Global()
 @Module({
