@@ -9,7 +9,9 @@ services:
       POSTGRES_PASSWORD: "${DB_PASSWORD}"
     ports:
       - "4000:5432"
+    command: ["postgres", "-c", "shared_preload_libraries=pg_prewarm"]
     volumes:
+      - ./docker-entrypoint-initdb.d/init-pgvector.sh:/docker-entrypoint-initdb.d/init-pgvector.sh
       - postgres_data:/var/lib/postgresql/data
     networks:
       - radar-network
