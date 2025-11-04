@@ -1,4 +1,20 @@
-export interface GitHubRepository {
+/**
+ * @file Defines the types for the raw data collected from the GitHub API.
+ * @description This file contains the type definitions for the raw GitHub repository data,
+ *              ensuring type safety and clarity throughout the collection and processing pipeline.
+ */
+
+/**
+ * Represents the type of a technology item from GitHub.
+ * @enum {string}
+ */
+export type GitHubItemType = 'repository';
+
+/**
+ * Represents a GitHub repository object as returned by the GitHub API.
+ * This type is used for raw data collection before further processing.
+ */
+export type GitHubRepository = {
     id: number;
     node_id: string;
     name: string;
@@ -103,5 +119,5 @@ export interface GitHubRepository {
     open_issues: number;
     watchers: number;
     default_branch: string;
-    score: number;
-}
+    score?: number;
+};
