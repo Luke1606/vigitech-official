@@ -1,6 +1,6 @@
 import { RadarQuadrant } from '@prisma/client';
 
-export interface ICollector {
+export interface IFetcher {
     quadrant: RadarQuadrant;
     collect(): Promise<void>;
 }

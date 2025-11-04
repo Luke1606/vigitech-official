@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { RadarQuadrant } from '@prisma/client';
-import { BaseCollector } from '../../base.collector';
+import { BaseFetcher } from '../../base.fetcher';
 import { PrismaService } from '../../../../../common/services/prisma.service';
 
 @Injectable()
-export class KaggleCollector extends BaseCollector {
+export class KaggleFetcher extends BaseFetcher {
     readonly quadrant = RadarQuadrant.BUSSINESS_INTEL;
 
     constructor(

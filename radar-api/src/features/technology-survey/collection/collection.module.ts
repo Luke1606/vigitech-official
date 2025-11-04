@@ -1,14 +1,14 @@
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { PrismaService } from '../../../common/services/prisma.service';
 import { CollectionService } from './collection.service';
-import { BaseCollector } from './base.collector';
+import { BaseFetcher } from './base.fetcher';
 
 @Module({})
 export class CollectionModule {
-    static register(collectors: (new (...args: unknown[]) => BaseCollector)[]): DynamicModule {
-        const collectorProviders: Provider[] = collectors.map((CollectorClass) => ({
-            provide: CollectorClass,
-            useClass: CollectorClass,
+    static register(fetchers: (new (...args: unknown[]) => BaseFetcher)[]): DynamicModule {
+        const fetcherProviders: Provider[] = fetchers.map((FetcherClass) => ({
+            provide: FetcherClass,
+            useClass: FetcherClass,
         }));
 
         return {
@@ -16,11 +16,11 @@ export class CollectionModule {
             providers: [
                 CollectionService,
                 PrismaService,
-                ...collectorProviders,
+                ...fetcherProviders,
                 {
-                    provide: 'COLLECTORS_ARRAY',
-                    useFactory: (...collectorInstances: BaseCollector[]) => collectorInstances,
-                    inject: collectors,
+                    provide: 'FETCHERS_ARRAY',
+                    useFactory: (...fetcherInstances: BaseFetcher[]) => fetcherInstances,
+                    inject: fetchers,
                 },
             ],
             exports: [CollectionService],

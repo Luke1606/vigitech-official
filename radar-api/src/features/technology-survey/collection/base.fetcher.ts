@@ -1,9 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { RadarQuadrant, RawData } from '@prisma/client';
 import { PrismaService } from '../../../common/services/prisma.service';
-import { ICollector } from './collection.interfaces';
+import { IFetcher } from './collection.interfaces';
 
-export abstract class BaseCollector implements ICollector {
+export abstract class BaseFetcher implements IFetcher {
     protected readonly logger: Logger;
     abstract readonly quadrant: RadarQuadrant;
 
