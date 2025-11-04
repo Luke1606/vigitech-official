@@ -161,6 +161,36 @@ enum RadarRing {
     @@schema("tech_survey")
 }
 
+enum RawDataSource {
+  GITHUB
+  GITLAB
+  KAGGLE
+  CROSSREF
+  OPENALEX
+  DOCKERHUB
+  NEWSAPI
+  HACKERNEWS
+  STACKEXCHANGE
+  NPM
+  PYPI
+  RSS
+
+  @@schema("tech_survey")
+}
+
+enum RawDataType {
+  REPOSITORY
+  DATASET
+  ARTICLE
+  PACKAGE
+  QUESTION
+  NEWS_ITEM
+  BLOG_POST
+  RESEARCH_PAPER
+
+  @@schema("tech_survey")
+}
+
 model SurveyItem {
   id                             String               @id @default(uuid())
   title                          String
@@ -254,12 +284,12 @@ model ItemAnalysis {
 
 // Nuevo modelo para almacenar datos brutos de las APIs
 model RawData {
-  id          String    @id @default(uuid())
-  source      String    
-  dataType    String    
-  content     Json      
-  processedAt DateTime? 
-  createdAt   DateTime  @default(now())
+  id          String        @id @default(uuid())
+  source      RawDataSource
+  dataType    RawDataType
+  content     Json
+  processedAt DateTime?
+  collectedAt DateTime      @default(now())
 
   @@schema("tech_survey")
 }
