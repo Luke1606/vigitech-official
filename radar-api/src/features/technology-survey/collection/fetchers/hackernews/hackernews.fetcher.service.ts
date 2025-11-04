@@ -7,7 +7,7 @@ import { HackerNewsItem } from '../../types/hackernews.types';
 
 @Injectable()
 export class HackerNewsFetcher extends BaseFetcher {
-    readonly quadrant = RadarQuadrant.LANGUAGES_AND_FRAMEWORKS; // Or a more appropriate quadrant
+    readonly quadrants = [RadarQuadrant.LANGUAGES_AND_FRAMEWORKS, RadarQuadrant.SCIENTIFIC_STAGE]; // Hacker News can cover multiple quadrants
 
     private readonly baseUrl = 'https://hacker-news.firebaseio.com/v0';
 
@@ -18,8 +18,8 @@ export class HackerNewsFetcher extends BaseFetcher {
         super(prisma);
     }
 
-    public async collect(): Promise<void> {
-        this.logger.log(`Collecting data from Hacker News for quadrant ${this.quadrant}...`);
+    public async fetch(): Promise<void> {
+        this.logger.log(`Collecting data from Hacker News for quadrants: ${this.quadrants.join(', ')}...`);
 
         try {
             // Get top story IDs

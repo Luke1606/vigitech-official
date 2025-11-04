@@ -6,7 +6,7 @@ import { PrismaService } from '../../../../../common/services/prisma.service';
 
 @Injectable()
 export class GitHubFetcher extends BaseFetcher {
-    readonly quadrant = RadarQuadrant.LANGUAGES_AND_FRAMEWORKS;
+    readonly quadrants = [RadarQuadrant.LANGUAGES_AND_FRAMEWORKS];
 
     constructor(
         protected readonly prisma: PrismaService,
@@ -15,8 +15,8 @@ export class GitHubFetcher extends BaseFetcher {
         super(prisma);
     }
 
-    public async collect(): Promise<void> {
-        this.logger.log(`Collecting data from GitHub for quadrant ${this.quadrant}...`);
+    public async fetch(): Promise<void> {
+        this.logger.log(`Collecting data from GitHub for quadrants: ${this.quadrants.join(', ')}...`);
 
         // Ejemplo: Obtener repositorios populares (esto es una simplificación)
         // En un caso real, se usaría la API de GitHub para buscar tendencias de lenguajes/frameworks

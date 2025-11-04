@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { RadarQuadrant } from '@prisma/client';
 import { BaseFetcher } from '../../base.fetcher';
 import { PrismaService } from '../../../../../common/services/prisma.service';
-import { StackExchangeApiResponse, StackExchangeQuestion } from '../../types/stackexchange.types';
+import { StackExchangeApiResponse, StackExchangeQuestion } from '../../types/stackoverflow/stackexchange.types';
 
 @Injectable()
 export class StackExchangeFetcher extends BaseFetcher {

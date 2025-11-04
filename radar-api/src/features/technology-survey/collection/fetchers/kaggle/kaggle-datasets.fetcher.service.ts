@@ -6,7 +6,11 @@ import { PrismaService } from '../../../../../common/services/prisma.service';
 
 @Injectable()
 export class KaggleFetcher extends BaseFetcher {
-    readonly quadrant = RadarQuadrant.BUSSINESS_INTEL;
+    readonly quadrants = [
+        RadarQuadrant.BUSSINESS_INTEL,
+        RadarQuadrant.LANGUAGES_AND_FRAMEWORKS,
+        RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES,
+    ];
 
     constructor(
         protected readonly prisma: PrismaService,
@@ -15,8 +19,8 @@ export class KaggleFetcher extends BaseFetcher {
         super(prisma);
     }
 
-    public async collect(): Promise<void> {
-        this.logger.log(`Collecting data from Kaggle for quadrant ${this.quadrant}...`);
+    public async fetch(): Promise<void> {
+        this.logger.log(`Collecting data from Kaggle for quadrants: ${this.quadrants.join(', ')}...`);
 
         // Ejemplo: Obtener datasets populares o en tendencia (simplificación)
         // En un caso real, se usaría la API de Kaggle para buscar datasets, notebooks o competiciones

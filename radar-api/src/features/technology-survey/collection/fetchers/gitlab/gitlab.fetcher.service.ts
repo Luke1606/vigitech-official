@@ -6,7 +6,7 @@ import { PrismaService } from '../../../../../common/services/prisma.service';
 
 @Injectable()
 export class GitLabFetcher extends BaseFetcher {
-    readonly quadrant = RadarQuadrant.LANGUAGES_AND_FRAMEWORKS;
+    readonly quadrants = [RadarQuadrant.LANGUAGES_AND_FRAMEWORKS, RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES];
 
     constructor(
         protected readonly prisma: PrismaService,
@@ -15,8 +15,8 @@ export class GitLabFetcher extends BaseFetcher {
         super(prisma);
     }
 
-    public async collect(): Promise<void> {
-        this.logger.log(`Collecting data from GitLab for quadrant ${this.quadrant}...`);
+    public async fetch(): Promise<void> {
+        this.logger.log(`Collecting data from GitLab for quadrants: ${this.quadrants.join(', ')}...`);
 
         // GitLab API para obtener proyectos populares o en tendencia
         // Esto es una simplificación y requeriría autenticación y manejo de paginación en un caso real.

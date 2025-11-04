@@ -6,7 +6,7 @@ import { PrismaService } from '../../../../../common/services/prisma.service';
 
 @Injectable()
 export class CrossRefFetcher extends BaseFetcher {
-    readonly quadrant = RadarQuadrant.SCIENTIFIC_STAGE;
+    readonly quadrants = [RadarQuadrant.SCIENTIFIC_STAGE];
 
     constructor(
         protected readonly prisma: PrismaService,
@@ -15,8 +15,8 @@ export class CrossRefFetcher extends BaseFetcher {
         super(prisma);
     }
 
-    public async collect(): Promise<void> {
-        this.logger.log(`Collecting data from CrossRef for quadrant ${this.quadrant}...`);
+    public async fetch(): Promise<void> {
+        this.logger.log(`Collecting data from CrossRef for quadrants: ${this.quadrants.join(', ')}...`);
 
         // CrossRef API para obtener publicaciones científicas (simplificación)
         // La API de CrossRef es bastante rica y permite buscar por varios criterios.

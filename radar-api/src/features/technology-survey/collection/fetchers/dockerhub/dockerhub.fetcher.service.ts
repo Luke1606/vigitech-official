@@ -6,7 +6,7 @@ import { PrismaService } from '../../../../../common/services/prisma.service';
 
 @Injectable()
 export class DockerHubFetcher extends BaseFetcher {
-    readonly quadrant = RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES;
+    readonly quadrants = [RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES];
 
     constructor(
         protected readonly prisma: PrismaService,
@@ -15,8 +15,8 @@ export class DockerHubFetcher extends BaseFetcher {
         super(prisma);
     }
 
-    public async collect(): Promise<void> {
-        this.logger.log(`Collecting data from Docker Hub for quadrant ${this.quadrant}...`);
+    public async fetch(): Promise<void> {
+        this.logger.log(`Collecting data from Docker Hub for quadrants: ${this.quadrants.join(', ')}...`);
 
         // Docker Hub API para obtener imágenes populares o en tendencia (simplificación)
         // La API de Docker Hub es pública pero tiene límites de tasa y requiere autenticación para más detalles.

@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { RadarQuadrant } from '@prisma/client';
 import { BaseFetcher } from '../../base.fetcher';
 import { PrismaService } from '../../../../../common/services/prisma.service';
-import { StackOverflowSurveyRecord } from '../../types/stackoverflow-survey.types';
+import { StackOverflowSurveyRecord } from '../../types/stackoverflow/stackoverflow-survey.types';
 
 @Injectable()
 export class StackOverflowSurveyFetcher extends BaseFetcher {

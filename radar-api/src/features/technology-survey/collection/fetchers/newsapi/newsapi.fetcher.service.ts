@@ -7,7 +7,11 @@ import { NewsApiArticle } from '../../types/newsapi.types'; // Assuming newsapi.
 
 @Injectable()
 export class NewsApiFetcher extends BaseFetcher {
-    readonly quadrant = RadarQuadrant.SCIENTIFIC_STAGE; // Or a more appropriate quadrant
+    readonly quadrants = [
+        RadarQuadrant.SCIENTIFIC_STAGE,
+        RadarQuadrant.LANGUAGES_AND_FRAMEWORKS,
+        RadarQuadrant.BUSSINESS_INTEL,
+    ]; // News can cover multiple quadrants
 
     constructor(
         protected readonly prisma: PrismaService,
@@ -16,8 +20,8 @@ export class NewsApiFetcher extends BaseFetcher {
         super(prisma);
     }
 
-    public async collect(): Promise<void> {
-        this.logger.log(`Collecting data from NewsAPI for quadrant ${this.quadrant}...`);
+    public async fetch(): Promise<void> {
+        this.logger.log(`Collecting data from NewsAPI for quadrants: ${this.quadrants.join(', ')}...`);
 
         // NewsAPI URL for general tech news, requires an API key
         const newsApiUrl = `https://newsapi.org/v2/everything?q=technology&sortBy=relevancy&pageSize=10&apiKey=${process.env.NEWS_API_KEY}`;
