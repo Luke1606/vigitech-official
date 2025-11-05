@@ -1,33 +1,35 @@
+// useUpdateListMutationOptions.ts
 import { mutationOptions, useQueryClient } from '@tanstack/react-query';
 import { userItemListRepository } from '../../../..';
+import type { UUID } from 'crypto';
 import { userItemListsKey } from '../constants';
 import type { UserItemList } from '../../../..';
-import { useUserItemLists } from '../../../..';
-import { error } from 'console';
-import { findAllQueryOptions } from '../query-options';
 
-export const useCreateListMutationOptions = () => {
+export const useUpdateListMutationOptions = () => {
     const queryClient = useQueryClient();
 
     return mutationOptions({
-        mutationFn: (listName: string) => userItemListRepository.createList(listName),
+        mutationFn: ({ listId, listNewName }: { listId: UUID; listNewName: string }) =>
+            userItemListRepository.updateList(listId, listNewName),
 
-        onMutate: async (listName: string) => {
+        onMutate: async ({ listId, listNewName }) => {
             await queryClient.cancelQueries({ queryKey: [userItemListsKey] });
 
             const previousLists = queryClient.getQueryData<UserItemList[]>([userItemListsKey]);
 
-            const optimisticList: UserItemList = {
-                id: crypto.randomUUID() as any, // temporal ID
-                name: listName,
-                items: [],
-            };
-
             if (previousLists) {
-                queryClient.setQueryData<UserItemList[]>([userItemListsKey], [
-                    ...previousLists,
-                    optimisticList,
-                ]);
+                queryClient.setQueryData<UserItemList[]>(
+                    [userItemListsKey],
+                    previousLists.map(list =>
+                        list.id === listId
+                            ? {
+                                ...list,
+                                name: listNewName,
+                                updatedAt: new Date().toISOString()
+                            }
+                            : list
+                    )
+                );
             }
 
             return { previousLists };
@@ -37,17 +39,15 @@ export const useCreateListMutationOptions = () => {
             if (context?.previousLists) {
                 queryClient.setQueryData([userItemListsKey], context.previousLists);
             }
-            console.log(_error);
+            console.log(_error)
         },
 
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [userItemListsKey] });
-
         },
-        
+
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: [userItemListsKey] });
         },
     });
 };
-

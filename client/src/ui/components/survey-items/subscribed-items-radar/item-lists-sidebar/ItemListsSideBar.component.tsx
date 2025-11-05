@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { EyeIcon, EyeOff, Plus, Rotate3D, RotateCw } from 'lucide-react';
+import { EyeIcon, EyeOff, Plus } from 'lucide-react';
 import {
     Blip,
     getQuadrantColor,
@@ -25,8 +25,9 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
-    Input
+    Input,
 } from '../../..';
+import { SyncButton } from '../../../sync-button';
 
 import { CustomItemsList } from './custom-item-list';
 import { UUID } from 'crypto';
@@ -41,14 +42,11 @@ export const ItemListsSideBar: React.FC<{
 }) => {
         const {
             lists,
-            query,
-            synchronized,
-            addPendingCreateList,
-            addPendingUpdateList,
-            addPendingRemoveList,
-            addPendingAppendAllItems,
-            addPendingRemoveAllItems,
-            clearListPendingChanges
+            createList,
+            updateList,
+            removeList,
+            appendAllItems,
+            removeAllItems,
         } = useUserItemLists();
         const [newListName, setNewListName] = useState('');
         const [open, setOpen] = useState(false);
@@ -56,7 +54,7 @@ export const ItemListsSideBar: React.FC<{
         const [deleteTarget, setDeleteTarget] = useState<UUID | null>(null);
         const [addTarget, setAddTarget] = useState<UserItemList | null>(null);
         const [removeElementTarget, setRemoveElementTarget] = useState<{
-            listId: string;
+            listId: UUID;
             itemIds: UUID[]
         } | null>(null);
 
@@ -88,7 +86,7 @@ export const ItemListsSideBar: React.FC<{
             };
         };
 
-        const openRemoveItemDialog = (listId: string, itemIds: UUID[]) => {
+        const openRemoveItemDialog = (listId: UUID, itemIds: UUID[]) => {
             setRemoveElementTarget({ listId, itemIds });
         };
 
@@ -153,12 +151,9 @@ export const ItemListsSideBar: React.FC<{
                                 name='crearLista'
                                 onClick={() => {
                                     if (newListName.trim()) {
-                                        const tempId: UUID = crypto.randomUUID()
-                                        addPendingCreateList({
-                                            id: tempId,
-                                            name: newListName.trim(),
-                                            items: []
-                                        });
+                                        createList(
+                                            newListName.trim(),
+                                        );
                                         setNewListName('');
                                         setOpen(false);
                                     }
@@ -190,7 +185,7 @@ export const ItemListsSideBar: React.FC<{
                             name='renombrarLista'
                             onClick={() => {
                                 if (newListName.trim()) {
-                                    addPendingUpdateList(renameTarget, newListName.trim());
+                                    updateList(renameTarget, newListName.trim());
                                     setRenameTarget(null);
                                     setNewListName('');
                                 }
@@ -228,7 +223,7 @@ export const ItemListsSideBar: React.FC<{
                             name='eliminarLista'
                             variant="destructive"
                             onClick={() => {
-                                addPendingRemoveList(deleteTarget);
+                                removeList(deleteTarget);
                                 setDeleteTarget(null);
                             }}
                         >
@@ -329,7 +324,7 @@ export const ItemListsSideBar: React.FC<{
                                         selectedItems.includes(item.id)
                                 )
 
-                                addPendingAppendAllItems(addTarget.id, updatedItems);
+                                appendAllItems(addTarget.id, updatedItems);
                                 setSelectedItems([]);
                                 setAddTarget(null);
                                 setElements(getAvailableItemsForTarget(addTarget));
@@ -362,7 +357,7 @@ export const ItemListsSideBar: React.FC<{
                             name='eliminarElemento'
                             variant="destructive"
                             onClick={() => {
-                                addPendingRemoveAllItems(
+                                removeAllItems(
                                     removeElementTarget.listId,
                                     removeElementTarget.itemIds
                                 );
@@ -391,10 +386,7 @@ export const ItemListsSideBar: React.FC<{
                         <SidebarGroup>
                             <SidebarGroupLabel className="font-semibold text-xl pt-4 flex justify-between">
                                 Listas personalizadas
-                                <Button onClick={() => clearListPendingChanges()} size={'sm'}
-                                    className={`${synchronized ? 'bg-green-500' : 'bg-red-600'} hover:bg-green-500`}>
-                                    <Rotate3D size={32} color="white"></Rotate3D>
-                                </Button>
+                                <SyncButton />
                             </SidebarGroupLabel>
 
                             <SidebarGroupContent>

@@ -1,11 +1,11 @@
 import type { UUID } from 'crypto';
-import { 
-    mutationOptions, 
-    useQueryClient 
+import {
+    mutationOptions,
+    useQueryClient
 } from '@tanstack/react-query';
-import { 
-    userItemListRepository, 
-    type UserItemList 
+import {
+    userItemListRepository,
+    type UserItemList
 } from '../../../..';
 import { userItemListsKey } from '../constants';
 
@@ -35,6 +35,7 @@ export const useRemoveAllItemsMutationOptions = () => {
             if (context?.previousList) {
                 queryClient.setQueryData([userItemListsKey, listId], context.previousList);
             }
+            console.log(_error)
         },
 
         onSuccess: (_, { listId }) => {

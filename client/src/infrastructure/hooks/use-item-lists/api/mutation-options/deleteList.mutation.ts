@@ -31,6 +31,7 @@ export const useDeleteListMutationOptions = () => {
             if (context?.previousLists) {
                 queryClient.setQueryData([userItemListsKey], context.previousLists);
             }
+            console.log(_error)
         },
 
         onSuccess: () => {

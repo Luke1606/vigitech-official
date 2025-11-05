@@ -35,6 +35,7 @@ export const useRemoveOneItemMutationOptions = () => {
             if (context?.previousList) {
                 queryClient.setQueryData([userItemListsKey, listId], context.previousList);
             }
+            console.log(_error)
         },
 
         onSuccess: (_, { listId }) => {

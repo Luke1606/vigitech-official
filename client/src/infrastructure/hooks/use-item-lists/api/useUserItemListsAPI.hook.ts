@@ -1,5 +1,6 @@
-import type { UUID } from 'crypto';
+// useUserItemListsAPI.hook.ts
 import { useMutation, useQuery } from '@tanstack/react-query';
+import type { UUID } from 'crypto';
 
 import {
     findOneQueryOptions,
@@ -13,6 +14,7 @@ import {
     useAppendAllItemsMutationOptions,
     useRemoveOneItemMutationOptions,
     useRemoveAllItemsMutationOptions,
+    useUpdateListMutationOptions, // Asegúrate de tener este archivo
 } from './mutation-options';
 
 export const useUserItemListsAPI = () => {
@@ -30,6 +32,10 @@ export const useUserItemListsAPI = () => {
 
     const useDeleteListItemMutation = useMutation(
         useDeleteListMutationOptions()
+    );
+
+    const useUpdateListMutation = useMutation(
+        useUpdateListMutationOptions() // Asegúrate de tener esta mutation
     );
 
     const useAppendAllItemMutation = useMutation(
@@ -51,15 +57,18 @@ export const useUserItemListsAPI = () => {
     return {
         findOne: useFindOneListQuery,
         findAll: useFindAllListsQuery,
-        createList: useCreateListMutation.mutate,
-        deleteList: useDeleteListItemMutation.mutate,
-        appendOneItem: useAppendOneItemMutation.mutate,
-        appendAllItem: useAppendAllItemMutation.mutate,
-        removeOneItem: useRemoveOneItemMutation.mutate,
-        removeAllItem: useRemoveAllItemMutation.mutate,
+        // Usar mutateAsync en lugar de mutate para obtener Promises
+        createList: useCreateListMutation.mutateAsync,
+        deleteList: useDeleteListItemMutation.mutateAsync,
+        updateList: useUpdateListMutation.mutateAsync, // Agregar esta línea
+        appendOneItem: useAppendOneItemMutation.mutateAsync,
+        appendAllItem: useAppendAllItemMutation.mutateAsync,
+        removeOneItem: useRemoveOneItemMutation.mutateAsync,
+        removeAllItem: useRemoveAllItemMutation.mutateAsync,
         isLoading: {
             createList: useCreateListMutation.isPending,
             deleteList: useDeleteListItemMutation.isPending,
+            updateList: useUpdateListMutation.isPending,
             appendOneItem: useAppendOneItemMutation.isPending,
             appendAllItem: useAppendAllItemMutation.isPending,
             removeOneItem: useRemoveOneItemMutation.isPending,
@@ -68,6 +77,7 @@ export const useUserItemListsAPI = () => {
         hasError: {
             createList: useCreateListMutation.isError,
             deleteList: useDeleteListItemMutation.isError,
+            updateList: useUpdateListMutation.isError,
             appendOneItem: useAppendOneItemMutation.isError,
             appendAllItem: useAppendAllItemMutation.isError,
             removeOneItem: useRemoveOneItemMutation.isError,

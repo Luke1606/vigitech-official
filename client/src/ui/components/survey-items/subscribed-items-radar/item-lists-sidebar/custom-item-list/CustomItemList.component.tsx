@@ -19,7 +19,7 @@ export const CustomItemsList: React.FC<{
     list: UserItemList
     onRename?: (id: UUID, listNewName: string) => void;
     onAddItem?: (name: string) => void;
-    onRemoveItem?: (listid: string, itemIds: UUID[]) => void;
+    onRemoveItem?: (listid: UUID, itemIds: UUID[]) => void;
     onDeleteList?: (id: UUID) => void;
 }> = ({
     list,

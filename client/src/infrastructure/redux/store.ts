@@ -1,3 +1,4 @@
+// store.ts
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import {
     userItemListsReducer,
