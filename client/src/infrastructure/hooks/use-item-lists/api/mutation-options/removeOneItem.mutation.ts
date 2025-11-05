@@ -8,6 +8,7 @@ import {
     type UserItemList 
 } from '../../../..';
 import { userItemListsKey } from '../constants';
+import { toast } from 'react-toastify';
 
 export const useRemoveOneItemMutationOptions = () => {
     const queryClient = useQueryClient();
@@ -36,10 +37,12 @@ export const useRemoveOneItemMutationOptions = () => {
                 queryClient.setQueryData([userItemListsKey, listId], context.previousList);
             }
             console.log(_error)
+            toast.error(`Error al quitar el elemento de la lista: ${_error}. Por favor haga una sincronización.`)
         },
 
         onSuccess: (_, { listId }) => {
             queryClient.invalidateQueries({ queryKey: [userItemListsKey, listId] });
+            toast.success("Se quitó con éxito el elemento de la lista.")     
         },
 
         onSettled: (_data, _error, { listId }) => {

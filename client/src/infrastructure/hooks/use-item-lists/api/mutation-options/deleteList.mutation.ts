@@ -3,6 +3,7 @@ import { userItemListRepository } from '../../../..';
 import type { UUID } from 'crypto';
 import { userItemListsKey } from '../constants';
 import type { UserItemList } from '../../../..';
+import { toast } from 'react-toastify';
 
 export const useDeleteListMutationOptions = () => {
 
@@ -32,10 +33,12 @@ export const useDeleteListMutationOptions = () => {
                 queryClient.setQueryData([userItemListsKey], context.previousLists);
             }
             console.log(_error)
+            toast.error(`Error al eliminar la lista: ${_error}. Por favor haga una sincronización.`)
         },
 
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [userItemListsKey] });
+            toast.success("Se eliminó con éxito la lista.")     
         },
 
         onSettled: () => {

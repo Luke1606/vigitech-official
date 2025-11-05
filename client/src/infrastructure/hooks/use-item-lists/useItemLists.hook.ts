@@ -71,19 +71,11 @@ export const useUserItemLists = () => {
     // Efecto para limpiar pending changes antiguos al cargar la aplicación
     useEffect(() => {
         const now = Date.now();
-        const oneWeekAgo = now - (7 * 24 * 60 * 60 * 1000);
+        const oneMonthAgo = now - (30 * 24 * 60 * 60 * 1000); // Solo por edad muy antigua
 
-        const shouldRemove = (change: any) => {
-            if (change.error?.timestamp && change.error.timestamp < oneWeekAgo) {
-                return true;
-            }
-            if (change.retryCount >= 5) {
-                return true;
-            }
-            return false;
-        };
-
-        dispatch(cleanupOldPendingChanges({ shouldRemove }));
+        dispatch(cleanupOldPendingChanges({
+            maxAge: oneMonthAgo // Solo eliminar cambios extremadamente antiguos (1 mes+)
+        }));
     }, [dispatch]);
 
     // Función para ejecutar operaciones con manejo de errores
@@ -138,25 +130,17 @@ export const useUserItemLists = () => {
     };
 
     // Función para reintentar pending changes
-    const retryPendingChanges = async (options?: {
-        maxRetries?: number;
-    }): Promise<RetryResult> => {
-        const maxRetries = options?.maxRetries || 3;
+    // En useUserItemLists.hook.ts - modificar retryPendingChanges
+    const retryPendingChanges = async (): Promise<RetryResult> => {
         const results: RetryResult = {
             successes: [],
             failures: []
         };
 
-        // Helper para reintentar un cambio individual
+        // Helper para reintentar sin límites
         const retryChange = async (change: any, type: keyof PendingChanges): Promise<boolean> => {
-            if (change.retryCount >= maxRetries) {
-                results.failures.push({
-                    ...change,
-                    type,
-                    error: { ...change.error, message: 'Max retries exceeded' }
-                });
-                return false;
-            }
+            // ELIMINADO: Verificación de límite de reintentos
+            // if (change.retryCount >= maxRetries) { ... }
 
             try {
                 switch (type) {
@@ -168,7 +152,6 @@ export const useUserItemLists = () => {
                         });
                         break;
                     case 'toUpdateList':
-                        // CORREGIDO: Pasar objeto en lugar de parámetros separados
                         if (query.updateList) {
                             await query.updateList({
                                 listId: change.listId,
@@ -188,7 +171,6 @@ export const useUserItemLists = () => {
                         });
                         break;
                     case 'toAppendAllItems':
-                        // CORREGIDO: Pasar objeto en lugar de parámetros separados
                         await query.appendAllItem({
                             listId: change.listId,
                             itemIds: change.items.map((item: SurveyItem) => item.id)
@@ -199,7 +181,6 @@ export const useUserItemLists = () => {
                         });
                         break;
                     case 'toRemoveAllItems':
-                        // CORREGIDO: Pasar objeto en lugar de parámetros separados
                         await query.removeAllItem({
                             listId: change.listId,
                             itemIds: change.itemIds
@@ -212,6 +193,7 @@ export const useUserItemLists = () => {
                 }
                 return true;
             } catch (error) {
+                // Siempre incrementar retryCount, sin límites
                 results.failures.push({
                     ...change,
                     type,
@@ -219,13 +201,13 @@ export const useUserItemLists = () => {
                         message: error instanceof Error ? error.message : 'Unknown error',
                         timestamp: Date.now()
                     },
-                    retryCount: change.retryCount + 1
+                    retryCount: change.retryCount + 1 // Siempre incrementar
                 });
                 return false;
             }
         };
 
-        // Reintentar por cada tipo
+        // Reintentar por cada tipo (mantener el orden)
         const types: (keyof PendingChanges)[] = [
             'toCreateList', 'toUpdateList', 'toRemoveList',
             'toAppendAllItems', 'toRemoveAllItems'
@@ -238,28 +220,21 @@ export const useUserItemLists = () => {
             }
         }
 
-        // Actualizar el estado de pendingChanges después del reintento
-        dispatch(updatePendingChangesAfterRetry(results));
+        // Actualizar pending changes
+        dispatch(updatePendingChangesAfterRetry({
+            successes: results.successes,
+            failures: results.failures
+        }));
 
         return results;
     };
 
     // Función para limpiar pending changes antiguos
     const cleanupPendingChanges = () => {
-        const now = Date.now();
-        const oneWeekAgo = now - (7 * 24 * 60 * 60 * 1000);
-
-        const shouldRemove = (change: any) => {
-            if (change.error?.timestamp && change.error.timestamp < oneWeekAgo) {
-                return true;
-            }
-            if (change.retryCount >= 5) {
-                return true;
-            }
-            return false;
-        };
-
-        dispatch(cleanupOldPendingChanges({ shouldRemove }));
+        const oneMonthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+        dispatch(cleanupOldPendingChanges({
+            maxAge: oneMonthAgo
+        }));
     };
 
     return {

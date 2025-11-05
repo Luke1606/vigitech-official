@@ -3,6 +3,7 @@ import { userItemListRepository } from '../../../..';
 import type { UUID } from 'crypto';
 import { userItemListsKey } from '../constants';
 import type { SurveyItem, UserItemList } from '../../../..';
+import { toast } from 'react-toastify';
 
 export const useAppendOneItemMutationOptions = () => {
     const queryClient = useQueryClient();
@@ -31,10 +32,13 @@ export const useAppendOneItemMutationOptions = () => {
                 queryClient.setQueryData([userItemListsKey, listId], context.previousList);
             }
             console.log(_error)
+            toast.error(`Error al añadir el elemento: ${_error}. Por favor haga una sincronización.`)
+                                        
         },
 
         onSuccess: (_, { listId }) => {
             queryClient.invalidateQueries({ queryKey: [userItemListsKey, listId] });
+            toast.success("Se añadieron con éxito el elemento.")     
         },
 
         onSettled: (_data, _error, { listId }) => {

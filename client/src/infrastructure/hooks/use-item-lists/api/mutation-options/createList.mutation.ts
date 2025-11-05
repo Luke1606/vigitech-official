@@ -5,6 +5,7 @@ import type { UserItemList } from '../../../..';
 import { useUserItemLists } from '../../../..';
 import { error } from 'console';
 import { findAllQueryOptions } from '../query-options';
+import { toast } from 'react-toastify';
 
 export const useCreateListMutationOptions = () => {
     const queryClient = useQueryClient();
@@ -38,11 +39,12 @@ export const useCreateListMutationOptions = () => {
                 queryClient.setQueryData([userItemListsKey], context.previousLists);
             }
             console.log(_error);
+            toast.error(`Error al crear la lista: ${_error}. Por favor haga una sincronización.`)
         },
 
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [userItemListsKey] });
-
+            toast.success("Se creó con éxito la lista.")     
         },
         
         onSettled: () => {

@@ -296,11 +296,23 @@ const userItemListsSlice = createSlice({
         },
 
         // Reducer para limpiar pending changes antiguos
+        // En userItemLists.slice.ts
+        // En userItemLists.slice.ts
         cleanupOldPendingChanges: (state, action: PayloadAction<{
-            shouldRemove: (change: any) => boolean;
+            maxAge: number; // Solo edad máxima, sin límite de reintentos
         }>) => {
-            const { shouldRemove } = action.payload;
+            const { maxAge } = action.payload;
 
+            const shouldRemove = (change: any) => {
+                // SOLO eliminar por edad extremadamente antigua
+                // NO hay verificación de retryCount
+                if (change.error?.timestamp && change.error.timestamp < maxAge) {
+                    return true;
+                }
+                return false;
+            };
+
+            // Aplicar el filtro a todos los arrays
             state.pendingChanges.toCreateList = state.pendingChanges.toCreateList.filter(
                 change => !shouldRemove(change)
             );
@@ -317,15 +329,17 @@ const userItemListsSlice = createSlice({
                 change => !shouldRemove(change)
             );
 
+            // Actualizar synchronized
             state.synchronized =
                 state.pendingChanges.toCreateList.length === 0 &&
                 state.pendingChanges.toUpdateList.length === 0 &&
                 state.pendingChanges.toRemoveList.length === 0 &&
                 state.pendingChanges.toAppendAllItems.length === 0 &&
                 state.pendingChanges.toRemoveAllItems.length === 0;
-        },
-    },
-});
+        }
+    }
+},
+);
 
 export const {
     addPendingCreateList,

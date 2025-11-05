@@ -13,6 +13,7 @@ import { routes } from "./routing";
 import { ErrorBoundary, SidebarProvider } from "./ui/components";
 import { PersistGate } from "redux-persist/integration/react";
 import { persistor } from "./infrastructure/redux/store";
+import { ToastContainer} from 'react-toastify'
 
 const router: DataRouter = createBrowserRouter(routes);
 
@@ -27,8 +28,20 @@ const App = () => {
 						</SidebarProvider>
 					</PersistGate>
 				</Provider>
-			</QueryClientProvider>
-		</ErrorBoundary>
+				<ToastContainer
+					position="top-right"
+					autoClose={5000}
+					hideProgressBar={false}
+					newestOnTop
+					closeOnClick
+					rtl={false}
+					pauseOnFocusLoss
+					draggable
+					pauseOnHover
+					theme="light"
+				/>
+		</QueryClientProvider>
+		</ErrorBoundary >
 	)
 }
 
