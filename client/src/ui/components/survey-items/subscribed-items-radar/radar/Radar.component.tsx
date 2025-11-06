@@ -13,6 +13,7 @@ import {
 import { RadarMenu } from './radar-menu/RadarMenu.component'; // Ajusta la ruta según tu estructura
 import type { SurveyItem } from '../../../../../infrastructure'; // Ajusta la ruta
 import { useNavigate } from 'react-router-dom';
+import { SettingsModal } from '../../../config-button';
 
 export const Radar: React.FC<{
     entries?: Blip[];
@@ -284,6 +285,7 @@ export const Radar: React.FC<{
                         isSelected={false} // Ajusta según tu lógica de selección
                     />
                 )}
+                <SettingsModal fields={[]} title='Configuraciones'/>
             </div >
         );
     };

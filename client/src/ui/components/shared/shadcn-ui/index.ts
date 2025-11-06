@@ -5,6 +5,8 @@ export { Separator } from './separator';
 export { Skeleton } from './skeleton';
 
 export { Badge } from './badge'
+export { Switch } from './switch'
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 
 export {
   Alert,
