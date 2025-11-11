@@ -31,14 +31,11 @@ export const useAppendOneItemMutationOptions = () => {
             if (context?.previousList) {
                 queryClient.setQueryData([userItemListsKey, listId], context.previousList);
             }
-            console.log(_error)
-            toast.error(`Error al añadir el elemento: ${_error}. Por favor haga una sincronización.`)
-                                        
+            toast.error("Error al añadir el elemento a la lista. Compruebe su conexión o inténtelo de nuevo.")
         },
 
-        onSuccess: (_, { listId }) => {
-            queryClient.invalidateQueries({ queryKey: [userItemListsKey, listId] });
-            toast.success("Se añadieron con éxito el elemento.")     
+        onSuccess: () => {
+            toast.success("Se añadió con éxito el elemento.")
         },
 
         onSettled: (_data, _error, { listId }) => {

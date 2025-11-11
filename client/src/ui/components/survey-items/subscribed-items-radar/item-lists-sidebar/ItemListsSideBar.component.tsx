@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { EyeIcon, EyeOff, Plus } from 'lucide-react';
+import { EyeIcon, EyeOff, Loader2, Plus } from 'lucide-react';
 import {
     Blip,
     getQuadrantColor,
@@ -32,6 +32,7 @@ import { SyncButton } from '../../../sync-button';
 import { CustomItemsList } from './custom-item-list';
 import { UUID } from 'crypto';
 import blips from '../../../../../assets/data/radarMock';
+import { useUserItemListsAPI } from '../../../../../infrastructure/hooks/use-item-lists/api/useUserItemListsAPI.hook';
 
 export const ItemListsSideBar: React.FC<{
     visible: boolean
@@ -40,14 +41,17 @@ export const ItemListsSideBar: React.FC<{
     visible,
     toggleVisible
 }) => {
-        const {
-            lists,
-            createList,
-            updateList,
-            removeList,
-            appendAllItems,
-            removeAllItems,
-        } = useUserItemLists();
+        // const {
+        //     lists,
+        //     createList,
+        //     updateList,
+        //     removeList,
+        //     appendAllItems,
+        //     removeAllItems,
+        // } = useUserItemLists();
+        const query = useUserItemListsAPI();
+        const { data: lists } = query.findAll
+
         const [newListName, setNewListName] = useState('');
         const [open, setOpen] = useState(false);
         const [renameTarget, setRenameTarget] = useState<UUID | null>(null);
@@ -72,7 +76,7 @@ export const ItemListsSideBar: React.FC<{
         };
 
         const openAddItemDialog = (id: string) => {
-            const currentList: UserItemList | undefined = lists.find((list: UserItemList) => list.id === id);
+            const currentList: UserItemList | undefined = lists?.find((list: UserItemList) => list.id === id);
 
             if (currentList) {
                 setAddTarget(currentList);
@@ -127,9 +131,15 @@ export const ItemListsSideBar: React.FC<{
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
                         <SidebarMenuButton asChild className='mt-5'>
-                            <Button>
-                                <Plus />
-                                Crear
+                            <Button disabled={query.isPending.createList}>
+                                {query.isPending.createList ?
+                                    <Loader2 className='animate-spin' />
+                                    :
+                                    <>
+                                        <Plus />
+                                        Crear
+                                    </>
+                                }
                             </Button>
                         </SidebarMenuButton>
                     </DialogTrigger>
@@ -151,7 +161,7 @@ export const ItemListsSideBar: React.FC<{
                                 name='crearLista'
                                 onClick={() => {
                                     if (newListName.trim()) {
-                                        createList(
+                                        query.createList(
                                             newListName.trim(),
                                         );
                                         setNewListName('');
@@ -185,7 +195,7 @@ export const ItemListsSideBar: React.FC<{
                             name='renombrarLista'
                             onClick={() => {
                                 if (newListName.trim()) {
-                                    updateList(renameTarget, newListName.trim());
+                                    query.updateList({ listId: renameTarget, listNewName: newListName.trim() });
                                     setRenameTarget(null);
                                     setNewListName('');
                                 }
@@ -223,7 +233,7 @@ export const ItemListsSideBar: React.FC<{
                             name='eliminarLista'
                             variant="destructive"
                             onClick={() => {
-                                removeList(deleteTarget);
+                                query.deleteList(deleteTarget);
                                 setDeleteTarget(null);
                             }}
                         >
@@ -324,7 +334,7 @@ export const ItemListsSideBar: React.FC<{
                                         selectedItems.includes(item.id)
                                 )
 
-                                appendAllItems(addTarget.id, updatedItems);
+                                //appendAllItems(addTarget.id, updatedItems);
                                 setSelectedItems([]);
                                 setAddTarget(null);
                                 setElements(getAvailableItemsForTarget(addTarget));
@@ -346,7 +356,7 @@ export const ItemListsSideBar: React.FC<{
                     </DialogHeader>
                     <p className="text-sm text-muted-foreground">
                         ¿Está seguro de que quiere remover <strong>{
-                            lists.find((list: UserItemList) => list.id === removeElementTarget.listId)?.name
+                            lists?.find((list: UserItemList) => list.id === removeElementTarget.listId)?.name
                         }</strong> de la lista?
                     </p>
                     <DialogFooter>
@@ -357,10 +367,10 @@ export const ItemListsSideBar: React.FC<{
                             name='eliminarElemento'
                             variant="destructive"
                             onClick={() => {
-                                removeAllItems(
-                                    removeElementTarget.listId,
-                                    removeElementTarget.itemIds
-                                );
+                                // removeAllItems(
+                                //     removeElementTarget.listId,
+                                //     removeElementTarget.itemIds
+                                // );
                                 setRemoveElementTarget(null);
                             }}>
                             Remover
@@ -394,7 +404,14 @@ export const ItemListsSideBar: React.FC<{
 
                                     {createButton}
 
-                                    {listElements}
+                                    {
+                                        query.findAll.isPending ?
+                                            <div className='flex justify-center'>
+                                                <Loader2 className='animate-spin ' />
+                                            </div>
+                                            :
+                                            listElements
+                                    }
 
                                 </SidebarMenu>
                             </SidebarGroupContent>

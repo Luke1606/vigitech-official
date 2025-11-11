@@ -10,10 +10,11 @@ import {
     isTextOverlapping,
     useSurveyItems
 } from '../../../../../infrastructure';
-import { RadarMenu } from './radar-menu/RadarMenu.component'; // Ajusta la ruta según tu estructura
-import type { SurveyItem } from '../../../../../infrastructure'; // Ajusta la ruta
+import { RadarMenu } from './radar-menu/RadarMenu.component';
+import type { SurveyItem } from '../../../../../infrastructure';
 import { useNavigate } from 'react-router-dom';
 import { SettingsModal } from '../../../config-button';
+import { Eye, EyeOff } from 'lucide-react';
 
 export const Radar: React.FC<{
     entries?: Blip[];
@@ -37,8 +38,33 @@ export const Radar: React.FC<{
         const [menuOpen, setMenuOpen] = React.useState(false);
         const [selectedBlip, setSelectedBlip] = React.useState<Blip | null>(null);
         const [menuPosition, setMenuPosition] = React.useState({ x: 0, y: 0 });
-        const blipPositions = React.useMemo(() => generateBlipPositions(entries ?? []), [entries]);
+
+        // Estado para controlar la visibilidad de los cuadrantes
+        const [visibleQuadrants, setVisibleQuadrants] = React.useState<Record<RadarQuadrant, boolean>>(() => {
+            const initialVisibility: Record<RadarQuadrant, boolean> = {
+                [RadarQuadrant.BUSSINESS_INTEL]: true,
+                [RadarQuadrant.SCIENTIFIC_STAGE]: true,
+                [RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES]: true,
+                [RadarQuadrant.LANGUAGES_AND_FRAMEWORKS]: true,
+            };
+            return initialVisibility;
+        });
+
+        // Filtrar entradas basado en la visibilidad de cuadrantes
+        const filteredEntries = React.useMemo(() => {
+            return entries?.filter(blip => visibleQuadrants[blip.radarQuadrant]) ?? [];
+        }, [entries, visibleQuadrants]);
+
+        const blipPositions = React.useMemo(() => generateBlipPositions(filteredEntries), [filteredEntries]);
         const labelPositions: { x: number; y: number }[] = [];
+
+        // Función para alternar la visibilidad de un cuadrante
+        const toggleQuadrantVisibility = (quadrant: RadarQuadrant) => {
+            setVisibleQuadrants(prev => ({
+                ...prev,
+                [quadrant]: !prev[quadrant]
+            }));
+        };
 
         // Manejador para cuando se hace clic en un blip
         const handleBlipClick = (blip: Blip, position: { x: number; y: number }) => {
@@ -152,34 +178,86 @@ export const Radar: React.FC<{
                     {/* Etiquetas de cuadrantes y listas */}
                     {quadrantLabels.map((quadrant) => {
                         if (!entries) return null;
-                        const quadrantBlips = entries.filter((b) => b.radarQuadrant === quadrant.label);
+
+                        // Filtrar blips por cuadrante y visibilidad
+                        const quadrantBlips = entries.filter((b) =>
+                            b.radarQuadrant === quadrant.label && visibleQuadrants[quadrant.label]
+                        );
                         const column1 = quadrantBlips.slice(0, 10);
                         const column2 = quadrantBlips.slice(10);
 
+                        // Calcular posición del título
+                        const titleX = quadrant.label === RadarQuadrant.BUSSINESS_INTEL
+                            ? quadrant.x + 60
+                            : quadrant.label === RadarQuadrant.SCIENTIFIC_STAGE
+                                ? quadrant.x + 135
+                                : quadrant.x;
+
+                        // Calcular posición del botón (justo al lado derecho del título)
+                        const buttonX = titleX + (quadrant.label === RadarQuadrant.BUSSINESS_INTEL ? 140 : 180);
+                        const buttonY = quadrant.y - 12;
+
                         return (
                             <g key={quadrant.label}>
-                                <text
-                                    x={
-                                        quadrant.label === RadarQuadrant.BUSSINESS_INTEL
-                                            ? quadrant.x + 60
-                                            :
-                                            quadrant.label === RadarQuadrant.SCIENTIFIC_STAGE
-                                                ?
-                                                quadrant.x + 135
-                                                : quadrant.x
-                                    }
-                                    y={quadrant.y}
-                                    fontSize={22}
-                                    fill="#333"
-                                    textAnchor={
-                                        quadrant.label === RadarQuadrant.BUSSINESS_INTEL ? 'middle' : quadrant.align
-                                    }
-                                    fontWeight="bold"
-                                >
-                                    {quadrant.label}
-                                </text>
+                                {/* Título del cuadrante con botón de ojo */}
+                                <g>
+                                    <text
+                                        x={titleX}
+                                        y={quadrant.y}
+                                        fontSize={22}
+                                        fill="#333"
+                                        textAnchor={
+                                            quadrant.label === RadarQuadrant.BUSSINESS_INTEL ? 'middle' : quadrant.align
+                                        }
+                                        fontWeight="bold"
+                                    >
+                                        {quadrant.label}
+                                    </text>
 
-                                {
+                                    {/* Botón de ojo */}
+                                    <g
+                                        onClick={() => toggleQuadrantVisibility(quadrant.label)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {/* Fondo del botón */}
+                                        <rect
+                                            x={buttonX}
+                                            y={buttonY}
+                                            width={24}
+                                            height={24}
+                                            rx={4}
+                                            fill="#f0f0f0"
+                                            stroke="#ccc"
+                                            strokeWidth={1}
+                                        />
+
+                                        {/* Ícono de Lucide React */}
+                                        <foreignObject
+                                            x={buttonX}
+                                            y={buttonY}
+                                            width={24}
+                                            height={24}
+                                        >
+                                            <div
+                                                className="flex items-center justify-center w-6 h-6"
+                                                style={{
+                                                    pointerEvents: 'none',
+                                                    width: '24px',
+                                                    height: '24px'
+                                                }}
+                                            >
+                                                {visibleQuadrants[quadrant.label] ? (
+                                                    <Eye size={16} color="#333" />
+                                                ) : (
+                                                    <EyeOff size={16} color="#999" />
+                                                )}
+                                            </div>
+                                        </foreignObject>
+                                    </g>
+                                </g>
+
+                                {/* Lista de blips del cuadrante (solo si está visible) */}
+                                {visibleQuadrants[quadrant.label] &&
                                     [column1, column2].map((column, colIndex) =>
                                         column.map((b, j) => {
                                             const isActive = hoveredBlipId === b.id;
@@ -211,12 +289,11 @@ export const Radar: React.FC<{
                                     )
                                 }
                             </g>
-
                         );
                     })}
 
-                    {/* Blips en el radar */}
-                    {(entries ?? []).map((blip) => {
+                    {/* Blips en el radar (solo los de cuadrantes visibles) */}
+                    {filteredEntries.map((blip) => {
                         const { x, y } = blipPositions[blip.id];
                         const isActive = hoveredBlipId === blip.id;
 
@@ -285,7 +362,7 @@ export const Radar: React.FC<{
                         isSelected={false} // Ajusta según tu lógica de selección
                     />
                 )}
-                <SettingsModal fields={[]} title='Configuraciones'/>
+                <SettingsModal />
             </div >
         );
     };

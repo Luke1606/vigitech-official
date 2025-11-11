@@ -40,13 +40,13 @@ export const useUpdateListMutationOptions = () => {
             if (context?.previousLists) {
                 queryClient.setQueryData([userItemListsKey], context.previousLists);
             }
-            console.log(_error)
-            toast.error(`Error al renombrar la lista: ${_error}. Por favor haga una sincronización.`)
+
+            toast.error("Error al renombrar la lista. Compruebe su conexión o inténtelo de nuevo.")
         },
 
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [userItemListsKey] });
-            toast.success("Se renombró con éxito la lista.")     
+            toast.success("Se renombró con éxito la lista.")
         },
 
         onSettled: () => {

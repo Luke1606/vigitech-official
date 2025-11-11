@@ -1,11 +1,11 @@
 import type { UUID } from 'crypto';
-import { 
-    mutationOptions, 
-    useQueryClient 
+import {
+    mutationOptions,
+    useQueryClient
 } from '@tanstack/react-query';
-import { 
-    userItemListRepository, 
-    type UserItemList 
+import {
+    userItemListRepository,
+    type UserItemList
 } from '../../../..';
 import { userItemListsKey } from '../constants';
 import { toast } from 'react-toastify';
@@ -36,13 +36,12 @@ export const useRemoveOneItemMutationOptions = () => {
             if (context?.previousList) {
                 queryClient.setQueryData([userItemListsKey, listId], context.previousList);
             }
-            console.log(_error)
-            toast.error(`Error al quitar el elemento de la lista: ${_error}. Por favor haga una sincronización.`)
+            toast.error("Error al remover el elemento de la lista. Compruebe su conexión o inténtelo de nuevo.")
         },
 
         onSuccess: (_, { listId }) => {
             queryClient.invalidateQueries({ queryKey: [userItemListsKey, listId] });
-            toast.success("Se quitó con éxito el elemento de la lista.")     
+            toast.success("Se quitó con éxito el elemento de la lista.")
         },
 
         onSettled: (_data, _error, { listId }) => {

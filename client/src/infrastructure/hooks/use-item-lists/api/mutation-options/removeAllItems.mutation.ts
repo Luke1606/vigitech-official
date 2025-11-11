@@ -36,8 +36,7 @@ export const useRemoveAllItemsMutationOptions = () => {
             if (context?.previousList) {
                 queryClient.setQueryData([userItemListsKey, listId], context.previousList);
             }
-            console.log(_error)
-            toast.error(`Error al quitar los elementos de la lista: ${_error}. Por favor haga una sincronización.`)
+            toast.error("Error al remover los elementos de la lista. Compruebe su conexión o inténtelo de nuevo.")
         },
 
         onSuccess: (_, { listId }) => {

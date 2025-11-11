@@ -11,7 +11,7 @@ class UserItemListRepository implements UserItemListInterface {
     constructor() {
 
         this.axios = new AxiosConfiguredInstance(
-            `${getEnv().VITE_SERVER_BASE_URL}/item-lists/`
+            `${getEnv().VITE_SERVER_BASE_URL}/item-lists`
         );
 
     }
@@ -31,8 +31,9 @@ class UserItemListRepository implements UserItemListInterface {
     async createList(
         listName: string
     ): Promise<UserItemList> {
+
         return await this.axios.http
-            .post('', listName);
+            .post('', { name: listName });
     };
 
     async updateList(
@@ -40,7 +41,7 @@ class UserItemListRepository implements UserItemListInterface {
         listName: string
     ): Promise<UserItemList> {
         return await this.axios.http
-            .patch(`${listId}`, { listId, listName });
+            .patch(`${listId}`, { name: listName });
     };
 
     async removeList(
