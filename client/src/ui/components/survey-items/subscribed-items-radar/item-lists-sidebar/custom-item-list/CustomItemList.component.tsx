@@ -14,7 +14,6 @@ import {
 } from '../../../..';
 import type { UserItemList } from '../../../../../../infrastructure';
 import styles from './CustomItemList.styles';
-import { useUserItemListsAPI } from '../../../../../../infrastructure/hooks/use-item-lists/api/useUserItemListsAPI.hook';
 
 export const CustomItemsList: React.FC<{
     list: UserItemList
@@ -30,7 +29,7 @@ export const CustomItemsList: React.FC<{
     onDeleteList
 }) => {
         const { id, name, items } = list;
-        const query = useUserItemListsAPI()
+        
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
