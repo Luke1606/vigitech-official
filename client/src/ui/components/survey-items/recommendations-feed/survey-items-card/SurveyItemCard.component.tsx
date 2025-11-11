@@ -39,13 +39,13 @@ export const SurveyItemCard: React.FC<{
         return (
             <Card
                 key={id}
-                className={`${selected ? "caret-blue-800" : "caret-blue-100"} w-fit`}
+                className={`border-4 ${selected ? "border-blue-400" : "border-background"} w-fit`}
                 onClick={() => {
                     if (selected) onUnselect();
                     else onSelect();
                 }}>
                 <CardHeader>
-                    <CardTitle>{item.title}</CardTitle>
+                    <CardTitle className="font-bold">{item.title}</CardTitle>
 
                     <CardDescription>{item.summary}</CardDescription>
                 </CardHeader>
