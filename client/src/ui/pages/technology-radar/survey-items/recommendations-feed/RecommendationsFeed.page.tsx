@@ -7,7 +7,7 @@ import {
 } from '../../../../../infrastructure';
 import { useCallback, useEffect, useState } from 'react';
 import { useSurveyItemsAPI } from '../../../../../infrastructure/hooks/use-survey-items/api/useSurveyItemsAPI.hook';
-import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, RotateCw } from 'lucide-react';
 import radarMock from '../../../../../assets/data/radarMock'
 
 export const RecommendationsFeed: React.FC = () => {
@@ -18,7 +18,7 @@ export const RecommendationsFeed: React.FC = () => {
     } = useSurveyItems();
 
     const query = useSurveyItemsAPI()
-    const { isPending, isError, error } = query.recommended
+    const { isPending, isError, refetch } = query.recommended
     const [selectedItems, setSelectedItems] = useState<SurveyItem[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [itemsPerPage] = useState<number>(9);
@@ -92,8 +92,8 @@ export const RecommendationsFeed: React.FC = () => {
 
     if (isPending)
         return (
-            <div className="flex items-center justify-center py-12">
-                <p className="text-sm text-muted-foreground flex gap-x-5">Cargando recomendaciones
+            <div className="flex items-center justify-center mt-12 p-2">
+                <p className="text-md text-muted-foreground flex gap-x-5">Cargando recomendaciones
                     <Loader2 className='animate-spin' />
                 </p>
             </div>
@@ -101,8 +101,14 @@ export const RecommendationsFeed: React.FC = () => {
 
     if (isError)
         return (
-            <div className="flex items-center justify-center py-12">
-                <p className="text-sm text-destructive">Error al cargar las recomendaciones: {error.message}</p>
+            <div className="flex items-center justify-center gap-x-5 mt-12">
+                <p className="text-md text-destructive font-semibold">Error al cargar las recomendaciones. Inténtelo de nuevo</p>
+                <Button
+                    className='bg-blue-600 hover:bg-blue-800 transition-colors duration-300'
+                    onClick={() => refetch()}
+                >
+                    <RotateCw />
+                </Button>
             </div>
         );
 
