@@ -20,38 +20,38 @@ export const Header: React.FC = () => {
 
     const separator = <div className={styles.separator}></div>
 
-    const servicesInfo: { 
+    const servicesInfo: {
         to: PathOption,
         service: ServiceCardProps
     }[] = [
-        {
-            to: PathOption.TECHNOLOGY_RADAR_PORTAL,
-            service: {
-                imageSrc: '/vigitech_home_radar.jpg',
-                title: 'Technology Radar',
-                alt: 'Radar Service Home',
-                description: 'Track and evaluate the caliber of global tech trends.'
-            }
-        },
-        {
-            to: '#' as PathOption,
-            service: {
-                imageSrc: '/vigitech_home_browser.jpg',
-                title: 'Technology Browser',
-                alt: 'Browser Service Home',
-                description: 'Find insights about all kinds of technologies.'
-            }
-        },
-        {
-            to: '#' as PathOption,
-            service: {
-                imageSrc: '/vigitech_home_graphics.jpg',
-                title: 'Technology Graphics',
-                alt: 'Graphics Service Home',
-                description: 'Analyze global tech trends and their impact through data visualizations.'
-            }
-        },
-    ];
+            {
+                to: PathOption.TECHNOLOGY_RADAR_PORTAL,
+                service: {
+                    imageSrc: '/vigitech_home_radar.jpg',
+                    title: 'Radar Tecnológico',
+                    alt: 'Radar Service Home',
+                    description: 'Supervisa y evalúa la calidad de las tendencias tecnológicas globales.'
+                }
+            },
+            {
+                to: '#' as PathOption,
+                service: {
+                    imageSrc: '/vigitech_home_browser.jpg',
+                    title: 'Buscador de Tecnologías',
+                    alt: 'Browser Service Home',
+                    description: 'Encuentra información clave sobre todo tipo de tecnologías.'
+                }
+            },
+            {
+                to: '#' as PathOption,
+                service: {
+                    imageSrc: '/vigitech_home_graphics.jpg',
+                    title: 'Gráficos Tecnológicos',
+                    alt: 'Graphics Service Home',
+                    description: 'Analiza las tendencias tecnológicas globales y su impacto mediante visualizaciones de datos.'
+                }
+            },
+        ];
 
     return (
         <header className={styles.header}>
@@ -59,9 +59,9 @@ export const Header: React.FC = () => {
                 <NavigationMenuList className={styles.navigationMenuList}>
                     {(
                         currentPath === PathOption.VIGITECH_PORTAL_HOME ||
-                        currentPath === PathOption.VIGITECH_PORTAL_FAQ || 
-                        currentPath === PathOption.VIGITECH_PORTAL_ABOUT || 
-                        currentPath === PathOption.VIGITECH_PORTAL_CTA 
+                        currentPath === PathOption.VIGITECH_PORTAL_FAQ ||
+                        currentPath === PathOption.VIGITECH_PORTAL_ABOUT ||
+                        currentPath === PathOption.VIGITECH_PORTAL_CTA
                     ) ? (
                         <>
                             {/* HOME */}
@@ -69,8 +69,8 @@ export const Header: React.FC = () => {
                                 <NavigationMenuLink
                                     asChild
                                     className={`${styles.navigationMenuLink}
-                                        ${currentPath === PathOption.VIGITECH_PORTAL_HOME && 
-                                            styles.navigationMenuLinkFocused
+                                        ${currentPath === PathOption.VIGITECH_PORTAL_HOME &&
+                                        styles.navigationMenuLinkFocused
                                         }`}>
                                     <NavLink to={PathOption.VIGITECH_PORTAL_HOME}>HOME</NavLink>
                                 </NavigationMenuLink>
@@ -79,29 +79,29 @@ export const Header: React.FC = () => {
                             {/* SERVICES */}
                             <NavigationMenuItem>
                                 <NavigationMenuTrigger className={styles.navigationMenuTrigger}>
-                                    SERVICES
+                                    SERVICIOS
                                 </NavigationMenuTrigger>
 
                                 <NavigationMenuContent className="p-0">
                                     <ul className={styles.navigationMenuUl}>
                                         {/* Items */}
-                                        { servicesInfo.map(
-                                            (item: {to: PathOption, service: ServiceCardProps}, index) => (
+                                        {servicesInfo.map(
+                                            (item: { to: PathOption, service: ServiceCardProps }, index) => (
                                                 <li key={index}>
                                                     <NavigationMenuLink asChild>
                                                         <NavLink to={item.to}>
-                                                            <ServiceCard 
+                                                            <ServiceCard
                                                                 imageSrc={item.service.imageSrc}
                                                                 title={item.service.title}
                                                                 alt={item.service.alt}
                                                                 description={item.service.description}
-                                                                />
+                                                            />
                                                         </NavLink>
                                                     </NavigationMenuLink>
 
                                                     {separator}
                                                 </li>)
-                                            )}
+                                        )}
                                     </ul>
                                 </NavigationMenuContent>
                             </NavigationMenuItem>
@@ -111,8 +111,8 @@ export const Header: React.FC = () => {
                                 <NavigationMenuLink
                                     asChild
                                     className={`${styles.navigationMenuLink} 
-                                        ${currentPath === PathOption.VIGITECH_PORTAL_FAQ && 
-                                            styles.navigationMenuLinkFocused}
+                                        ${currentPath === PathOption.VIGITECH_PORTAL_FAQ &&
+                                        styles.navigationMenuLinkFocused}
                                         }`}>
                                     <NavLink to={PathOption.VIGITECH_PORTAL_FAQ}>FAQ</NavLink>
                                 </NavigationMenuLink>
@@ -122,8 +122,8 @@ export const Header: React.FC = () => {
                                 <NavigationMenuLink
                                     asChild
                                     className={`${styles.navigationMenuLink} 
-                                        ${currentPath === PathOption.VIGITECH_PORTAL_ABOUT && 
-                                            styles.navigationMenuLinkFocused}
+                                        ${currentPath === PathOption.VIGITECH_PORTAL_ABOUT &&
+                                        styles.navigationMenuLinkFocused}
                                         }`}>
                                     <NavLink to={PathOption.VIGITECH_PORTAL_ABOUT}>ABOUT</NavLink>
                                 </NavigationMenuLink>
@@ -136,8 +136,8 @@ export const Header: React.FC = () => {
                                 <NavigationMenuLink
                                     asChild
                                     className={styles.secundaryNavigationMenuLink}
-                                    >
-                                    <NavLink to={PathOption.VIGITECH_PORTAL_HOME}>Vigitech</NavLink>
+                                >
+                                    <NavLink to={PathOption.VIGITECH_PORTAL_HOME}>VIGITECH</NavLink>
                                 </NavigationMenuLink>
                             </NavigationMenuItem>
 
@@ -145,8 +145,8 @@ export const Header: React.FC = () => {
                                 <NavigationMenuLink
                                     asChild
                                     className={`${styles.navigationMenuLink} 
-                                        ${currentPath === PathOption.TECHNOLOGY_RADAR_PORTAL && 
-                                            styles.navigationMenuLinkFocused}
+                                        ${currentPath === PathOption.TECHNOLOGY_RADAR_PORTAL &&
+                                        styles.navigationMenuLinkFocused}
                                         }`}>
                                     <NavLink to={PathOption.TECHNOLOGY_RADAR_PORTAL}>Home</NavLink>
                                 </NavigationMenuLink>
@@ -156,10 +156,10 @@ export const Header: React.FC = () => {
                                 <NavigationMenuLink
                                     asChild
                                     className={`${styles.navigationMenuLink} 
-                                        ${currentPath === PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED && 
-                                            styles.navigationMenuLinkFocused}
+                                        ${currentPath === PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED &&
+                                        styles.navigationMenuLinkFocused}
                                         }`}>
-                                    <NavLink to={PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED}>Feed</NavLink>
+                                    <NavLink to={PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED}>Recomedacioness</NavLink>
                                 </NavigationMenuLink>
                             </NavigationMenuItem>
 
@@ -167,8 +167,8 @@ export const Header: React.FC = () => {
                                 <NavigationMenuLink
                                     asChild
                                     className={`${styles.navigationMenuLink} 
-                                        ${currentPath === PathOption.TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR && 
-                                            styles.navigationMenuLinkFocused}
+                                        ${currentPath === PathOption.TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR &&
+                                        styles.navigationMenuLinkFocused}
                                         }`}>
                                     <NavLink to={PathOption.TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR}>Radar</NavLink>
                                 </NavigationMenuLink>
@@ -178,7 +178,7 @@ export const Header: React.FC = () => {
                                 <NavigationMenuLink
                                     asChild
                                     className={styles.navigationMenuLink}
-                                    >
+                                >
                                     <NotificationCenter />
                                 </NavigationMenuLink>
                             </NavigationMenuItem>
@@ -189,7 +189,7 @@ export const Header: React.FC = () => {
                         <NavigationMenuLink
                             asChild
                             className={styles.navigationMenuLink}
-                            >
+                        >
                             <SignedOut>
                                 <SignInButton />
                             </SignedOut>
@@ -200,7 +200,7 @@ export const Header: React.FC = () => {
                         <NavigationMenuLink
                             asChild
                             className={styles.navigationMenuLink}
-                            >
+                        >
                             <SignedIn>
                                 <UserButton />
                             </SignedIn>

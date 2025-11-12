@@ -6,4 +6,6 @@ export type UserItemList = {
     id: UUID;
     name: string;
     items: SurveyItem[] | Blip[];
+    createdAt?: string,
+    updatedAt?: string
 };

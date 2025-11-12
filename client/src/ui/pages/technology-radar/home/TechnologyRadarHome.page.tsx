@@ -17,17 +17,19 @@ export const TechnologyRadarHome: React.FC = () => {
                 />
                 <div className="relative z-10 max-w-lg sm:max-w-4xl mx-auto px-2" data-aos="zoom-in" data-aos-duration="1500">
                     <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-6 tracking-tight">
-                        Navigate the Landscape of Emerging Technologies
+                        Navega el panorama de las tecnologías emergentes.
                     </h1>
                     <p className="text-base sm:text-lg md:text-xl text-white/80 mb-8">
-                        The Technology Radar gives you dynamic access to evolving global trends. Discover innovations, assess maturity, and visualize how tech is shaping the future across industries.
+                        El Radar Tecnológico te brinda acceso dinámico a las tendencias globales en evolución. 
+                        Descubre innovaciones, evalúa su nivel de madurez y visualiza 
+                        cómo la tecnología está moldeando el futuro en todos los sectores.
                     </p>
                     <button
                         onClick={() =>
                             document.getElementById("info")?.scrollIntoView({ behavior: "smooth" })
                         }
                         className="bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-8 py-3 rounded-xl shadow-xl hover:scale-105 hover:shadow-violet-950 hover:shadow-xl transition duration-300 ring-2 ring-white/20">
-                        Let’s explore how Radar works
+                        ¡¡ Exploremos cómo funciona el Radar !!
                     </button>
                 </div>
             </section>
@@ -54,24 +56,24 @@ export const TechnologyRadarHome: React.FC = () => {
                 <div className="flex flex-wrap justify-center gap-x-28 gap-y-28">
                     {[
                         {
-                            title: "Information Gathering",
+                            title: "Recopilación de Información",
                             imgSrc: "/radar_home_hub.jpg",
                             description:
-                                "The radar begins by exploring various digital sources across the Internet, collecting key information about emerging technologies.",
+                                "El radar comienza explorando diversas fuentes digitales en Internet, recopilando información clave sobre tecnologías emergentes.",
                             animation: "fade-left",
                         },
                         {
-                            title: "Trend Identification",
+                            title: "Identificación de Tendencias",
                             imgSrc: "/radar_home_trends.jpg",
                             description:
-                                "Next, it organizes the gathered information, identifying patterns and highlighting the most relevant technological trends worldwide.",
+                                "Luego, organiza la información recopilada, identifica patrones y destaca las tendencias tecnológicas más relevantes a nivel mundial.",
                             animation: "fade-down",
                         },
                         {
-                            title: "Strategic Analysis",
+                            title: "Análisis Estratégico",
                             imgSrc: "/radar_home_analysis.jpg",
                             description:
-                                "Finally, it applies filters and analysis processes that determine the strategic positioning of each technology within the radar map.",
+                                "Finalmente, aplica filtros y procesos de análisis que determinan el posicionamiento estratégico de cada tecnología dentro del mapa de radar.",
                             animation: "fade-right",
                         },
                     ].map(({ title, imgSrc, description, animation }, index) => (

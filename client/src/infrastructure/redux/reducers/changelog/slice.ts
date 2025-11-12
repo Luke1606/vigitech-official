@@ -11,7 +11,7 @@ const initialState: ChangelogState = {
 
 
 export const changelogSlice = createSlice({
-    name: 'surveyItems',
+    name: 'changeLog',
     initialState,
     reducers: {
         addChangeLog: (

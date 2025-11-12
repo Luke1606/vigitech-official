@@ -20,24 +20,24 @@ export const PortalHome: React.FC = () => {
         />
         <div className="relative z-10 max-w-4xl mx-auto" data-aos="zoom-in" data-aos-duration="1500">
           <h1 className="text-5xl md:text-6xl font-extrabold mb-6 tracking-tight">
-            Welcome to the Future of Tech Intelligence
+            Bienvenido al futuro de la inteligencia tecnológica.
           </h1>
           <p className="text-lg md:text-xl text-white/80 mb-8">
-            Vigitech Portal is your gateway to exploring the most transformative technological innovations worldwide.
-            We merge insight, impact, and intuition—so you're always one step ahead in the global tech landscape.
+            La plataforma Vigitech es tu puerta de entrada para explorar las innovaciones tecnológicas más transformadoras del mundo.
+            Fusionamos visión, impacto e intuición, para que siempre estés un paso adelante en el panorama tecnológico global.
           </p>
           <button
             onClick={() =>
               document.getElementById("services")?.scrollIntoView({ behavior: "smooth" })
             }
             className="bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-8 py-3 rounded-xl shadow-xl hover:scale-105 hover:shadow-violet-950 hover:shadow-xl transition duration-300 ring-2 ring-white/20">
-            Begin Your Exploration
+            ¡¡ Comienza a explorar !!
           </button>
         </div>
       </section>
 
       <section id="services" className="bg-white text-gray-800 px-6 py-20 relative">
-        <h2 className="text-4xl font-bold text-center mb-16">Explore Vigitech’s Services</h2>
+        <h2 className="text-4xl font-bold text-center mb-16">Explora los servicios de Vigitech</h2>
 
         <div className="grid md:grid-cols-2 gap-12 mb-24 items-center">
           <img
@@ -51,14 +51,14 @@ export const PortalHome: React.FC = () => {
             data-aos="fade-left"
             data-aos-duration="1500"
           >
-            <h3 className="text-3xl font-semibold mb-4">Technology Radar</h3>
+            <h3 className="text-3xl font-semibold mb-4">Radar Tecnológico</h3>
             <p className="text-lg text-gray-700 mb-6">
-              Discover emerging technologies and track their maturity, relevance, and global impact.
-              Our radar provides dynamic visualization of innovations across sectors, helping you stay
-              ahead in strategy and adoption.
+              Descubre tecnologías emergentes y sigue su evolución, relevancia e impacto global.
+              Nuestro radar ofrece una visualización dinámica de innovaciones en diversos sectores,
+              ayudándote a mantenerte a la vanguardia en estrategia y adopción.
             </p>
             <NavLink to={PathOption.TECHNOLOGY_RADAR_PORTAL} className="bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xl transition duration-300">
-              Access Radar
+              Accede al Radar
             </NavLink>
           </div>
         </div>
@@ -76,14 +76,15 @@ export const PortalHome: React.FC = () => {
             data-aos="fade-left"
             data-aos-duration="1500"
           >
-            <h3 className="text-3xl font-semibold mb-4">Technology Browser</h3>
+            <h3 className="text-3xl font-semibold mb-4">Buscador de Tecnologías</h3>
             <p className="text-lg text-gray-700 mb-6">
-              Search through an extensive index of technologies—from disruptive innovations to legacy systems.
-              Filter by sector, region, maturity level and more. Whether you're researching or benchmarking,
-              our browser gives you curated data at your fingertips.
+              Explora un extenso índice de tecnologías, desde innovaciones disruptivas hasta sistemas heredados.
+              Filtra por sector, región, nivel de madurez y más.
+              Ya sea que estés investigando o realizando análisis comparativos,
+              nuestro navegador te ofrece datos seleccionados al alcance de tu mano.
             </p>
             <button className="bg-gradient-to-br from-indigo-500 via-purple-600 to-sky-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xxl transition duration-300">
-              Browse Technologies
+              Busca Tecnologías
             </button>
           </div>
         </div>
@@ -100,13 +101,15 @@ export const PortalHome: React.FC = () => {
             data-aos="fade-left"
             data-aos-duration="1500"
           >
-            <h3 className="text-3xl font-semibold mb-4">Technology Graphics</h3>
+            <h3 className="text-3xl font-semibold mb-4">Gráficos Tecnológicos</h3>
             <p className="text-lg text-gray-700 mb-6">
-              Visualize global tech trends, adoption rates, and technological impact using interactive charts and dashboards.
-              Our visualization engine transforms raw data into clear insights so you can make informed decisions at every stage.
+              Visualiza las tendencias tecnológicas globales,
+              las tasas de adopción y el impacto tecnológico mediante gráficos y paneles interactivos.
+              Nuestro motor de visualización transforma datos en bruto en ideas claras,
+              para que puedas tomar decisiones informadas en cada etapa.
             </p>
             <button className="bg-gradient-to-br from-purple-500 via-fuchsia-500 to-cyan-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xl transition duration-300">
-              Explore Visualizations
+              Explora visualizaciones
             </button>
           </div>
         </div>

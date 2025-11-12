@@ -1,69 +1,131 @@
 import { useNavigate } from 'react-router-dom';
 import { Button, SurveyItemCard } from '../../../../components';
-import { 
-    type SurveyItem, 
-    PathOption, 
-    useSurveyItems 
+import {
+    type SurveyItem,
+    PathOption,
+    useSurveyItems
 } from '../../../../../infrastructure';
 import { useCallback, useEffect, useState } from 'react';
+import { useSurveyItemsAPI } from '../../../../../infrastructure/hooks/use-survey-items/api/useSurveyItemsAPI.hook';
+import { Loader2, ChevronLeft, ChevronRight, RotateCw } from 'lucide-react';
+import radarMock from '../../../../../assets/data/radarMock'
 
 export const RecommendationsFeed: React.FC = () => {
-    const { 
+    const {
         isLoading,
-        recommended,
-        selectedItems,
         addPendingRemoves,
-        addToSelectedItems,
         addPendingSubscribes,
-        removeFromSelectedItems,
     } = useSurveyItems();
 
-    const unselectAll = useCallback(
-        () => {
-            if (selectedItems?.length > 0)
-                removeFromSelectedItems(selectedItems)
-        }, [removeFromSelectedItems, selectedItems]
-    )
+    const query = useSurveyItemsAPI()
+    const { isPending, isError, refetch } = query.recommended
+    const [selectedItems, setSelectedItems] = useState<SurveyItem[]>([]);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [itemsPerPage] = useState<number>(9);
+
+    const addToSelectedItems = (items: SurveyItem[]) => {
+        setSelectedItems(prev => {
+            const newItems = items.filter(item =>
+                !prev.some(selected => selected.id === item.id)
+            );
+            return [...prev, ...newItems];
+        });
+    };
+
+    const removeFromSelectedItems = (items: SurveyItem[]) => {
+        setSelectedItems(prev =>
+            prev.filter(selectedItem =>
+                !items.some(item => item.id === selectedItem.id)
+            )
+        );
+    };
+
+    let recommended = radarMock;
+
+    // Calcular elementos para la página actual
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = recommended.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(recommended.length / itemsPerPage);
+
+    // Función para verificar si un item está seleccionado (comparando por ID)
+    const isItemSelected = (item: SurveyItem) => {
+        return selectedItems.some(selected => selected.id === item.id);
+    };
+
+    // Función para verificar si TODOS los items están seleccionados (no solo los de la página actual)
+    const areAllItemsSelected = () => {
+        return recommended.every(item => isItemSelected(item));
+    };
 
     useEffect(() => {
-        return () => unselectAll()
-    }, [unselectAll])
+        return () => setSelectedItems([])
+    }, [])
+
+    useEffect(() => {
+        console.log(selectedItems)
+    }, [selectedItems])
 
     const [
-        isMultipleSelection, 
+        isMultipleSelection,
         setMultipleSelection
     ] = useState<boolean>(false);
 
     const navigate = useNavigate();
-    
-    if (recommended.isLoading)
+
+    // Funciones de paginación
+    const goToNextPage = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const goToPreviousPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const goToPage = (pageNumber: number) => {
+        setCurrentPage(pageNumber);
+    };
+
+    if (isPending)
         return (
-            <div className="flex items-center justify-center py-12">
-                <p className="text-sm text-muted-foreground">Loading recommendations...</p>
+            <div className="flex items-center justify-center mt-12 p-2">
+                <p className="text-md text-muted-foreground flex gap-x-5">Cargando recomendaciones
+                    <Loader2 className='animate-spin' />
+                </p>
             </div>
         );
 
-    if (recommended.error)
+    if (isError)
         return (
-            <div className="flex items-center justify-center py-12">
-                <p className="text-sm text-destructive">Error loading recommendations: {recommended.error.message}</p>
+            <div className="flex items-center justify-center gap-x-5 mt-12">
+                <p className="text-md text-destructive font-semibold">Error al cargar las recomendaciones. Inténtelo de nuevo</p>
+                <Button
+                    className='bg-blue-600 hover:bg-blue-800 transition-colors duration-300'
+                    onClick={() => refetch()}
+                >
+                    <RotateCw />
+                </Button>
             </div>
         );
 
-     if (!recommended.data || recommended.data.length === 0) {
+    if (!recommended || recommended.length === 0) {
         return (
             <div className="text-center py-12">
                 <h3 className="text-lg font-medium text-muted-foreground">
-                    There are no recommendations yet. Wait for them to renew.
+                    No hay recomendaciones aún. Espere un momento a que se renueven.
                 </h3>
                 <p className="text-sm text-muted-foreground mt-2">
-                    Meanwhile you can watch for changes or manage your suscriptions
+                    Mientras tanto, puedes estar atento a los cambios o gestionar tus suscripciones.
                     <span
                         className="text-primary underline ml-1 cursor-pointer"
                         onClick={() =>
                             navigate(PathOption.TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR)
                         }>
-                        here
+                        aquí
                     </span>.
                 </p>
             </div>
@@ -71,21 +133,27 @@ export const RecommendationsFeed: React.FC = () => {
     }
 
     return (
-        <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Recommendations</h2>
+        <div className="space-y-4 px-10 mt-8">
+            <h2 className="text-2xl font-bold">Recomendaciones</h2>
 
-            <div className="flex flex-wrap items-center gap-2">
-                {/* Select and unselect*/}
+            <div className="flex flex-wrap items-center gap-6 mb-10">
+                {/* Select and unselect - AHORA SELECCIONA TODOS */}
                 <Button
                     type="button"
-                    className=""
+                    className="bg-blue-600 hover:bg-blue-800 min-w-[12%]"
                     onClick={() => {
                         if (isMultipleSelection) setMultipleSelection(true);
-                        addToSelectedItems(recommended.data);
+                        if (areAllItemsSelected()) {
+                            // Deseleccionar todos los items
+                            setSelectedItems([]);
+                        } else {
+                            // Seleccionar todos los items
+                            setSelectedItems([...recommended]);
+                        }
                     }}>
-                    {recommended.data.every((item: SurveyItem) => selectedItems.includes(item))
-                        ? 'Unselect all'
-                        : 'Select all'}
+                    {areAllItemsSelected()
+                        ? 'Deseleccionar todos'
+                        : 'Seleccionar todos'}
                 </Button>
 
                 {/* Subscribe */}
@@ -96,29 +164,34 @@ export const RecommendationsFeed: React.FC = () => {
                         addPendingSubscribes(selectedItems);
                         if (isMultipleSelection) setMultipleSelection(true);
                         removeFromSelectedItems(selectedItems);
-                    }}>
-                    Subscribe all selected
+                    }}
+                    disabled={selectedItems.length === 0}>
+                    Suscribirse a todos los elementos seleccionados.
                 </Button>
 
                 {/* Remove */}
                 <Button
                     type="button"
                     variant="destructive"
+                    className='hover:bg-red-800'
                     onClick={() => {
                         addPendingRemoves(selectedItems);
                         if (isMultipleSelection) setMultipleSelection(true);
                         removeFromSelectedItems(selectedItems);
-                    }}>
-                    Remove all selected
+                    }}
+                    disabled={selectedItems.length === 0}>
+                    Remover suscripciones
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {recommended.data.map((item: SurveyItem) => (
+            {/* Grid de items */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 place-self-center">
+                {currentItems.map((item: SurveyItem) => (
                     <SurveyItemCard
                         key={item.id}
+                        id={item.id}
                         item={item}
-                        selected={selectedItems.includes(item)}
+                        selected={isItemSelected(item)}
                         onSelect={() => {
                             if (!isMultipleSelection) setMultipleSelection(true);
                             addToSelectedItems([item]);
@@ -135,6 +208,60 @@ export const RecommendationsFeed: React.FC = () => {
                     />
                 ))}
             </div>
+
+            {/* Paginación */}
+            {totalPages > 1 && (
+                <div className='flex justify-center'>
+                    <div className="flex flex-col items-center justify-center space-y-4 mt-8 lg:absolute lg:bottom-10">
+                        {/* Información de página */}
+                        <div className="text-sm text-muted-foreground">
+                            Mostrando {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, recommended.length)} de {recommended.length} elementos
+                        </div>
+
+                        {/* Controles de paginación */}
+                        <div className="flex items-center space-x-2">
+                            {/* Botón anterior */}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={goToPreviousPage}
+                                disabled={currentPage === 1}
+                                className="flex items-center gap-1"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                                Anterior
+                            </Button>
+
+                            {/* Números de página */}
+                            <div className="flex items-center space-x-1">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                    <Button
+                                        key={page}
+                                        variant={currentPage === page ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => goToPage(page)}
+                                        className={`h-8 w-8 p-0 ${currentPage === page ? 'bg-blue-600 text-white' : ''}`}
+                                    >
+                                        {page}
+                                    </Button>
+                                ))}
+                            </div>
+
+                            {/* Botón siguiente */}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={goToNextPage}
+                                disabled={currentPage === totalPages}
+                                className="flex items-center gap-1"
+                            >
+                                Siguiente
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

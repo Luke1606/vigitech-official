@@ -45,8 +45,8 @@ export const ChangeLogSideBar: React.FC<{
                     <SidebarContent>
                         <SidebarGroup>
                             <SidebarGroupLabel
-                                className="font-semibold">
-                                ChangeLog
+                                className="font-semibold text-xl pt-2">
+                                Registro de cambios
                             </SidebarGroupLabel>
 
                             <SidebarGroupContent>

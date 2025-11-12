@@ -4,6 +4,10 @@ export { ScrollArea } from './scroll-area';
 export { Separator } from './separator';
 export { Skeleton } from './skeleton';
 
+export { Badge } from './badge'
+export { Switch } from './switch'
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
+
 export {
   Alert,
   AlertTitle,
@@ -24,13 +28,13 @@ export {
   AlertDialogCancel,
 } from './alert-dialog';
 
-export { 
-    Button, 
-    buttonVariants 
+export {
+  Button,
+  buttonVariants
 } from './button';
 
 export {
-    Card,
+  Card,
   CardHeader,
   CardFooter,
   CardTitle,
@@ -121,9 +125,9 @@ export {
 } from './sidebar';
 
 
-export { 
-    Tooltip, 
-    TooltipTrigger, 
-    TooltipContent, 
-    TooltipProvider 
+export {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider
 } from './tooltip';

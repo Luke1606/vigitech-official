@@ -28,7 +28,9 @@
   },
   "include": [
     "src",
-    "global.d.ts"
+    "global.d.ts",
+    "playwright.config.ts",
+    "tests"
   ],
   "exclude": [
     "**/*.spec.ts",

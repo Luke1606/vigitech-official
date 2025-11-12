@@ -1,4 +1,4 @@
-import type { UUID } from '../../../../../../infrastructure';
+import type { UUID } from 'crypto';
 import { Trash2 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -17,10 +17,10 @@ import styles from './CustomItemList.styles';
 
 export const CustomItemsList: React.FC<{
     list: UserItemList
-    onRename?: (id: string, listNewName: string) => void;
+    onRename?: (id: UUID, listNewName: string) => void;
     onAddItem?: (name: string) => void;
-    onRemoveItem?: (listid: string, itemIds: UUID[]) => void;
-    onDeleteList?: (id: string) => void;
+    onRemoveItem?: (listid: UUID, itemIds: UUID[]) => void;
+    onDeleteList?: (id: UUID) => void;
 }> = ({
     list,
     onRename,
@@ -29,6 +29,7 @@ export const CustomItemsList: React.FC<{
     onDeleteList
 }) => {
         const { id, name, items } = list;
+        
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -69,6 +70,7 @@ export const CustomItemsList: React.FC<{
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button
+                                            name='cesto'
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => onRemoveItem?.(id, [item.id])}

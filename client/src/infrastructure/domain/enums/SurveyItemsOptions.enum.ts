@@ -1,13 +1,13 @@
 export enum RadarQuadrant {
-    BUSSINESS_INTEL = 'Bussiness Intel',
-    SCIENTIFIC_STAGE = 'Scientific Stage',
-    SUPPORT_PLATTFORMS_AND_TECHNOLOGIES = 'Support Plattforms and Technologies',
-    LANGUAGES_AND_FRAMEWORKS = 'Languages and Frameworks'
+    BUSSINESS_INTEL = 'Inteligencia del negocio',
+    SCIENTIFIC_STAGE = 'Escenario científico',
+    SUPPORT_PLATTFORMS_AND_TECHNOLOGIES = 'Soporte de plataformas y tecnologías',
+    LANGUAGES_AND_FRAMEWORKS = 'Lenguajes y Frameworks'
 };
 
 export enum RadarRing {
-    ADOPT = 'Adopt',
-    TEST = 'Test',
-    SUSTAIN = 'Sustain',
-    HOLD = 'Hold'
+    ADOPT = 'Adoptar',
+    TEST = 'Probar',
+    SUSTAIN = 'Evaluar',
+    HOLD = 'Detener'
 };

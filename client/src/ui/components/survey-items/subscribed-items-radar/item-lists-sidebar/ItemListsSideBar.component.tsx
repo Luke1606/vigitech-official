@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { EyeIcon, EyeOff, Plus } from 'lucide-react';
+import { EyeIcon, EyeOff, Loader2, Plus } from 'lucide-react';
 import {
     Blip,
     getQuadrantColor,
@@ -25,12 +25,14 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
-    Input
+    Input,
 } from '../../..';
+import { SyncButton } from '../../../sync-button';
 
 import { CustomItemsList } from './custom-item-list';
 import { UUID } from 'crypto';
 import blips from '../../../../../assets/data/radarMock';
+import { useUserItemListsAPI } from '../../../../../infrastructure/hooks/use-item-lists/api/useUserItemListsAPI.hook';
 
 export const ItemListsSideBar: React.FC<{
     visible: boolean
@@ -39,21 +41,24 @@ export const ItemListsSideBar: React.FC<{
     visible,
     toggleVisible
 }) => {
-        const {
-            lists,
-            addPendingCreateList,
-            addPendingUpdateList,
-            addPendingRemoveList,
-            addPendingAppendAllItems,
-            addPendingRemoveAllItems,
-        } = useUserItemLists();
+        // const {
+        //     lists,
+        //     createList,
+        //     updateList,
+        //     removeList,
+        //     appendAllItems,
+        //     removeAllItems,
+        // } = useUserItemLists();
+        const query = useUserItemListsAPI();
+        const { data: lists } = query.findAll
+
         const [newListName, setNewListName] = useState('');
         const [open, setOpen] = useState(false);
-        const [renameTarget, setRenameTarget] = useState<string | null>(null);
-        const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+        const [renameTarget, setRenameTarget] = useState<UUID | null>(null);
+        const [deleteTarget, setDeleteTarget] = useState<UUID | null>(null);
         const [addTarget, setAddTarget] = useState<UserItemList | null>(null);
         const [removeElementTarget, setRemoveElementTarget] = useState<{
-            listId: string;
+            listId: UUID;
             itemIds: UUID[]
         } | null>(null);
 
@@ -61,17 +66,17 @@ export const ItemListsSideBar: React.FC<{
 
         const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-        const openRenameDialog = (id: string, name: string) => {
+        const openRenameDialog = (id: UUID, name: string) => {
             setRenameTarget(id);
             setNewListName(name);
         };
 
-        const openDeleteDialog = (id: string) => {
+        const openDeleteDialog = (id: UUID) => {
             setDeleteTarget(id);
         };
 
         const openAddItemDialog = (id: string) => {
-            const currentList: UserItemList | undefined = lists.find((list: UserItemList) => list.id === id);
+            const currentList: UserItemList | undefined = lists?.find((list: UserItemList) => list.id === id);
 
             if (currentList) {
                 setAddTarget(currentList);
@@ -85,7 +90,7 @@ export const ItemListsSideBar: React.FC<{
             };
         };
 
-        const openRemoveItemDialog = (listId: string, itemIds: UUID[]) => {
+        const openRemoveItemDialog = (listId: UUID, itemIds: UUID[]) => {
             setRemoveElementTarget({ listId, itemIds });
         };
 
@@ -105,7 +110,7 @@ export const ItemListsSideBar: React.FC<{
         const listElements = !lists || lists.length === 0 ?
             (
                 <SidebarMenuItem key="none">
-                    <p>No lists here</p>
+                    <p>No hay listas</p>
                 </SidebarMenuItem>
             ) : (
                 lists.map((list: UserItemList) => (
@@ -126,39 +131,44 @@ export const ItemListsSideBar: React.FC<{
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
                         <SidebarMenuButton asChild className='mt-5'>
-                            <Button>
-                                <Plus />
-                                Create
+                            <Button disabled={query.isPending.createList}>
+                                {query.isPending.createList ?
+                                    <Loader2 className='animate-spin' />
+                                    :
+                                    <>
+                                        <Plus />
+                                        Crear
+                                    </>
+                                }
                             </Button>
                         </SidebarMenuButton>
                     </DialogTrigger>
 
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Create new list</DialogTitle>
+                            <DialogTitle>Crear lista</DialogTitle>
                         </DialogHeader>
 
                         <Input
                             id='create-list-name'
-                            placeholder="Name of the list"
+                            placeholder="Nombre de la lista"
                             value={newListName}
                             onChange={(e) => setNewListName(e.target.value)}
                         />
 
                         <DialogFooter>
                             <Button
+                                name='crearLista'
                                 onClick={() => {
                                     if (newListName.trim()) {
-                                        addPendingCreateList({
-                                            id: `id-local-${newListName}` as UUID,
-                                            name: newListName.trim(),
-                                            items: []
-                                        });
+                                        query.createList(
+                                            newListName.trim(),
+                                        );
                                         setNewListName('');
                                         setOpen(false);
                                     }
                                 }}>
-                                Save
+                                Crear
                             </Button>
                         </DialogFooter>
                     </DialogContent>
@@ -170,7 +180,7 @@ export const ItemListsSideBar: React.FC<{
             <Dialog open={true} onOpenChange={() => setRenameTarget(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Rename list</DialogTitle>
+                        <DialogTitle>Renombrar lista</DialogTitle>
                     </DialogHeader>
 
                     <Input
@@ -182,15 +192,16 @@ export const ItemListsSideBar: React.FC<{
 
                     <DialogFooter>
                         <Button
+                            name='renombrarLista'
                             onClick={() => {
                                 if (newListName.trim()) {
-                                    addPendingUpdateList(renameTarget, newListName.trim());
+                                    query.updateList({ listId: renameTarget, listNewName: newListName.trim() });
                                     setRenameTarget(null);
                                     setNewListName('');
                                 }
                             }}
                         >
-                            Save
+                            Renombrar
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -205,27 +216,28 @@ export const ItemListsSideBar: React.FC<{
                 }>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete list?</DialogTitle>
+                        <DialogTitle>Eliminar lista?</DialogTitle>
                     </DialogHeader>
 
                     <p className="text-sm text-muted-foreground">
-                        This action cannot be undone. The contained elements won't be removed from the screen. ¿Are you sure you want to delete <strong>{deleteTarget}</strong>?
+                        ¿Esta acción no se puede deshacer. Los elementos contenidos no se eliminarán de la pantalla. ¿Estás seguro de que deseas eliminar <strong>{deleteTarget}</strong>?
                     </p>
 
                     <DialogFooter>
                         <Button
                             variant="outline"
                             onClick={() => setDeleteTarget(null)}>
-                            Cancel
+                            Cancelar
                         </Button>
                         <Button
+                            name='eliminarLista'
                             variant="destructive"
                             onClick={() => {
-                                addPendingRemoveList(deleteTarget);
+                                query.deleteList(deleteTarget);
                                 setDeleteTarget(null);
                             }}
                         >
-                            Delete
+                            Eliminar
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -236,13 +248,13 @@ export const ItemListsSideBar: React.FC<{
             <Dialog open={true} onOpenChange={() => setAddTarget(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add elements to {addTarget.name}</DialogTitle>
+                        <DialogTitle>Agregar elementos a <span className='text-blue-800 font-bold'>{addTarget.name}</span></DialogTitle>
                     </DialogHeader>
 
                     <Input
                         id='search-elements'
                         type="text"
-                        placeholder="Search by name..."
+                        placeholder="Busca por nombre..."
                         onChange={(e) => {
                             const query = e.target.value.toLowerCase();
                             const available = getAvailableItemsForTarget(addTarget);
@@ -312,23 +324,24 @@ export const ItemListsSideBar: React.FC<{
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setAddTarget(null)}>
-                            Cancel
+                            Cancelar
                         </Button>
                         <Button
+                            name='agregarElementos'
                             onClick={() => {
                                 const updatedItems: Blip[] = elements.filter(
                                     (item: Blip) =>
                                         selectedItems.includes(item.id)
                                 )
 
-                                addPendingAppendAllItems(addTarget.id, updatedItems);
+                                //appendAllItems(addTarget.id, updatedItems);
                                 setSelectedItems([]);
                                 setAddTarget(null);
                                 setElements(getAvailableItemsForTarget(addTarget));
 
                             }
                             }>
-                            Save
+                            Agregar
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -339,27 +352,28 @@ export const ItemListsSideBar: React.FC<{
             <Dialog open={true} onOpenChange={() => setRemoveElementTarget(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Remove element?</DialogTitle>
+                        <DialogTitle>Remover elementos</DialogTitle>
                     </DialogHeader>
                     <p className="text-sm text-muted-foreground">
-                        ¿Are you sure you want to remove this element from <strong>{
-                            lists.find((list: UserItemList) => list.id === removeElementTarget.listId)?.name
-                        }</strong>?
+                        ¿Está seguro de que quiere remover <strong>{
+                            lists?.find((list: UserItemList) => list.id === removeElementTarget.listId)?.name
+                        }</strong> de la lista?
                     </p>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setRemoveElementTarget(null)}>
-                            Cancel
+                            Cancelar
                         </Button>
                         <Button
+                            name='eliminarElemento'
                             variant="destructive"
                             onClick={() => {
-                                addPendingRemoveAllItems(
-                                    removeElementTarget.listId,
-                                    removeElementTarget.itemIds
-                                );
+                                // removeAllItems(
+                                //     removeElementTarget.listId,
+                                //     removeElementTarget.itemIds
+                                // );
                                 setRemoveElementTarget(null);
                             }}>
-                            Remove
+                            Remover
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -380,8 +394,9 @@ export const ItemListsSideBar: React.FC<{
                     className={`my-12 transition-all duration-300 ${visible ? 'w-80' : 'w-0'}`}>
                     <SidebarContent>
                         <SidebarGroup>
-                            <SidebarGroupLabel className="font-semibold text-xl pt-4">
-                                Custom Item Lists
+                            <SidebarGroupLabel className="font-semibold text-xl pt-4 flex justify-between">
+                                Listas personalizadas
+                                <SyncButton />
                             </SidebarGroupLabel>
 
                             <SidebarGroupContent>
@@ -389,7 +404,14 @@ export const ItemListsSideBar: React.FC<{
 
                                     {createButton}
 
-                                    {listElements}
+                                    {
+                                        query.findAll.isPending ?
+                                            <div className='flex justify-center'>
+                                                <Loader2 className='animate-spin ' />
+                                            </div>
+                                            :
+                                            listElements
+                                    }
 
                                 </SidebarMenu>
                             </SidebarGroupContent>

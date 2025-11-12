@@ -46,19 +46,18 @@ export const routes: RouteObject[] = [
                     <TechnologyRadarHome />
             },
             {
-                path: `${technologyRadarGlobalPrefix}subscribed-items-radar`,
-                element: <SubscribedItemsRadar />
-            },
-            {
                 element: <ProtectedRoutes />,
                 children: [
                     {
                         path: `${technologyRadarGlobalPrefix}recommendations-feed`,
                         element: <RecommendationsFeed />
                     },
-
                     {
-                        path: `${technologyRadarGlobalPrefix}item-details/:item`,
+                        path: `${technologyRadarGlobalPrefix}subscribed-items-radar`,
+                        element: <SubscribedItemsRadar />
+                    },
+                    {
+                        path: `${technologyRadarGlobalPrefix}item-details/:string`,
                         element: <ItemDetails />
                     }
                 ]

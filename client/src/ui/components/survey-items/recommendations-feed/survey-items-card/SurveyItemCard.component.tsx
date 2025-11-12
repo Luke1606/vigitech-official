@@ -2,17 +2,17 @@ import type { UUID } from "crypto";
 import type React from "react";
 import { Plus, Trash2, View } from "lucide-react";
 import { type SurveyItem } from "../../../../../infrastructure";
-import { 
-    Card, 
-    CardHeader, 
-    CardTitle, 
-    CardDescription, 
-    CardFooter, 
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardFooter,
     Button
 } from "../../..";
 
 export const SurveyItemCard: React.FC<{
-    key: UUID;
+    id: UUID;
     item: SurveyItem
     selected: boolean
     onSelect: CallableFunction
@@ -25,7 +25,7 @@ export const SurveyItemCard: React.FC<{
         removeOne: boolean
     }
 }> = ({
-    key,
+    id,
     item,
     selected,
     onSelect,
@@ -36,41 +36,42 @@ export const SurveyItemCard: React.FC<{
     isLoading
 }) => {
 
-    return (
-        <Card 
-            key={key} 
-            className={`${selected? "caret-blue-800" : "caret-blue-100"}`}
-            onClick={() => {
-                if (selected) onUnselect();
-                else onSelect();
-            }}>
-            <CardHeader>
-                <CardTitle>{item.title}</CardTitle>
-                
-                <CardDescription>{item.summary}</CardDescription>
-            </CardHeader>
-            
-            <CardFooter>
-                <Button
-                    className="mr-2"
-                    onClick={() => onViewDetails()}
-                    disabled={isLoading.subscribeOne}>
-                    <View className="w-4 h-4 mr-2" /> Details
-                </Button>
+        return (
+            <Card
+                key={id}
+                className={`border-4 ${selected ? "border-blue-400" : "border-background"} w-fit`}
+                onClick={() => {
+                    if (selected) onUnselect();
+                    else onSelect();
+                }}>
+                <CardHeader>
+                    <CardTitle className="font-bold">{item.title}</CardTitle>
 
-                <Button
-                    className="mr-2"
-                    onClick={() => onSubscribe()}
-                    disabled={isLoading.subscribeOne}>
-                    <Plus className="w-4 h-4 mr-2" /> Subscribe
-                </Button>
+                    <CardDescription>{item.summary}</CardDescription>
+                </CardHeader>
 
-                <Button
-                    variant="destructive"
-                    onClick={() => onRemove()}
-                    disabled={isLoading.removeOne}>
-                    <Trash2 className="w-4 h-4 mr-2" /> Remove
-                </Button>
-            </CardFooter>
-        </Card>)
-}
+                <CardFooter className="flex gap-x-5">
+                    <Button
+                        className="bg-purple-800 hover:bg-purple-950"
+                        onClick={() => onViewDetails()}
+                        disabled={isLoading.subscribeOne}>
+                        <View className="w-4 h-4" /> Detalles
+                    </Button>
+
+                    <Button
+                        className="bg-blue-600 hover:bg-blue-800"
+                        onClick={() => onSubscribe()}
+                        disabled={isLoading.subscribeOne}>
+                        <Plus className="w-4 h-4" /> Suscribirse
+                    </Button>
+
+                    <Button
+                        variant="destructive"
+                        className="hover:bg-red-800"
+                        onClick={() => onRemove()}
+                        disabled={isLoading.removeOne}>
+                        <Trash2 className="w-4 h-4" /> Remover
+                    </Button>
+                </CardFooter>
+            </Card>)
+    }
