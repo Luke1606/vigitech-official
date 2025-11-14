@@ -9,7 +9,7 @@ import { BaseFetcher } from '../../base.fetcher';
 @Injectable()
 export class NpmDownloadsFetcher extends BaseFetcher {
     // API de descargas de npm (pública)
-    private readonly DOWNLOADS_BASE_URL = 'https://api.npmjs.org/downloads/point/last-month/';
+    private readonly DOWNLOADS_BASE_URL: string = 'https://api.npmjs.org/downloads/point/last-month/';
 
     constructor(
         private readonly httpService: HttpService,

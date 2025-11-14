@@ -9,6 +9,7 @@ export type HttpWithPartnerFetcherConstructor = new (
     searchFetcher: NpmPopularSearchFetcher,
 ) => BaseFetcher;
 
-type NpmFetcherConstructor = HttpFetcherConstructor | HttpWithPartnerFetcherConstructor;
-
-export const NPM_FETCHERS: NpmFetcherConstructor[] = [NpmPopularSearchFetcher, NpmDownloadsFetcher];
+export const NPM_FETCHERS: (HttpFetcherConstructor | HttpWithPartnerFetcherConstructor)[] = [
+    NpmPopularSearchFetcher,
+    NpmDownloadsFetcher,
+];

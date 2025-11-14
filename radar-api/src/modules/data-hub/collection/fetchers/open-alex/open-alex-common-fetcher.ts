@@ -1,5 +1,6 @@
-import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
+import { Logger } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { OpenAlexResults } from '../../types/open-alex/open-alex.types';
 
 // Función auxiliar para manejar la lógica repetitiva de la API de OpenAlex
@@ -7,10 +8,10 @@ export async function fetchOpenAlex<T>(
     httpService: HttpService,
     endpoint: string,
     filterParams: Record<string, string>,
-    logger: any,
+    logger: Logger,
 ): Promise<T[]> {
-    const EMAIL_CONTACT = 'TODO: añadir_email@ejemplo.com'; // Debe ser una variable de ENV en prod
-    const BASE_URL = `https://api.openalex.org/${endpoint}`;
+    const EMAIL_CONTACT: string = 'TODO: añadir_email@ejemplo.com'; // Debe ser una variable de ENV en prod
+    const BASE_URL: string = `https://api.openalex.org/${endpoint}`;
 
     const params = new URLSearchParams({
         ...filterParams,

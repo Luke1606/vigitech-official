@@ -1,82 +1,86 @@
+import csv from 'csv-parser';
+import { lastValueFrom } from 'rxjs';
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { RadarQuadrant } from '@prisma/client';
+import { RawDataSource, RawDataType } from '@prisma/client';
+import { StackOverflowSurveyRecord } from '../../types/stack-overflow/stack-overflow.types';
 import { BaseFetcher } from '../../base.fetcher';
-import { PrismaService } from '../../../../../common/services/prisma.service';
-import { StackOverflowSurveyRecord } from '../../types/stack-overflow/stack-overflow-survey.types';
 
 @Injectable()
-export class StackOverflowSurveyFetcher extends BaseFetcher {
-    readonly quadrants = [RadarQuadrant.LANGUAGES_AND_FRAMEWORKS]; // Or a more appropriate quadrant
+export class StackOverflowSurveyDataFetcher extends BaseFetcher {
+    private readonly REPORT_DATA_URL =
+        'https://raw.githubusercontent.com/stackoverflow/survey/master/survey_results_2023.csv';
 
-    // Note: Stack Overflow Survey data is typically released as CSV files, not a direct API.
-    // This fetcher would simulate fetching or parsing such data.
-    // For a real implementation, you might:
-    // 1. Download the CSV from Kaggle or Stack Overflow directly.
-    // 2. Parse the CSV into a structured format.
-    // 3. Store the parsed data.
-    // This example uses a placeholder for where data would be processed.
-
-    constructor(
-        protected readonly prisma: PrismaService,
-        private readonly httpService: HttpService, // HttpService might not be directly used for CSV, but kept for consistency
-    ) {
-        super(prisma);
+    constructor(private readonly httpService: HttpService) {
+        super();
     }
 
-    public async fetch(): Promise<void> {
-        this.logger.log(
-            `Collecting data from Stack Overflow Developer Survey for quadrant ${this.quadrants.join()}...`,
-        );
+    getDataSource(): RawDataSource {
+        return RawDataSource.STACK_OVERFLOW_SURVEY;
+    }
+    getDatatype(): RawDataType {
+        return RawDataType.REPORT_OR_PRODUCT;
+    }
+
+    async fetch(): Promise<StackOverflowSurveyRecord[]> {
+        this.logger.log('Collecting Stack Overflow Survey raw data via CSV stream...');
+
+        const records: StackOverflowSurveyRecord[] = [];
 
         try {
-            // Placeholder for fetching/parsing survey data.
-            // In a real scenario, this might involve:
-            // - Using a library to read a local CSV file.
-            // - Making an HTTP request to a hosted CSV/JSON version of the survey.
-            // - Using Kaggle API to download the dataset.
+            // 1. Iniciar la solicitud como un STREAM (crucial para archivos grandes)
+            const response = await lastValueFrom(
+                this.httpService.get(this.REPORT_DATA_URL, {
+                    responseType: 'stream',
+                }),
+            );
 
-            // For demonstration, we'll simulate some data.
-            const simulatedSurveyData: StackOverflowSurveyRecord[] = [
-                {
-                    ResponseId: 1,
-                    Q120: 'Employed, full-time',
-                    MainBranch: 'I am a developer by profession',
-                    Age: '25-34 years old',
-                    Employment: 'Employed, full-time',
-                    RemoteWork: 'Hybrid (some remote, some in-person)',
-                    EdLevel: 'Bachelor’s degree (B.A., B.S., B.Eng., etc.)',
-                    YearsCodePro: '5-9 years',
-                    DevType: 'Developer, full-stack',
-                    LanguageHaveWorkedWith: 'JavaScript;TypeScript;Python;HTML/CSS',
-                    LanguageWantToWorkWith: 'Rust;Go',
-                    DatabaseHaveWorkedWith: 'PostgreSQL;MongoDB',
-                    DatabaseWantToWorkWith: 'Redis',
-                    PlatformHaveWorkedWith: 'AWS;Docker',
-                    PlatformWantToWorkWith: 'Kubernetes',
-                    WebframeHaveWorkedWith: 'React;Node.js',
-                    WebframeWantToWorkWith: 'Next.js',
-                    MiscTechHaveWorkedWith: 'Apache Kafka',
-                    MiscTechWantToWorkWith: 'WebAssembly',
-                    ToolsTechHaveWorkedWith: 'Docker;Git;Jira',
-                    ToolsTechWantToWorkWith: 'Pulumi',
-                    Country: 'USA',
-                },
-                // Add more simulated records or actual parsed data
-            ];
+            const dataStream = response.data;
 
-            if (simulatedSurveyData.length > 0) {
-                for (const record of simulatedSurveyData) {
-                    await this.saveRawData('StackOverflowSurvey', 'SurveyRecord', record);
-                }
-                this.logger.log(
-                    `Successfully collected ${simulatedSurveyData.length} records from Stack Overflow Survey.`,
-                );
-            } else {
-                this.logger.warn('No data found from Stack Overflow Developer Survey.');
+            if (!dataStream) {
+                throw new Error('Data stream is unavailable.');
             }
-        } catch (error) {
-            this.logger.error('Failed to collect data from Stack Overflow Developer Survey', error);
+
+            // 2. Procesamiento del Stream
+            await new Promise<void>((resolve, reject) => {
+                // Inicia el parseo CSV y lo conecta a la tubería (pipe)
+                dataStream
+                    .pipe(csv())
+                    .on('data', (data: any) => {
+                        const record: StackOverflowSurveyRecord = {
+                            ResponseId: parseInt(data.ResponseId, 10) || 0,
+                            MainBranch: data.MainBranch || '',
+                            Age: data.Age || '',
+                            Employment: data.Employment || '',
+                            EdLevel: data.EdLevel || '',
+                            YearsCodePro: data.YearsCodePro || '',
+                            DevType: data.DevType || '',
+                            Q120: data.Q120 || '',
+                            RemoteWork: data.RemoteWork || '',
+                            Country: data.Country || '',
+                            LanguageHaveWorkedWith: data.LanguageHaveWorkedWith || '',
+                            DatabaseHaveWorkedWith: data.DatabaseHaveWorkedWith || '',
+                            WebframeHaveWorkedWith: data.WebframeHaveWorkedWith || '',
+                            MiscTechHaveWorkedWith: data.MiscTechHaveWorkedWith || '',
+                            // Incluye el resto de campos variables
+                            ...data,
+                        };
+                        records.push(record);
+                    })
+                    .on('end', () => {
+                        this.logger.log(`Successfully collected ${records.length} survey records via stream.`);
+                        resolve();
+                    })
+                    .on('error', (err: Error) => {
+                        this.logger.error('Error during CSV stream processing', err);
+                        reject(err);
+                    });
+            });
+
+            return records;
+        } catch (error: unknown) {
+            this.logger.error('Failed to fetch or process SO Survey data. Check URL and connectivity.', error);
+            return [];
         }
     }
 }

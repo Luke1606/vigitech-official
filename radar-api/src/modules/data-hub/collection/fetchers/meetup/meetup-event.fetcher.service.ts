@@ -8,7 +8,7 @@ import { BaseFetcher } from '../../base.fetcher';
 @Injectable()
 export class MeetupEventsFetcher extends BaseFetcher {
     // TODO: Conseguir una API Key/Token y/o credenciales de socio para acceder a esta data.
-    private readonly BASE_URL = 'https://api.meetup.com/find/events';
+    private readonly BASE_URL: string = 'https://api.meetup.com/find/events';
 
     constructor(private readonly httpService: HttpService) {
         super();

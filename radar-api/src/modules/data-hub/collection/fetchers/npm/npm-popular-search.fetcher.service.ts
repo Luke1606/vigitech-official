@@ -7,7 +7,7 @@ import { BaseFetcher } from '../../base.fetcher';
 
 @Injectable()
 export class NpmPopularSearchFetcher extends BaseFetcher {
-    private readonly BASE_URL = 'https://registry.npmjs.org/-/v1/search';
+    private readonly BASE_URL: string = 'https://registry.npmjs.org/-/v1/search';
 
     constructor(private readonly httpService: HttpService) {
         super();

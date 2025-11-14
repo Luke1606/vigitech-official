@@ -9,7 +9,7 @@ import { BaseFetcher } from '../../base.fetcher';
 export class KaggleCompetitionsFetcher extends BaseFetcher {
     // TODO: La API de Kaggle requiere autenticación CLI.
     // La misma nota de autenticación aplica para las competiciones.
-    private readonly BASE_URL = 'https://www.kaggle.com/api/v1/competitions';
+    private readonly BASE_URL: string = 'https://www.kaggle.com/api/v1/competitions';
 
     constructor(private readonly httpService: HttpService) {
         super();

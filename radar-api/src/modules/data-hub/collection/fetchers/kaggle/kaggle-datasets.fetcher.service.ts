@@ -9,7 +9,7 @@ import { BaseFetcher } from '../../base.fetcher';
 export class KaggleDatasetsFetcher extends BaseFetcher {
     // TODO: La API de Kaggle requiere autenticación CLI.
     // Para producción, se debe buscar una librería o método para autenticar y usar su API.
-    private readonly BASE_URL = 'https://www.kaggle.com/api/v1/datasets';
+    private readonly BASE_URL: string = 'https://www.kaggle.com/api/v1/datasets';
 
     constructor(private readonly httpService: HttpService) {
         super();

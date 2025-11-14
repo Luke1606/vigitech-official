@@ -9,7 +9,7 @@ import { BaseFetcher } from '../../base.fetcher';
 @Injectable()
 export class NewsApiTopHeadlinesFetcher extends BaseFetcher {
     // TODO conseguir apikey de newsapi
-    private readonly BASE_URL = 'https://newsapi.org/v2/everything';
+    private readonly BASE_URL: string = 'https://newsapi.org/v2/everything';
     private readonly apiKey: string;
 
     constructor(

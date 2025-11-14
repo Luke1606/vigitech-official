@@ -7,7 +7,7 @@ import { BaseFetcher } from '../../base.fetcher';
 
 @Injectable()
 export class MediaWikiExtractsFetcher extends BaseFetcher {
-    private readonly BASE_URL = 'https://en.wikipedia.org/w/api.php';
+    private readonly BASE_URL: string = 'https://en.wikipedia.org/w/api.php';
 
     constructor(private readonly httpService: HttpService) {
         super();

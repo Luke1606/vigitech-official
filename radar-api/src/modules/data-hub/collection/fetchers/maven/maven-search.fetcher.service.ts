@@ -7,7 +7,7 @@ import { BaseFetcher } from '../../base.fetcher';
 
 @Injectable()
 export class MavenSearchFetcher extends BaseFetcher {
-    private readonly BASE_URL = 'https://search.maven.org/solrsearch/select';
+    private readonly BASE_URL: string = 'https://search.maven.org/solrsearch/select';
 
     constructor(private readonly httpService: HttpService) {
         super();
