@@ -1,6 +1,7 @@
-import { RadarQuadrant } from '@prisma/client';
+import { RawDataSource, RawDataType } from '@prisma/client';
 
 export interface IFetcher {
-    quadrants: RadarQuadrant[];
-    fetch(): Promise<void>;
+    fetch(): Promise<object[]>;
+    getDataSource(): RawDataSource;
+    getDatatype(): RawDataType;
 }

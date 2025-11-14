@@ -1,49 +1,40 @@
+import { lastValueFrom } from 'rxjs';
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { RadarQuadrant } from '@prisma/client';
+import { RawDataSource, RawDataType } from '@prisma/client';
+import { KaggleDataset } from '../../types/kaggle/kaggle.types';
 import { BaseFetcher } from '../../base.fetcher';
-import { PrismaService } from '../../../../../common/services/prisma.service';
 
 @Injectable()
-export class KaggleFetcher extends BaseFetcher {
-    readonly quadrants = [
-        RadarQuadrant.BUSSINESS_INTEL,
-        RadarQuadrant.LANGUAGES_AND_FRAMEWORKS,
-        RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES,
-    ];
+export class KaggleDatasetsFetcher extends BaseFetcher {
+    // TODO: La API de Kaggle requiere autenticación CLI.
+    // Para producción, se debe buscar una librería o método para autenticar y usar su API.
+    private readonly BASE_URL = 'https://www.kaggle.com/api/v1/datasets';
 
-    constructor(
-        protected readonly prisma: PrismaService,
-        private readonly httpService: HttpService,
-    ) {
-        super(prisma);
+    constructor(private readonly httpService: HttpService) {
+        super();
     }
 
-    public async fetch(): Promise<void> {
-        this.logger.log(`Collecting data from Kaggle for quadrants: ${this.quadrants.join(', ')}...`);
+    getDataSource(): RawDataSource {
+        return RawDataSource.KAGGLE;
+    }
+    getDatatype(): RawDataType {
+        return RawDataType.DATASET;
+    }
 
-        // Ejemplo: Obtener datasets populares o en tendencia (simplificación)
-        // En un caso real, se usaría la API de Kaggle para buscar datasets, notebooks o competiciones
-        // relevantes para Business Intelligence.
-        const kaggleApiUrl = 'https://www.kaggle.com/api/v1/datasets/list?sort_by=votes&page=1&page_size=10'; // URL de ejemplo, la API real requiere autenticación y es más compleja
+    async fetch(): Promise<KaggleDataset[]> {
+        this.logger.log('Collecting top trending datasets from Kaggle...');
+
+        // Simulación de búsqueda de datasets populares.
+        const apiUrl = `${this.BASE_URL}/list?sort_by=hottest&page_size=100`;
 
         try {
-            // Nota: La API pública de Kaggle es limitada. Para un uso real, se necesitaría autenticación
-            // y posiblemente un cliente SDK o web scraping si la API no expone lo necesario.
-            // Este es un placeholder.
-            const response = await this.httpService.get(kaggleApiUrl).toPromise();
-            const datasets = response?.data;
-
-            if (datasets && datasets.length > 0) {
-                for (const dataset of datasets) {
-                    await this.saveRawData('Kaggle', 'Dataset', dataset);
-                }
-                this.logger.log(`Successfully collected ${datasets.length} datasets from Kaggle.`);
-            } else {
-                this.logger.warn('No datasets found from Kaggle API.');
-            }
+            // Esta llamada es una URL simulada; fallará sin la autenticación adecuada de Kaggle.
+            const response = await lastValueFrom(this.httpService.get(apiUrl));
+            return (response?.data as KaggleDataset[]) ?? [];
         } catch (error) {
             this.logger.error('Failed to collect data from Kaggle', error);
+            throw error;
         }
     }
 }

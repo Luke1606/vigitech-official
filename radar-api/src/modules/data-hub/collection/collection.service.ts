@@ -1,54 +1,71 @@
-import { Injectable, Logger, OnModuleInit, Inject } from '@nestjs/common';
-import { RadarQuadrant } from '@prisma/client';
-import { IFetcher } from './collection.interfaces';
+import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { BaseFetcher } from './base.fetcher';
+import { FETCHERS_ARRAY_TOKEN } from './constants';
+import { PrismaService } from '../../../common/services/prisma.service';
 
 @Injectable()
-export class CollectionService implements OnModuleInit {
+export class CollectionService {
     private readonly logger = new Logger(CollectionService.name);
-    private collectors: Map<RadarQuadrant, IFetcher[]> = new Map();
+    private readonly fetchers: BaseFetcher[];
 
-    constructor(@Inject('COLLECTORS_ARRAY') private readonly allCollectors: IFetcher[]) {}
-
-    onModuleInit() {
-        this.allCollectors.forEach((collector) => this.registerCollector(collector));
-        this.logger.log('CollectionService initialized. All collectors registered.');
+    constructor(
+        @Inject(FETCHERS_ARRAY_TOKEN) injectedFetchers: BaseFetcher[],
+        private readonly prisma: PrismaService,
+    ) {
+        this.fetchers = injectedFetchers;
+        this.logger.log(`CollectionService initialized with ${this.fetchers.length} fetcher strategies.`);
     }
 
-    /**
-     * Registra un colector para un cuadrante específico.
-     * @param collector La instancia del colector.
-     */
-    registerCollector(_collector: IFetcher) {
-        // Usar ICollector
-        //     if (!this.collectors.has(collector.quadrants)) {
-        //         this.collectors.set(collector.quadrants, []);
-        //     }
-        //     this.collectors.get(collector.quadrants)?.push(collector);
-        //     this.logger.log(`Registered collector ${collector.constructor.name} for quadrant ${collector.quadrant}`);
-    }
+    public async collectAllDataAndSave(): Promise<void> {
+        this.logger.log('--- Starting massive data collection across all fetchers ---');
 
-    /**
-     * Ejecuta todos los colectores registrados para un cuadrante específico.
-     * @param quadrant El cuadrante para el cual ejecutar los colectores.
-     */
-    async collectForQuadrant(quadrant: RadarQuadrant): Promise<void> {
-        this.logger.log(`Starting data collection for quadrant: ${quadrant}`);
-        const quadrantCollectors = this.collectors.get(quadrant) || [];
+        const allRawDataToInsert: Prisma.RawDataCreateManyInput[] = [];
 
-        if (quadrantCollectors.length === 0) {
-            this.logger.warn(`No collectors registered for quadrant: ${quadrant}`);
-            return;
-        }
+        const fetchPromises = this.fetchers.map(async (fetcher) => {
+            const source = fetcher.getDataSource();
+            const dataType = fetcher.getDatatype();
+            const fetcherName = fetcher.constructor.name;
 
-        for (const collector of quadrantCollectors) {
             try {
-                await collector.fetch();
-                this.logger.log(`Collector ${collector.constructor.name} finished for quadrant ${quadrant}`);
+                const rawItems = await fetcher.fetch();
+
+                if (Array.isArray(rawItems) && rawItems.length > 0) {
+                    rawItems.forEach((item) => {
+                        if (item !== null) {
+                            allRawDataToInsert.push({
+                                source,
+                                dataType,
+                                content: item,
+                            });
+                        } else {
+                            this.logger.warn(`Skipping null item collected by ${fetcherName}.`);
+                        }
+                    });
+                    this.logger.log(`Fetcher ${fetcherName} collected ${rawItems.length} items.`);
+                }
             } catch (error) {
-                // Explicitly cast error to any
-                this.logger.error(`Collector ${collector.constructor.name} failed for quadrant ${quadrant}`, error);
+                this.logger.error(`Error collecting data from ${fetcherName} (${source}#${dataType}):`, error);
             }
+        });
+
+        await Promise.all(fetchPromises);
+
+        // 3. Inserción Masiva
+        if (allRawDataToInsert.length > 0) {
+            this.logger.log(`Consolidated a total of ${allRawDataToInsert.length} raw data records.`);
+            try {
+                const result = await this.prisma.rawData.createMany({
+                    data: allRawDataToInsert,
+                    skipDuplicates: true,
+                });
+                this.logger.log(`Successfully saved ${result.count} raw data records using createMany. 🎉`);
+            } catch (error) {
+                this.logger.error('FATAL: Error during Prisma createMany operation.', error);
+                throw error;
+            }
+        } else {
+            this.logger.log('No raw data collected to save.');
         }
-        this.logger.log(`Data collection for quadrant ${quadrant} completed.`);
     }
 }

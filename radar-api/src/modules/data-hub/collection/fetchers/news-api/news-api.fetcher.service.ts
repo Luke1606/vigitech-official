@@ -1,45 +1,62 @@
+import { lastValueFrom } from 'rxjs';
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { RadarQuadrant } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
+import { RawDataSource, RawDataType } from '@prisma/client';
+import { NewsArticle, NewsApiResponse } from '../../types/news-api/news-api.types';
 import { BaseFetcher } from '../../base.fetcher';
-import { PrismaService } from '../../../../../common/services/prisma.service';
-import { NewsApiArticle } from '../../types/news-api/news-api.types'; // Assuming newsapi.types.ts exists
 
 @Injectable()
-export class NewsApiFetcher extends BaseFetcher {
-    readonly quadrants = [
-        RadarQuadrant.SCIENTIFIC_STAGE,
-        RadarQuadrant.LANGUAGES_AND_FRAMEWORKS,
-        RadarQuadrant.BUSSINESS_INTEL,
-    ]; // News can cover multiple quadrants
+export class NewsApiTopHeadlinesFetcher extends BaseFetcher {
+    // TODO conseguir apikey de newsapi
+    private readonly BASE_URL = 'https://newsapi.org/v2/everything';
+    private readonly apiKey: string;
 
     constructor(
-        protected readonly prisma: PrismaService,
         private readonly httpService: HttpService,
+        private readonly configService: ConfigService,
     ) {
-        super(prisma);
+        super();
+        this.apiKey = this.configService.get<string>('NEWS_API_KEY') || ''; // Asumir ENV: NEWS_API_KEY
     }
 
-    public async fetch(): Promise<void> {
-        this.logger.log(`Collecting data from NewsAPI for quadrants: ${this.quadrants.join(', ')}...`);
+    getDataSource(): RawDataSource {
+        return RawDataSource.NEWS_API;
+    }
+    getDatatype(): RawDataType {
+        return RawDataType.TEXT_CONTENT;
+    }
 
-        // NewsAPI URL for general tech news, requires an API key
-        const newsApiUrl = `https://newsapi.org/v2/everything?q=technology&sortBy=relevancy&pageSize=10&apiKey=${process.env.NEWS_API_KEY}`;
+    async fetch(): Promise<NewsArticle[]> {
+        this.logger.log('Collecting recent articles on AI and Data Science from NewsAPI...');
+
+        if (!this.apiKey) {
+            this.logger.error('NEWS_API_KEY is not configured. Skipping fetch.');
+            return [];
+        }
+
+        const params = new URLSearchParams({
+            q: 'AI OR "Data Science" OR "Machine Learning"',
+            language: 'en',
+            sortBy: 'publishedAt',
+            pageSize: '100',
+            apiKey: this.apiKey, // Usando la clave inyectada
+        });
+
+        const apiUrl = `${this.BASE_URL}?${params.toString()}`;
 
         try {
-            const response = await this.httpService.get(newsApiUrl).toPromise();
-            const articles: NewsApiArticle[] = response?.data?.articles;
+            const response = await lastValueFrom(this.httpService.get<NewsApiResponse>(apiUrl));
 
-            if (articles && articles.length > 0) {
-                for (const article of articles) {
-                    await this.saveRawData('NewsAPI', 'Article', article);
-                }
-                this.logger.log(`Successfully collected ${articles.length} articles from NewsAPI.`);
-            } else {
-                this.logger.warn('No articles found from NewsAPI.');
+            if (response.data.status === 'error') {
+                this.logger.error(`NewsAPI returned an error: ${response.status} - ${response.statusText}`);
+                return [];
             }
+
+            return response?.data?.articles ?? [];
         } catch (error) {
             this.logger.error('Failed to collect data from NewsAPI', error);
+            return [];
         }
     }
 }

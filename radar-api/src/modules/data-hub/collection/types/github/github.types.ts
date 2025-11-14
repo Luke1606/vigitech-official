@@ -1,19 +1,18 @@
 /**
  * @file Defines the types for the raw data collected from the GitHub API.
- * @description This file contains the type definitions for the raw GitHub repository data,
- *              ensuring type safety and clarity throughout the collection and processing pipeline.
+ * @description This file contains the type definitions for the raw GitHub data 
+ * (Repository, Issue, PR, Code, Topic), ensuring type safety and clarity.
  */
+
+// --- Tipos Base ---
 
 /**
  * Represents the type of a technology item from GitHub.
+ * This is used to map the item back to its origin.
  * @enum {string}
  */
-export type GitHubItemType = 'repository';
+export type GitHubItemType = 'repository' | 'issue' | 'pull_request' | 'code' | 'topic';
 
-/**
- * Represents a GitHub repository object as returned by the GitHub API.
- * This type is used for raw data collection before further processing.
- */
 export type GitHubRepository = {
     id: number;
     node_id: string;
@@ -44,80 +43,87 @@ export type GitHubRepository = {
     description: string | null;
     fork: boolean;
     url: string;
-    forks_url: string;
-    keys_url: string;
-    collaborators_url: string;
-    teams_url: string;
-    hooks_url: string;
-    issue_events_url: string;
-    events_url: string;
-    assignees_url: string;
-    branches_url: string;
-    tags_url: string;
-    blobs_url: string;
-    git_tags_url: string;
-    git_refs_url: string;
-    trees_url: string;
-    statuses_url: string;
-    languages_url: string;
-    stargazers_url: string;
-    contributors_url: string;
-    subscribers_url: string;
-    subscription_url: string;
-    commits_url: string;
-    git_commits_url: string;
-    comments_url: string;
-    issue_comment_url: string;
-    contents_url: string;
-    compare_url: string;
-    merges_url: string;
-    archive_url: string;
-    downloads_url: string;
-    issues_url: string;
-    pulls_url: string;
-    milestones_url: string;
-    notifications_url: string;
-    labels_url: string;
-    releases_url: string;
-    deployments_url: string;
-    created_at: string;
-    updated_at: string;
-    pushed_at: string;
-    git_url: string;
-    ssh_url: string;
-    clone_url: string;
-    svn_url: string;
-    homepage: string | null;
-    size: number;
     stargazers_count: number;
     watchers_count: number;
     language: string | null;
-    has_issues: boolean;
-    has_projects: boolean;
-    has_downloads: boolean;
-    has_wiki: boolean;
-    has_pages: boolean;
-    has_discussions: boolean;
-    forks_count: number;
-    mirror_url: string | null;
-    archived: boolean;
-    disabled: boolean;
     open_issues_count: number;
-    license: {
-        key: string;
-        name: string;
-        spdx_id: string;
-        url: string;
-        node_id: string;
-    } | null;
-    allow_forking: boolean;
-    is_template: boolean;
-    web_commit_signoff_required: boolean;
     topics: string[];
     visibility: string;
-    forks: number;
-    open_issues: number;
-    watchers: number;
     default_branch: string;
     score?: number;
+};
+
+/**
+ * Representa un Issue o Pull Request de GitHub.
+ * Nota: Los resultados de búsqueda de Issues/PRs usan el mismo endpoint /search/issues.
+ */
+type SharedIssuePrProperties = {
+    url: string;
+    repository_url: string;
+    labels_url: string;
+    comments_url: string;
+    html_url: string;
+    id: number;
+    node_id: string;
+    number: number;
+    title: string;
+    user: GitHubRepository['owner'];
+    labels: Array<{
+        name: string;
+        color: string;
+    }>;
+    state: 'open' | 'closed';
+    locked: boolean;
+    assignee: GitHubRepository['owner'] | null;
+    comments: number;
+    created_at: string;
+    updated_at: string;
+    body: string | null;
+    score: number;
+    // Propiedad que identifica si es un Pull Request
+    pull_request?: {
+        url: string;
+        html_url: string;
+    }; 
+};
+
+/**
+ * Representa un Issue de GitHub (excluyendo la propiedad 'pull_request').
+ */
+export type GitHubIssue = Omit<SharedIssuePrProperties, 'pull_request'>;
+
+/**
+ * Representa un Pull Request de GitHub.
+ */
+export type GitHubPullRequest = SharedIssuePrProperties & {
+    pull_request: NonNullable<SharedIssuePrProperties['pull_request']>;
+};
+
+/**
+ * Representa un fragmento de código encontrado por la búsqueda de código.
+ */
+export type GitHubCodeResult = {
+    name: string;
+    path: string;
+    sha: string;
+    url: string;
+    git_url: string;
+    html_url: string;
+    repository: Pick<GitHubRepository, 'id' | 'name' | 'full_name' | 'owner'>;
+    score: number;
+};
+
+/**
+ * Representa un Topic (Tema) de GitHub.
+ */
+export type GitHubTopic = {
+    name: string;
+    display_name: string | null;
+    short_description: string | null;
+    description: string | null;
+    created_by: string | null;
+    released: string | null;
+    updated_at: string;
+    featured: boolean;
+    curated: boolean;
 };

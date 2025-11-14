@@ -1,35 +1,18 @@
 import { Logger } from '@nestjs/common';
-import { RadarQuadrant, RawData } from '@prisma/client';
-import { PrismaService } from '../../../common/services/prisma.service';
+import { RawDataSource, RawDataType } from '@prisma/client';
 import { IFetcher } from './collection.interfaces';
 
 export abstract class BaseFetcher implements IFetcher {
     protected readonly logger: Logger;
-    abstract readonly quadrants: RadarQuadrant[];
 
-    constructor(protected readonly prisma: PrismaService) {
+    constructor() {
         this.logger = new Logger(this.constructor.name);
     }
 
     /**
      * Recopila datos brutos de la fuente externa y los almacena en la tabla RawData.
      */
-    public abstract fetch(): Promise<void>;
-
-    /**
-     * Guarda un nuevo registro de datos brutos en la base de datos.
-     * @param source El nombre de la fuente de datos (ej. "GitHub").
-     * @param dataType El tipo de dato recopilado (ej. "Repository", "Dataset").
-     * @param content El contenido JSON bruto de la respuesta de la API.
-     */
-    protected async saveRawData(source: string, dataType: string, content: object): Promise<RawData> {
-        this.logger.log(`Saving raw data from ${source} (${dataType})...`);
-        return await this.prisma.rawData.create({
-            data: {
-                source,
-                dataType,
-                content,
-            },
-        });
-    }
+    public abstract fetch(): Promise<object[]>;
+    public abstract getDatatype(): RawDataType;
+    public abstract getDataSource(): RawDataSource;
 }

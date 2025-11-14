@@ -1,0 +1,1 @@
+export const FETCHERS_ARRAY_TOKEN = Symbol('FETCHERS_ARRAY');

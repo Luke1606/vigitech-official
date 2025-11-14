@@ -1,31 +1,24 @@
 /**
- * @file Defines the types for the raw data collected from the Docker Hub API.
- * @description This file contains the type definitions for raw Docker Hub repository data,
- *              ensuring type safety and clarity throughout the collection and processing pipeline.
+ * Define los tipos para la respuesta de la API de Docker Hub.
  */
-
-/**
- * Represents the type of a technology item from Docker Hub.
- * @enum {string}
- */
-export type DockerHubItemType = 'repository' | 'image';
-
-/**
- * Represents a concise Docker Hub Repository object.
- * This type is used for raw data collection before further processing, focusing on key information.
- */
-export type DockerHubRepository = {
-    creator: number;
+export type DockerHubTag = {
     id: number;
-    image_id: string | null;
-    last_updated: string; // ISO 8601 format
-    name: string;
+    name: string; // Nombre del tag (ej: latest, 1.20)
+    full_size: number;
+    last_updated: string;
+    image_id: string;
+    v2: boolean;
+};
+
+export type DockerHubRepository = {
+    user: string; // Nombre del usuario/organización (ej: library)
+    name: string; // Nombre del repositorio (ej: nginx)
     namespace: string;
-    repository_type: string; // e.g., 'image'
-    star_count: number;
-    status: string; // e.g., 'Active'
-    summary: string;
+    repository_type: 'image';
     full_description: string | null;
-    pull_count: number;
-    // Add other relevant fields as needed, but keep it concise for initial implementation
+    full_url: string;
+    status: number;
+    star_count: number;
+    pull_count: number; // Indicador de popularidad
+    last_updated: string;
 };

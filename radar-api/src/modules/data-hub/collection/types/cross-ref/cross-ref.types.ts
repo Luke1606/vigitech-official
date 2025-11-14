@@ -1,50 +1,29 @@
 /**
- * @file Defines the types for the raw data collected from the CrossRef API.
- * @description This file contains the type definitions for raw CrossRef scholarly article data,
- *              ensuring type safety and clarity throughout the collection and processing pipeline.
+ * Define los tipos para la respuesta de la API de Crossref (Fondo Abierto).
  */
+export type CrossrefAuthor = {
+    given: string;
+    family: string;
+};
 
-/**
- * Represents the type of a technology item from CrossRef.
- * @enum {string}
- */
-export type CrossRefItemType = 'article' | 'research-paper';
-
-/**
- * Represents a concise CrossRef Work (e.g., article, conference paper) object.
- * This type is used for raw data collection before further processing, focusing on key information.
- */
-export type CrossRefWork = {
+export type CrossrefWork = {
     DOI: string;
-    title: string[];
-    author: Array<{
-        given: string;
-        family: string;
-        sequence: string;
-        affiliation: Array<{ name: string }>;
-    }>;
-    'container-title': string[];
-    'short-container-title': string[];
-    abstract?: string; // Optional, as not all works have an abstract
+    title: string[]; // Título completo
+    subtitle: string[];
+    author: CrossrefAuthor[];
+    'container-title': string[]; // Nombre de la revista o conferencia
     issued: {
-        'date-parts': number[][]; // e.g., [[2023, 10, 26]]
-    };
-    created: {
         'date-parts': number[][];
-        timestamp: number;
     };
-    deposited: {
-        'date-parts': number[][];
-        timestamp: number;
+    link: { URL: string }[];
+    type: string; // Ej: journal-article, proceedings-article, book
+    abstract?: string; // El resumen generalmente se obtiene a través de un endpoint adicional, pero lo tipificamos.
+};
+
+export type CrossrefApiResult = {
+    'message-version': string;
+    message: {
+        'items-per-page': number;
+        items: CrossrefWork[];
     };
-    indexed: {
-        'date-parts': number[][];
-        timestamp: number;
-    };
-    publisher: string;
-    type: string; // e.g., 'journal-article', 'conference-paper'
-    URL: string;
-    score?: number; // Added for search results
-    subject?: string[]; // Keywords/subjects
-    // Add other relevant fields as needed, but keep it concise for initial implementation
 };

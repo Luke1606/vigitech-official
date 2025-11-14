@@ -1,50 +1,50 @@
+import { lastValueFrom } from 'rxjs';
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { RadarQuadrant } from '@prisma/client';
-import { BaseFetcher } from '../../base.fetcher';
-import { PrismaService } from '../../../../../common/services/prisma.service';
+import { RawDataSource, RawDataType } from '@prisma/client';
 import { HackerNewsItem } from '../../types/hacker-news/hacker-news.types';
+import { BaseFetcher } from '../../base.fetcher';
 
 @Injectable()
-export class HackerNewsFetcher extends BaseFetcher {
-    readonly quadrants = [RadarQuadrant.LANGUAGES_AND_FRAMEWORKS, RadarQuadrant.SCIENTIFIC_STAGE]; // Hacker News can cover multiple quadrants
+export class HackerNewsTopFetcher extends BaseFetcher {
+    private readonly BASE_URL = 'https://hacker-news.firebaseio.com/v0';
 
-    private readonly baseUrl = 'https://hacker-news.firebaseio.com/v0';
-
-    constructor(
-        protected readonly prisma: PrismaService,
-        private readonly httpService: HttpService,
-    ) {
-        super(prisma);
+    constructor(private readonly httpService: HttpService) {
+        super();
     }
 
-    public async fetch(): Promise<void> {
-        this.logger.log(`Collecting data from Hacker News for quadrants: ${this.quadrants.join(', ')}...`);
+    getDataSource(): RawDataSource {
+        return RawDataSource.HACKER_NEWS;
+    }
+    getDatatype(): RawDataType {
+        return RawDataType.COMMUNITY_POST;
+    }
+
+    async fetch(): Promise<HackerNewsItem[]> {
+        this.logger.log('Collecting top and new stories from Hacker News...');
+
+        const topStoriesUrl = `${this.BASE_URL}/topstories.json`;
+        const itemBaseUrl = `${this.BASE_URL}/item/`;
 
         try {
-            // Get top story IDs
-            const topStoryIdsResponse = await this.httpService
-                .get<number[]>(`${this.baseUrl}/topstories.json`)
-                .toPromise();
-            const topStoryIds = topStoryIdsResponse?.data?.slice(0, 10); // Limit to top 10 for example
+            // 1. Obtener IDs de las 50 historias principales (máximo de stories en la lista es ~500)
+            const idResponse = await lastValueFrom(this.httpService.get<number[]>(topStoriesUrl));
+            const topIds = idResponse.data.slice(0, 50);
 
-            if (topStoryIds && topStoryIds.length > 0) {
-                for (const id of topStoryIds) {
-                    const itemResponse = await this.httpService
-                        .get<HackerNewsItem>(`${this.baseUrl}/item/${id}.json`)
-                        .toPromise();
-                    const item = itemResponse?.data;
+            // 2. Crear solicitudes para obtener los detalles de cada historia.
+            // Usamos Promise.all para la eficiencia.
+            const detailRequests = topIds.map((id) =>
+                lastValueFrom(this.httpService.get<HackerNewsItem>(`${itemBaseUrl}${id}.json`)),
+            );
 
-                    if (item) {
-                        await this.saveRawData('HackerNews', item.type, item);
-                    }
-                }
-                this.logger.log(`Successfully collected ${topStoryIds.length} top stories from Hacker News.`);
-            } else {
-                this.logger.warn('No top stories found from Hacker News API.');
-            }
+            const detailResponses = await Promise.all(detailRequests);
+            const stories = detailResponses.map((res) => res.data);
+
+            this.logger.log(`Successfully collected ${stories.length} top stories from HN.`);
+            return stories;
         } catch (error) {
             this.logger.error('Failed to collect data from Hacker News', error);
+            throw error;
         }
     }
 }

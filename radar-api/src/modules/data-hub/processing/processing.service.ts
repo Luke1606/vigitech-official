@@ -1,80 +1,66 @@
 import { Injectable, Logger, OnModuleInit, Inject } from '@nestjs/common';
+import { CentralizedAiAgentService } from '../../centralized-ai-agent/centralized-ai-agent.service';
+import { VectorizingService } from '../vectorizing/vectorizing.service';
 import { PrismaService } from '../../../common/services/prisma.service';
-import { RadarQuadrant } from '@prisma/client';
-import { IProcessor } from './processing.interfaces'; // Importar la interfaz
+import { RawData, RawDataType } from '@prisma/client';
+import { PROCESSORS_TOKEN } from './constants';
+
+// Define an interface for processors
+export interface IProcessor {
+    process(rawData: RawData): Promise<void>;
+}
 
 @Injectable()
 export class ProcessingService implements OnModuleInit {
     private readonly logger = new Logger(ProcessingService.name);
-    private processors: Map<RadarQuadrant, IProcessor[]> = new Map(); // Usar IProcessor
+    private readonly processors: Map<RawDataType, IProcessor> = new Map(); // Map by RawDataType
 
     constructor(
+        private readonly aiAgentService: CentralizedAiAgentService,
+        private readonly vectorizingService: VectorizingService,
         private readonly prisma: PrismaService,
-        @Inject('PROCESSORS_ARRAY') private readonly allProcessors: IProcessor[], // Inyectar el array
+        @Inject(PROCESSORS_TOKEN) private readonly injectedProcessors: IProcessor[],
     ) {}
 
     onModuleInit() {
-        this.allProcessors.forEach((processor) => this.registerProcessor(processor));
-        this.logger.log('ProcessingService initialized. All processors registered.');
+        this.injectedProcessors.forEach((processor) =>
+            this.registerProcessor(processor.constructor.name as RawDataType, processor),
+        );
     }
 
-    /**
-     * Registra un procesador para un cuadrante específico.
-     * @param processor La instancia del procesador.
-     */
-    registerProcessor(processor: IProcessor) {
-        // Usar IProcessor
-        if (!this.processors.has(processor.quadrant)) {
-            this.processors.set(processor.quadrant, []);
-        }
-        this.processors.get(processor.quadrant)?.push(processor);
-        this.logger.log(`Registered processor ${processor.constructor.name} for quadrant ${processor.quadrant}`);
+    private registerProcessor(key: RawDataType, processor: IProcessor) {
+        this.processors.set(key, processor);
+        this.logger.log(`Processor for key "${key}" registered.`);
     }
 
-    /**
-     * Procesa los datos brutos para un cuadrante específico.
-     * @param quadrant El cuadrante para el cual procesar los datos.
-     */
-    async processQuadrantRawData(quadrant: RadarQuadrant): Promise<void> {
-        this.logger.log(`Starting data processing for quadrant: ${quadrant}`);
-        const quadrantProcessors = this.processors.get(quadrant) || [];
-
-        if (quadrantProcessors.length === 0) {
-            this.logger.warn(`No processors registered for quadrant: ${quadrant}`);
-            return;
-        }
-
-        // Obtener datos brutos no procesados para este cuadrante
-        const rawDataEntries = await this.prisma.rawData.findMany({
-            where: {
-                processedAt: null, // Solo procesar los que no han sido procesados
-            },
-            // Considerar filtrar por dataType si un procesador solo maneja ciertos tipos
+    async processRawData(rawDataId: string): Promise<void> {
+        this.logger.log(`Processing raw data with ID: ${rawDataId}`);
+        const rawData = await (this.prisma as any).tech_survey.rawData.findUnique({
+            where: { id: rawDataId },
         });
 
-        if (rawDataEntries.length === 0) {
-            this.logger.log(`No new raw data to process for quadrant: ${quadrant}`);
-            return;
+        if (!rawData) {
+            this.logger.error(`RawData with ID ${rawDataId} not found.`);
+            throw new Error(`RawData with ID ${rawDataId} not found.`);
         }
 
-        for (const rawData of rawDataEntries) {
-            for (const processor of quadrantProcessors) {
-                try {
-                    await processor.process(rawData);
-                    // Marcar el RawData como procesado
-                    await this.prisma.rawData.update({
-                        where: { id: rawData.id },
-                        data: { processedAt: new Date() },
-                    });
-                    this.logger.log(`Processor ${processor.constructor.name} processed RawData ${rawData.id}.`);
-                } catch (error) {
-                    this.logger.error(
-                        `Processor ${processor.constructor.name} failed for RawData ${rawData.id}:`,
-                        error,
-                    );
-                }
-            }
+        // Determine which processor to use based on rawData.dataType or other criteria
+        const processorKey = rawData.dataType; // Example: use RawDataType as key
+        const processor = this.processors.get(processorKey);
+
+        if (!processor) {
+            this.logger.error(`No processor registered for data type: ${rawData.dataType}`);
+            throw new Error(`No processor registered for data type: ${rawData.dataType}`);
         }
-        this.logger.log(`Data processing for quadrant ${quadrant} completed.`);
+
+        await processor.process(rawData);
+
+        // Mark raw data as processed
+        await (this.prisma as any).tech_survey.rawData.update({
+            where: { id: rawDataId },
+            data: { processedAt: new Date() },
+        });
+
+        this.logger.log(`Raw data with ID ${rawDataId} processed successfully.`);
     }
 }
