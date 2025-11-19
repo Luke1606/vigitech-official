@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { UserDataModule } from './user-data/user-data.module';
 import { TechnologySurveyModule } from './technology-survey/technology-survey.module';
-import { CentralizedAiAgentModule } from './centralized-ai-agent/centralized-ai-agent.module';
+import { AiAgentsModule } from './ai-agents/ai-agents.module';
 
 @Module({
-    imports: [AuthModule, UserDataModule, TechnologySurveyModule, CentralizedAiAgentModule],
+    imports: [AuthModule, UserDataModule, TechnologySurveyModule, AiAgentsModule],
 })
 export class ModulesModule {}
