@@ -13,7 +13,6 @@ import {
 import { RadarMenu } from './radar-menu/RadarMenu.component';
 import type { SurveyItem } from '../../../../../infrastructure';
 import { useNavigate } from 'react-router-dom';
-import { SettingsModal } from '../../../config-button';
 import { Eye, EyeOff } from 'lucide-react';
 
 export const Radar: React.FC<{
@@ -193,28 +192,30 @@ export const Radar: React.FC<{
                                 ? quadrant.x + 135
                                 : quadrant.x;
 
-                        // Calcular posición del botón (justo al lado derecho del título)
-                        const buttonX = titleX + (quadrant.label === RadarQuadrant.BUSSINESS_INTEL ? 140 : 180);
-                        const buttonY = quadrant.y - 12;
+                        // Calcular posición del botón (solo BUSSINESS_INTEL y SCIENTIFIC_STAGE se mueven más a la izquierda)
+                        const getButtonX = () => {
+                            switch (quadrant.label) {
+                                case RadarQuadrant.BUSSINESS_INTEL:
+                                    return titleX - 160; // 60px a la izquierda del título (más a la izquierda)
+                                case RadarQuadrant.SCIENTIFIC_STAGE:
+                                    return titleX - 235; // 60px a la izquierda del título (más a la izquierda)
+                                case RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES:
+                                    return titleX - 40; // 40px a la izquierda del título (posición normal)
+                                case RadarQuadrant.LANGUAGES_AND_FRAMEWORKS:
+                                    return titleX - 40; // 40px a la izquierda del título (posición normal)
+                                default:
+                                    return titleX - 40;
+                            }
+                        };
+
+                        const buttonX = getButtonX();
+                        const buttonY = quadrant.y - 18;
 
                         return (
                             <g key={quadrant.label}>
                                 {/* Título del cuadrante con botón de ojo */}
                                 <g>
-                                    <text
-                                        x={titleX}
-                                        y={quadrant.y}
-                                        fontSize={22}
-                                        fill="#333"
-                                        textAnchor={
-                                            quadrant.label === RadarQuadrant.BUSSINESS_INTEL ? 'middle' : quadrant.align
-                                        }
-                                        fontWeight="bold"
-                                    >
-                                        {quadrant.label}
-                                    </text>
-
-                                    {/* Botón de ojo */}
+                                    {/* Botón de ojo - AHORA A LA IZQUIERDA DEL TÍTULO */}
                                     <g
                                         onClick={() => toggleQuadrantVisibility(quadrant.label)}
                                         style={{ cursor: 'pointer' }}
@@ -254,6 +255,20 @@ export const Radar: React.FC<{
                                             </div>
                                         </foreignObject>
                                     </g>
+
+                                    {/* Título del cuadrante */}
+                                    <text
+                                        x={titleX}
+                                        y={quadrant.y}
+                                        fontSize={22}
+                                        fill="#333"
+                                        textAnchor={
+                                            quadrant.label === RadarQuadrant.BUSSINESS_INTEL ? 'middle' : quadrant.align
+                                        }
+                                        fontWeight="bold"
+                                    >
+                                        {quadrant.label}
+                                    </text>
                                 </g>
 
                                 {/* Lista de blips del cuadrante (solo si está visible) */}
@@ -362,7 +377,6 @@ export const Radar: React.FC<{
                         isSelected={false} // Ajusta según tu lógica de selección
                     />
                 )}
-                <SettingsModal />
             </div >
         );
     };

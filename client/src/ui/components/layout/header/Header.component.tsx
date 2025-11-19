@@ -13,6 +13,7 @@ import { PathOption } from '../../../../infrastructure';
 import { NotificationCenter } from '../../notification-center';
 import styles from './Header.styles';
 import { ServiceCard, type ServiceCardProps } from './service-card';
+import { SettingsModal } from '../../config-button';
 
 export const Header: React.FC = () => {
     const location = useLocation();
@@ -208,6 +209,7 @@ export const Header: React.FC = () => {
                     </NavigationMenuItem>
                 </NavigationMenuList>
             </NavigationMenu>
+            <SettingsModal />
         </header >
     )
 }

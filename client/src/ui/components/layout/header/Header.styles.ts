@@ -1,5 +1,5 @@
 const styles = {
-    header: 'fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-indigo-700 via-blue-600 to-sky-500 text-white shadow-lg ring-1 ring-white/20 backdrop-blur-md px-4 py-3',
+    header: 'fixed top-0 left-0 right-0 z-50 flex gap-x-10 bg-gradient-to-r from-indigo-700 via-blue-600 to-sky-500 text-white shadow-lg ring-1 ring-white/20 backdrop-blur-md px-4 py-3',
 
     navigationMenuList: 'flex flex-wrap sm:flex-nowrap items-center gap-x-3 sm:gap-x-6 text-sm sm:text-base',
 
