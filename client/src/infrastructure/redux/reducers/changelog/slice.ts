@@ -2,7 +2,7 @@ import type { ChangeLogEntry } from "../../../domain";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export interface ChangelogState {
-    changelogs: string[];
+    changelogs: ChangeLogEntry[];
 }
 
 const initialState: ChangelogState = {
@@ -18,10 +18,7 @@ export const changelogSlice = createSlice({
             state: ChangelogState,
             action: PayloadAction<ChangeLogEntry>
         ) => {
-            const { itemTitle, oldRing, newRing } = action.payload;
-            state.changelogs.push(
-                `Item ${itemTitle} has been moved from ${oldRing} to ${newRing}`
-            )
+            state.changelogs.push(action.payload)
         },
 
         clearChangeLog: (state: ChangelogState) => {

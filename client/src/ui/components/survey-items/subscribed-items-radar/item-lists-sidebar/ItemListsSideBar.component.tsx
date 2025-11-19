@@ -6,7 +6,6 @@ import {
     getQuadrantLightColor,
     getRingColor,
     getRingLightColor,
-    useUserItemLists,
     type UserItemList
 } from '../../../../../infrastructure';
 import {

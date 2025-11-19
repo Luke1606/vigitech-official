@@ -10,6 +10,8 @@ import {
     SidebarMenu,
 } from '../../..';
 import { useChangelog } from '../../../../../infrastructure/hooks/use-changelog';
+import { ChangeLogEntry, getRingColor, getRingLightColor, RadarRing } from '../../../../../infrastructure';
+import { useEffect } from 'react';
 
 export const ChangeLogSideBar: React.FC<{
     visible: boolean
@@ -18,7 +20,34 @@ export const ChangeLogSideBar: React.FC<{
     visible,
     toggleVisible
 }) => {
-        const { changelogs, clearChangeLog } = useChangelog();
+        const { changelogs, addChangeLog, clearChangeLog } = useChangelog();
+        useEffect(() => {
+            addChangeLog({
+                itemTitle: "FTP",
+                oldRing: RadarRing.SUSTAIN,
+                newRing: RadarRing.HOLD
+            })
+            addChangeLog({
+                itemTitle: "TypeScript",
+                oldRing: RadarRing.TEST,
+                newRing: RadarRing.ADOPT
+            })
+            addChangeLog({
+                itemTitle: "Cypress",
+                oldRing: RadarRing.SUSTAIN,
+                newRing: RadarRing.TEST
+            })
+            addChangeLog({
+                itemTitle: "Terraform",
+                oldRing: RadarRing.TEST,
+                newRing: RadarRing.ADOPT
+            })
+            addChangeLog({
+                itemTitle: "Perl",
+                oldRing: RadarRing.SUSTAIN,
+                newRing: RadarRing.HOLD
+            })
+        }, [])
 
         return (
             <div className='flex mt-8 gap-x-20'>
@@ -40,7 +69,7 @@ export const ChangeLogSideBar: React.FC<{
                 <Sidebar
                     side='right'
                     className={`my-12 transition-all duration-300
-                    ${visible ? 'w-80' : 'w-0'}`
+                    ${visible ? 'w-100' : 'w-0'}`
                     }>
                     <SidebarContent>
                         <SidebarGroup>
@@ -49,7 +78,7 @@ export const ChangeLogSideBar: React.FC<{
                                 Registro de cambios
                             </SidebarGroupLabel>
 
-                            <SidebarGroupContent>
+                            <SidebarGroupContent className=''>
                                 <SidebarMenu>
                                     <div className="border-t pt-4 mt-4">
                                         <div className="flex items-center justify-between mb-3">
@@ -64,17 +93,36 @@ export const ChangeLogSideBar: React.FC<{
                                             )}
                                         </div>
 
-                                        <ScrollArea className="h-48">
-                                            <div className="space-y-2">
+                                        <ScrollArea className="h-160">
+                                            <div className="">
 
                                                 {changelogs?.length === 0 ? (
-                                                    <p className="text-sm text-muted-foreground text-center py-4">
+                                                    <p className="text-md text-muted-foreground text-center py-4">
                                                         No hay cambios recientes
                                                     </p>
                                                 ) : (
-                                                    changelogs?.map((log: string, index: number) => (
-                                                        <div key={index} className="text-xs p-2 bg-muted rounded">
-                                                            {log}
+                                                    changelogs?.map((log: ChangeLogEntry, index: number) => (
+                                                        <div key={index} className="text-md p-2 rounded w-full">
+                                                            <p className='bg-gray-200 px-2 py-2 rounded-md flex flex-wrap items-center'>
+                                                                <span>Elemento</span>
+                                                                <span className='font-bold mx-1'>{log.itemTitle}</span>
+                                                                <span>se ha movido de</span>
+                                                                <span
+                                                                    className='p-1 mx-1 rounded-lg font-semibold'
+                                                                    style={{
+                                                                        backgroundColor: getRingColor(log.oldRing),
+                                                                        color: getRingLightColor(log.oldRing)
+                                                                    }}
+                                                                >{log.oldRing}</span>
+                                                                <span>a</span>
+                                                                <span
+                                                                    className='p-1 mx-1 rounded-lg font-semibold'
+                                                                    style={{
+                                                                        backgroundColor: getRingColor(log.newRing),
+                                                                        color: getRingLightColor(log.newRing)
+                                                                    }}
+                                                                >{log.newRing}</span>
+                                                            </p>
                                                         </div>
                                                     ))
                                                 )}
@@ -85,7 +133,7 @@ export const ChangeLogSideBar: React.FC<{
                             </SidebarGroupContent>
                         </SidebarGroup>
                     </SidebarContent>
-                </Sidebar>
-            </div>
+                </Sidebar >
+            </div >
         )
     };

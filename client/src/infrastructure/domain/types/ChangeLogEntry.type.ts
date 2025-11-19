@@ -1,4 +1,4 @@
-import type { RadarRing } from "../enums";
+import { RadarRing } from "../enums";
 
 export type ChangeLogEntry = {
     itemTitle: string;
