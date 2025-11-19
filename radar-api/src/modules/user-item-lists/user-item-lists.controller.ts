@@ -34,7 +34,7 @@ export class UserItemListsController {
 
     @Patch(':id')
     async updateList(
-        @Param(':id', ParseUUIDPipe) id: UUID,
+        @Param('id', ParseUUIDPipe) id: UUID,
         @Body() data: UpdateUserItemListDto,
         @Req() request: AuthenticatedRequest,
     ): Promise<UserItemList> {
@@ -44,7 +44,7 @@ export class UserItemListsController {
 
     @Delete(':id')
     async removeList(
-        @Param(':id', ParseUUIDPipe) id: UUID,
+        @Param('id', ParseUUIDPipe) id: UUID,
         @Req() request: AuthenticatedRequest,
     ): Promise<UserItemList> {
         const userId: UUID = request.userId as UUID;
@@ -53,7 +53,7 @@ export class UserItemListsController {
 
     @Patch(':listId')
     async appendOneItem(
-        @Param(':listId') listId: UUID,
+        @Param('listId') listId: UUID,
         @Body() itemId: UUID,
         @Req() request: AuthenticatedRequest,
     ): Promise<UserItemList> {
@@ -63,7 +63,7 @@ export class UserItemListsController {
 
     @Patch('batch/:listId')
     async appendAllItems(
-        @Param(':listId') id: UUID,
+        @Param('listId') id: UUID,
         @Body() itemIds: UUID[],
         @Req() request: AuthenticatedRequest,
     ): Promise<UserItemList> {
@@ -73,7 +73,7 @@ export class UserItemListsController {
 
     @Patch(':listId')
     async removeOneItem(
-        @Param(':listId') listId: UUID,
+        @Param('listId') listId: UUID,
         @Body() itemId: UUID,
         @Req() request: AuthenticatedRequest,
     ): Promise<UserItemList> {
@@ -83,7 +83,7 @@ export class UserItemListsController {
 
     @Patch('batch/:listId')
     async removeAllItems(
-        @Param(':listId') id: UUID,
+        @Param('listId') id: UUID,
         @Body() itemIds: UUID[],
         @Req() request: AuthenticatedRequest,
     ): Promise<UserItemList> {

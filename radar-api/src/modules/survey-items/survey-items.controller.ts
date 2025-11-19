@@ -1,10 +1,11 @@
 import type { UUID } from 'crypto';
-import { Get, Body, Patch, Param, Logger, Delete, Controller, ParseUUIDPipe, Req } from '@nestjs/common';
+import { Get, Body, Patch, Param, Logger, Delete, Controller, ParseUUIDPipe, Req, Post } from '@nestjs/common';
 
 import { UserSubscribedItem, UserHiddenItem } from '@prisma/client';
 import { SurveyItemsService } from './survey-items.service';
 import { SurveyItemWithAnalysisType } from './types/survey-item-with-analysis.type';
 import type { AuthenticatedRequest } from '../../shared/types/authenticated-request.type';
+import type { CreateSurveyItemType } from './types/create-survey-item.type';
 
 @Controller('survey-items')
 export class SurveyItemsController {

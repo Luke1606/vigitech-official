@@ -62,30 +62,6 @@ const initialState: UserItemListsState = {
     synchronized: true,
 };
 
-const findPendingChangeIndex = (pendingChanges: PendingChanges, failure: any): number => {
-    const { type } = failure;
-
-    switch (type) {
-        case 'toCreateList':
-            return pendingChanges.toCreateList.findIndex(item => item.listName === failure.listName);
-        case 'toUpdateList':
-            return pendingChanges.toUpdateList.findIndex(item => item.listId === failure.listId);
-        case 'toRemoveList':
-            return pendingChanges.toRemoveList.findIndex(item => item.listId === failure.listId);
-        case 'toAppendAllItems':
-            return pendingChanges.toAppendAllItems.findIndex(item =>
-                item.listId === failure.listId &&
-                JSON.stringify(item.items) === JSON.stringify(failure.items)
-            );
-        case 'toRemoveAllItems':
-            return pendingChanges.toRemoveAllItems.findIndex(item =>
-                item.listId === failure.listId &&
-                JSON.stringify(item.itemIds) === JSON.stringify(failure.itemIds)
-            );
-        default:
-            return -1;
-    }
-};
 
 // Helper para actualizar pending changes con tipos seguros
 const updatePendingChange = (state: UserItemListsState, failure: any): void => {

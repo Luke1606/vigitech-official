@@ -1,5 +1,4 @@
 export {
-    type ItemListState,
     addPendingCreateList,
     addPendingUpdateList,
     addPendingRemoveList,

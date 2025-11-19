@@ -5,7 +5,7 @@ import {
 } from '../../..';
 import { AxiosConfiguredInstance } from '../../../utils/AxiosConfiguredInstance.util';
 import { getEnv } from '../../../config/env';
-class SurveyItemsRepository implements SurveyItemsInterface {
+export class SurveyItemsRepository implements SurveyItemsInterface {
     private readonly axios: AxiosConfiguredInstance;
 
     constructor() {

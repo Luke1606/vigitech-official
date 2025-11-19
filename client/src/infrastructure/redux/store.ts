@@ -5,8 +5,8 @@ import {
     changelogReducer,
     surveyItemsReducer
 } from "./reducers";
-import storage from 'redux-persist/lib/storage';
 import persistReducer from "redux-persist/es/persistReducer";
+import storage from 'redux-persist/lib/storage';
 import { persistStore } from "redux-persist";
 import {
     FLUSH,

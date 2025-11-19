@@ -1,3 +1,4 @@
+// src/infrastructure/domain/repositories/user-item-list/UserItemList.repository.ts
 import { UUID } from 'crypto';
 import {
     type UserItemListInterface,
@@ -5,15 +6,15 @@ import {
 } from '../../..';
 import { AxiosConfiguredInstance } from '../../../utils/AxiosConfiguredInstance.util';
 import { getEnv } from '../../../config/env';
-class UserItemListRepository implements UserItemListInterface {
+
+// Exporta la clase para testing
+export class UserItemListRepository implements UserItemListInterface {
     private readonly axios: AxiosConfiguredInstance;
 
     constructor() {
-
         this.axios = new AxiosConfiguredInstance(
             `${getEnv().VITE_SERVER_BASE_URL}/item-lists`
         );
-
     }
 
     async findAll(): Promise<UserItemList[]> {
@@ -31,7 +32,6 @@ class UserItemListRepository implements UserItemListInterface {
     async createList(
         listName: string
     ): Promise<UserItemList> {
-
         return await this.axios.http
             .post('', { name: listName });
     };
@@ -84,4 +84,5 @@ class UserItemListRepository implements UserItemListInterface {
     };
 }
 
+// Exporta la instancia singleton para uso normal
 export const userItemListRepository = new UserItemListRepository();

@@ -1,4 +1,4 @@
-import { RadarQuadrant } from '@prisma/client';
+import { RadarQuadrant, RadarRing } from '@prisma/client';
 
 export type CreateSurveyItemType = {
     title: string;
