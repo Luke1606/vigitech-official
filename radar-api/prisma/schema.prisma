@@ -1,206 +1,319 @@
 generator client {
-	provider = "prisma-client-js"
-    output = "../node_modules/.prisma/client"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/client"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
-	provider  = "postgresql"
-	url       = env("DATABASE_URL")
-    directUrl = env("DIRECT_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas   = ["public", "user_data", "tech_survey"]
 }
+
+// ----------------------------------------------------
+// SCHEMA: user_data
+// ----------------------------------------------------
 
 model User {
-  id                             String               @id @default(uuid())
-  clerkId                        String               @unique
-  
-  createdAt                      DateTime             @default(now())
-  updatedAt                      DateTime             @updatedAt
-  
-  preferences                   UserPreferences?
-  subscribedItems               UserSubscribedItem[]
-  hiddenItems                   UserHiddenItem[]
-  lists                         UserItemList[]
+  id               String                 @id @default(uuid())
+  clerkId          String                 @unique
+
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  preferences      UserPreferences?
+  insertedItems    Item[]
+  subscribedItems  UserSubscribedItem[]
+  hiddenItems      UserHiddenItem[]
+  lists            UserItemList[]
+
+  @@schema("user_data")
 }
 
-
 enum NotificationChannel {
-    IN_APP
-    EMAIL
-    PUSH
-    SMS
+  IN_APP
+  EMAIL
+  PUSH
+  SMS
+
+  @@schema("user_data")
 }
 
 enum Theme {
-    DARK
-    LIGHT
-    SYSTEM
+  DARK
+  LIGHT
+  SYSTEM
+
+  @@schema("user_data")
 }
 
 enum Language {
-    EN
-    ES
+  EN
+  ES
+
+  @@schema("user_data")
 }
 
 enum Frequency {
-    EVERY_10_MINUTES
-    EVERY_30_MINUTES
-    HOURLY
-    EVERY_6_HOURS
-    DAILY
-    EVERY_TWO_DAYS
-    EVERY_FOUR_DAYS
-    WEEKLY
+  EVERY_10_MINUTES
+  EVERY_30_MINUTES
+  HOURLY
+  EVERY_6_HOURS
+  DAILY
+  EVERY_TWO_DAYS
+  EVERY_FOUR_DAYS
+  WEEKLY
+
+  @@schema("user_data")
 }
 
 model UserPreferences {
-    id                             String               @id @default(uuid())
-    theme                          Theme                @default(SYSTEM)
-    language                       Language             @default(ES)
-    defaultNotificationChannel     NotificationChannel  @default(IN_APP)
-    analysisFrequency              Frequency            @default(EVERY_6_HOURS)
-    recommendationsUpdateFrequency Frequency            @default(DAILY)
+  id                           String              @id @default(uuid())
+  theme                        Theme               @default(SYSTEM)
+  language                     Language            @default(ES)
+  defaultNotificationChannel   NotificationChannel @default(IN_APP)
+  analysisFrequency            Frequency           @default(EVERY_6_HOURS)
+  recommendationsUpdateFrequency Frequency           @default(DAILY)
 
-    createdAt                      DateTime             @default(now())
-    updatedAt                      DateTime             @updatedAt
+  createdAt                    DateTime            @default(now())
+  updatedAt                    DateTime            @updatedAt
 
-	userId                         String               @unique
-    user                           User?                @relation(fields: [userId], references: [id])
+  userId                       String              @unique
+  user                         User?               @relation(fields: [userId], references: [id])
+
+  @@schema("user_data")
 }
-
-
-enum RadarQuadrant {
-    BUSSINESS_INTEL
-    SCIENTIFIC_STAGE
-    SUPPORT_PLATTFORMS_AND_TECHNOLOGIES
-    LANGUAGES_AND_FRAMEWORKS
-}
-
-enum RadarRing {
-    ADOPT
-    TEST
-    SUSTAIN
-    HOLD
-    UNKNOWN
-}
-
-model SurveyItem {
-  id                             String               @id @default(uuid())
-  title                          String
-  summary                        String
-
-  radarQuadrant                  RadarQuadrant
-  radarRing                      RadarRing            @default(UNKNOWN)
-
-  createdAt                      DateTime             @default(now())
-  updatedAt                      DateTime             @updatedAt
-
-  analysisHistory                ItemAnalysis[]  
-  lists                          UserItemList[]       @relation("ListItems")
-  reports                        Report[]             @relation("ReportItems")
-  
-  subscribedBy                  UserSubscribedItem[]
-  hiddenBy                      UserHiddenItem[]
-}
-
 
 model UserSubscribedItem {
-  id                             String               @id @default(uuid())
-  userId                         String
-  user                           User                 @relation(fields: [userId], references: [id])
-  itemId                         String
-  item                           SurveyItem           @relation(fields: [itemId], references: [id])
-  
-  createdAt                      DateTime             @default(now())
-  
-  @@unique([userId, itemId])
-}
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  itemId    String
+  item      Item       @relation(fields: [itemId], references: [id])
 
+  createdAt DateTime   @default(now())
+
+  @@unique([userId, itemId])
+  @@schema("user_data")
+}
 
 model UserHiddenItem {
-  id                             String               @id @default(uuid())
-  userId                         String
-  user                           User                 @relation(fields: [userId], references: [id])
-  itemId                         String
-  item                           SurveyItem           @relation(fields: [itemId], references: [id])
-  
-  createdAt                      DateTime             @default(now())
-  
-  @@unique([userId, itemId])
-}
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  itemId    String
+  item      Item       @relation(fields: [itemId], references: [id])
 
+  createdAt DateTime   @default(now())
+
+  @@unique([userId, itemId])
+  @@schema("user_data")
+}
 
 model UserItemList {
-    id                             String               @id @default(uuid())    
-    name                           String
-    preferredNotificationChannel   NotificationChannel  @default(IN_APP)
+  id                           String              @id @default(uuid())
+  name                         String
+  preferredNotificationChannel NotificationChannel @default(IN_APP)
 
-    createdAt                      DateTime             @default(now())
-    updatedAt                      DateTime             @updatedAt
-    
-    ownerId                        String
-    owner                          User                 @relation(fields: [ownerId], references: [id])
-    items                          SurveyItem[]         @relation("ListItems")
+  createdAt                    DateTime            @default(now())
+  updatedAt                    DateTime            @updatedAt
+
+  ownerId                      String
+  owner                        User                @relation(fields: [ownerId], references: [id])
+  items                        Item[]              @relation("ListItems")
+
+  @@schema("user_data")
 }
-
-
-model GeneralSearchResult {
-    id                            String               @id @default(uuid())
-    crossRefResult                Json
-    openAlexResult                Json
-
-    analysis                      ItemAnalysis?
-}
-
-
-enum Trending {
-    UP
-    DOWN
-    STABLE
-    UNSTABLE
-}
-
-enum AccesibilityLevel {
-    FREE
-    PAID
-}
-
-model Insights {
-    id                            String               @id @default(uuid())
-    citations                     Int
-    downloads                     Int
-    relevance                     Float
-    accesibilityLevel             AccesibilityLevel
-    trending                      Trending
-
-    analysis                      ItemAnalysis?
-}
-
-
-model ItemAnalysis {
-	id                             String               @id @default(uuid())
-    
-    createdAt                      DateTime             @default(now())
-    updatedAt                      DateTime             @updatedAt
-
-	itemId                         String
-
-    dataId                         String               @unique
-	searchedData                   GeneralSearchResult  @relation(fields: [dataId], references: [id])
-
-    metricsId                      String               @unique
-    analyzedMetrics                Insights              @relation(fields: [metricsId], references: [id])
-
-    item                           SurveyItem           @relation(fields: [itemId], references: [id])
-}
-
 
 model Report {
-    id                             String               @id @default(uuid())
-    startDate                      DateTime
-    endDate                        DateTime             @default(now())
-    
-    createdAt                      DateTime             @default(now())
-    updatedAt                      DateTime             @updatedAt
+  id        String   @id @default(uuid())
+  startDate DateTime
+  endDate   DateTime @default(now())
 
-    items                          SurveyItem[]         @relation("ReportItems")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items     Item[]   @relation("ReportItems")
+
+  @@schema("user_data")
+}
+
+// ----------------------------------------------------
+// SCHEMA: tech_survey
+// ----------------------------------------------------
+
+enum Field {
+  BUSSINESS_INTEL
+  SCIENTIFIC_STAGE
+  SUPPORT_PLATTFORMS_AND_TECHNOLOGIES
+  LANGUAGES_AND_FRAMEWORKS
+
+  @@schema("tech_survey")
+}
+
+enum Classification {
+  ADOPT
+  TEST
+  SUSTAIN
+  HOLD
+
+  @@schema("tech_survey")
+}
+
+enum RawDataSource {
+  ARXIV_ORG
+  CROSS_REF
+  DEV_TO
+  DOCKER_HUB
+  GITHUB
+  GITHUB_OCTOVERSE
+  GITLAB
+  GOOGLE_BOOKS
+  HACKER_NEWS
+  HASHNODE
+  HUGGING_FACE_HUB
+  KAGGLE
+  KUBERNETES
+  MAVEN
+  MEDIA_WIKI
+  MEETUP
+  NEWS_API
+  NPM
+  OPEN_ALEX
+  PAPERS_WITH_CODE
+  PRODUCT_HUNT
+  PYPI
+  REDDIT
+  RSS
+  SEMANTIC_SCHOLAR
+  STACK_EXCHANGE
+  STACK_OVERFLOW_SURVEY
+
+  @@schema("tech_survey")
+}
+
+enum RawDataType {
+  CODE_ASSET
+  TEXT_CONTENT
+  ACADEMIC_PAPER
+  REPORT_OR_PRODUCT
+  COMMUNITY_POST
+  DATASET
+
+  @@schema("tech_survey")
+}
+
+// ----------------------------------------------------
+// TIH CORE: RawData y KnowledgeFragment (El Hub de Conocimiento)
+// ----------------------------------------------------
+
+// Almacena el dato crudo (JSONB)
+model RawData {
+  id                 String              @id @default(uuid())
+  source             RawDataSource
+  dataType           RawDataType
+  content            Json // El dato JSON crudo
+  processedAt        DateTime?
+  collectedAt        DateTime            @default(now())
+  
+  // Relación con los fragmentos de conocimiento generados
+  knowledgeFragments KnowledgeFragment[] 
+
+  @@schema("tech_survey")
+}
+
+// La unidad atómica de conocimiento vectorizado para RAG
+model KnowledgeFragment {
+  id                      String              @id @default(uuid())
+  // El texto limpio listo para ser inyectado en el Prompt del LLM
+  textSnippet             String 
+  // El vector denso (embedding) del texto, usando pgvector
+  embedding               Unsupported("vector")
+
+  // Almacena métricas estructuradas que viajan con el vector para la Búsqueda Híbrida
+  associatedKPIs          Json                @default("{}") 
+
+  // Referencia a la fuente cruda
+  sourceRawDataId         String
+  sourceRawData           RawData             @relation(fields: [sourceRawDataId], references: [id])
+
+  // Citaciones de la clasificación que usaron este fragmento como evidencia
+  citedBy                 ItemCitedFragment[]
+
+  createdAt               DateTime            @default(now())
+
+  @@schema("tech_survey")
+}
+
+// ----------------------------------------------------
+// RADAR CORE: Item, Historial y Citas
+// ----------------------------------------------------
+
+// El objeto de estudio del Radar
+model Item {
+  id                      String                @id @default(uuid())
+  title                   String
+  summary                 String
+
+  itemField               Field // El cuadrante del Radar
+
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+
+  // Campo de optimización de lectura para la vista actual del Radar
+  latestClassificationId  String?               @unique 
+  latestClassification    ItemClassification?   @relation("LatestClassification", fields: [latestClassificationId], references: [id])
+  
+  // Transparencia: Lista de fragmentos usados para la última clasificación
+  citedFragments          ItemCitedFragment[] 
+
+  // Historial completo de clasificaciones
+  analysisHistory         ItemClassification[] @relation("ItemAnalysisHistory") 
+
+  // Relaciones de usuario
+  lists                   UserItemList[]        @relation("ListItems")
+  reports                 Report[]              @relation("ReportItems")
+  insertedBy              User?                 @relation(fields: [insertedById], references: [id])
+  insertedById            String?
+  subscribedBy            UserSubscribedItem[]
+  hiddenBy                UserHiddenItem[]
+
+  @@schema("tech_survey")
+}
+
+// Representa una ejecución de clasificación (el Historial)
+model ItemClassification {
+  id                      String                @id @default(uuid())
+  analyzedAt              DateTime              @default(now())
+
+  itemId                  String
+  item                    Item                  @relation("ItemAnalysisHistory", fields: [itemId], references: [id])
+
+  radarRing               Classification 
+
+  // El insight textual (justificación) y las métricas de razonamiento del LLM
+  insightsValues          Json
+
+  // Relación inversa para el puntero rápido de 'latestClassification'
+  itemAsLatest            Item?                 @relation("LatestClassification")
+
+  @@schema("tech_survey")
+  @@map("ItemAnalysis")
+}
+
+// Tabla intermedia para citar qué KnowledgeFragment se usó para la última clasificación de un Item
+model ItemCitedFragment {
+  id                      String              @id @default(uuid())
+  
+  // Relación con el Item
+  itemId                  String
+  item                    Item                @relation(fields: [itemId], references: [id])
+  
+  // Relación con el Fragmento de Conocimiento
+  fragmentId              String
+  fragment                KnowledgeFragment   @relation(fields: [fragmentId], references: [id])
+
+  @@unique([itemId, fragmentId])
+  @@schema("tech_survey")
 }

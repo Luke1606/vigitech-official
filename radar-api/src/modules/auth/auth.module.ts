@@ -1,13 +1,13 @@
 import { Global, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ClerkAuthGuard } from './guards/clerk-auth.guard';
-import { UsersService } from './users/users.service';
 import { ClerkClientProvider } from './providers/clerk.provider';
+import { UsersModule } from '../user-data/users/users.module';
 
 @Global()
 @Module({
+    imports: [UsersModule],
     providers: [
-        UsersService,
         ClerkClientProvider,
         {
             provide: APP_GUARD,

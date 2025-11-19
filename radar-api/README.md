@@ -1,98 +1,107 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🚀 Radar-API: Vigilancia Tecnológica Asistida por IA
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Bienvenido al *backend* de **Radar-API**, un sistema robusto diseñado para la **Vigilancia Tecnológica** continua y la generación automatizada de un **Technology Radar**. Este proyecto combina la gestión de datos relacionales (PostgreSQL/Prisma) con capacidades de procesamiento de lenguaje natural de última generación (**RAG** y **CAG**) y búsqueda vectorial (**pgvector**).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 💡 Visión del Proyecto
 
-## Description
+El objetivo principal es transformar datos crudos provenientes de múltiples fuentes técnicas (GitHub, ArXiv, NPM, etc.) en **conocimiento estructurado** y clasificable. Esto se logra mediante un *pipeline* de procesamiento impulsado por IA que culmina en la clasificación automática de tecnologías según la metodología de un Technology Radar (Adopt, Test, Sustain, Hold).
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🛠️ Stack Tecnológico
 
-## Project setup
+| Componente | Tecnología | Propósito |
+| :--- | :--- | :--- |
+| **Backend** | NestJS (TypeScript) | Framework modular para la lógica de negocio y API REST. |
+| **Base de Datos** | PostgreSQL | Persistencia de datos relacionales y gestión de esquemas. |
+| **ORM/Migraciones** | Prisma | Cliente de base de datos y herramienta de migración robusta. |
+| **Búsqueda Vectorial** | `pgvector` | Habilitación de índices vectoriales para **RAG**. |
+| **Contenedores** | Docker & Docker Compose | Entorno de desarrollo aislado y reproducible. |
+| **Modelos de IA** | Agentes LLM (via Centralized Agent) | **RAG** (Retrieval Augmented Generation) y **CAG** (Cache Augmented Generation) para análisis complejo. |
 
-```bash
-$ npm install
-```
+## 🏗️ Arquitectura de Módulos (Flujo de Datos)
 
-## Compile and run the project
+La arquitectura sigue un flujo de datos lógico que garantiza que los ítems clasificados sean rastreables hasta su fuente original.
 
-```bash
-# development
-$ npm run start
+### 1\. **`Data-Hub` (Ingesta & Preparación) 📥**
 
-# watch mode
-$ npm run start:dev
+Encargado de la limpieza, estandarización y vectorización de datos.
 
-# production mode
-$ npm run start:prod
-```
+* **`Collection`:** Implementación de *fetchers* para la recolección de datos crudos (`RawData`) desde fuentes externas (GitHub, ArXiv, etc.).
+* **`Processing`:** Fase **crítica** donde, asistido por el **`Centralized-AI-Agent`**, el texto crudo es sometido a **Chunking Semántico** y **Extracción de KPIs**. El resultado se transforma en el modelo **`KnowledgeFragment`** con su respectivo *embedding* (`vector`).
+* **`Vectorizing`:** Generación de los *embeddings* (vectores numéricos) a partir de los *Knowledge Fragments*.
 
-## Run tests
+### 2\. **`Technology-Survey` (Análisis & Clasificación) 🧠**
 
-```bash
-# unit tests
-$ npm run test
+Utiliza el conocimiento vectorial para tomar decisiones de clasificación.
 
-# e2e tests
-$ npm run test:e2e
+* **`Items-Identifying`:** Usa la **búsqueda vectorial (RAG)** para agrupar *Knowledge Fragments* relacionados y consolidarlos en un **`Item`** tecnológico único.
+* **`Items-Classification`:** Asigna la clasificación del radar (`ADOPT`, `TEST`, etc.) utilizando la **generación aumentada por caché (CAG)** y los *insights* extraídos de los *fragments*.
 
-# test coverage
-$ npm run test:cov
-```
+### 3\. **`Centralized-AI-Agent` (Servicio Compartido) 🤖**
 
-## Deployment
+Módulo desacoplado que unifica el contacto con todos los proveedores de LLMs (OpenAI, Gemini, etc.). Todos los demás módulos inyectan y consumen este servicio para cualquier tarea de IA.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### 4\. **`User-Data` y `Auth` (Usuarios) 👤**
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Módulos para la gestión de usuarios, autenticación externa (Clerk), preferencias personalizadas y listas de ítems (esconder, suscribir, reportes).
+
+-----
+
+## ⚙️ Configuración del Entorno de Desarrollo
+
+El proyecto utiliza Docker Compose para simplificar la configuración de la base de datos, incluyendo la extensión `pgvector`.
+
+### Requisitos Previos
+
+1. **Node.js** (v18+)
+2. **Docker** & **Docker Compose**
+3. Configurar las variables de entorno (`.env` file)
+
+### Pasos de Inicio Rápido
+
+Ejecute este comando para levantar la base de datos (`radar-db`) y la interfaz de administración (PgAdmin):
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+docker-compose up -d radar-db pgadmin
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Una vez que los contenedores estén en marcha:
 
-## Resources
+### 1\. Ejecutar las Migraciones de Prisma
 
-Check out a few resources that may come in handy when working with NestJS:
+Debido a la naturaleza de la extensión `pgvector`, las migraciones se realizan en dos pasos:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+1. **Aplicar la migración de la extensión:**
 
-## Support
+    ```bash
+    npx prisma migrate deploy
+    ```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+    > **Nota:** Este comando ejecuta el SQL manual `CREATE EXTENSION IF NOT EXISTS vector;` y es crucial que se ejecute primero.
 
-## Stay in touch
+2. **Generar y aplicar la migración del esquema:**
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+    ```bash
+    npx prisma migrate dev
+    ```
 
-## License
+### 2\. Ejecutar la Aplicación NestJS
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+npm install
+npm run start:dev
+```
+
+La API estará disponible en `http://localhost:3000` (o el puerto configurado en el archivo `.env`).
+
+-----
+
+## ⚠️ Nota Importante sobre `pgvector`
+
+Si alguna vez encuentra un error sobre que el tipo `vector` no existe (`P3006`), esto se debe a que la **base de datos de sombra** de Prisma no pudo inicializarse.
+
+**Solución:** Asegúrese de que sus servicios de Docker utilicen la imagen `ankane/pgvector:latest` y que los *scripts* de inicialización en `docker-entrypoint-initdb.d/` se hayan ejecutado. Luego, limpie y reinicie Docker:
+
+```bash
+docker-compose down -v
+docker-compose up -d
+```

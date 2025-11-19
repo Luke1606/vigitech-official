@@ -1,6 +1,6 @@
 services:
   test-db:
-    image: "postgres:${POSTGRES_VERSION}"
+    image: ankane/pgvector:latest
     container_name: radar-test-db
     environment:
       POSTGRES_DB: radar-test-db
@@ -8,6 +8,8 @@ services:
       POSTGRES_PASSWORD: test-password
     ports:
       - "5433:5432"
+    volumes:
+      - ./docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
     networks:
       - test-network
 

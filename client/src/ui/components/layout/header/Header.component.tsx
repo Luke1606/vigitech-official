@@ -159,7 +159,7 @@ export const Header: React.FC = () => {
                                         ${currentPath === PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED &&
                                         styles.navigationMenuLinkFocused}
                                         }`}>
-                                    <NavLink to={PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED}>Recomedacioness</NavLink>
+                                    <NavLink to={PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED}>Recomedaciones</NavLink>
                                 </NavigationMenuLink>
                             </NavigationMenuItem>
 

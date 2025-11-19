@@ -4,8 +4,8 @@ import { Injectable, CanActivate, ExecutionContext, Logger, UnauthorizedExceptio
 import { Reflector } from '@nestjs/core';
 import { type ClerkClient, verifyToken } from '@clerk/backend';
 import { User } from '@prisma/client';
-import { UsersService } from '../users/users.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { UsersService } from '../../user-data/users/users.service';
 import { AuthenticatedRequest } from '../../../shared/types/authenticated-request.type';
 
 @Injectable()
