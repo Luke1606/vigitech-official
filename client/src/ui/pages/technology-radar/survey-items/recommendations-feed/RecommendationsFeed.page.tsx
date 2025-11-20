@@ -17,8 +17,8 @@ export const RecommendationsFeed: React.FC = () => {
         addPendingSubscribes,
     } = useSurveyItems();
 
-    const query = useSurveyItemsAPI()
-    const { isPending, isError, refetch } = query.recommended
+    //const query = useSurveyItemsAPI()
+    //const { isPending, isError, refetch } = query.recommended
     const [selectedItems, setSelectedItems] = useState<SurveyItem[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [itemsPerPage] = useState<number>(9);
@@ -90,27 +90,27 @@ export const RecommendationsFeed: React.FC = () => {
         setCurrentPage(pageNumber);
     };
 
-    if (isPending)
-        return (
-            <div className="flex items-center justify-center mt-12 p-2">
-                <p className="text-md text-muted-foreground flex gap-x-5">Cargando recomendaciones
-                    <Loader2 className='animate-spin' />
-                </p>
-            </div>
-        );
+    // if (isPending)
+    //     return (
+    //         <div className="flex items-center justify-center mt-12 p-2">
+    //             <p className="text-md text-muted-foreground flex gap-x-5">Cargando recomendaciones
+    //                 <Loader2 className='animate-spin' />
+    //             </p>
+    //         </div>
+    //     );
 
-    if (isError)
-        return (
-            <div className="flex items-center justify-center gap-x-5 mt-12">
-                <p className="text-md text-destructive font-semibold">Error al cargar las recomendaciones. Inténtelo de nuevo</p>
-                <Button
-                    className='bg-blue-600 hover:bg-blue-800 transition-colors duration-300'
-                    onClick={() => refetch()}
-                >
-                    <RotateCw />
-                </Button>
-            </div>
-        );
+    // if (isError)
+    //     return (
+    //         <div className="flex items-center justify-center gap-x-5 mt-12">
+    //             <p className="text-md text-destructive font-semibold">Error al cargar las recomendaciones. Inténtelo de nuevo</p>
+    //             <Button
+    //                 className='bg-blue-600 hover:bg-blue-800 transition-colors duration-300'
+    //                 onClick={() => refetch()}
+    //             >
+    //                 <RotateCw />
+    //             </Button>
+    //         </div>
+    //     );
 
     if (!recommended || recommended.length === 0) {
         return (

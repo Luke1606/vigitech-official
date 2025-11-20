@@ -9,7 +9,7 @@ export const TechnologyRadarHome: React.FC = () => {
     return (
         <main className="min-h-screen text-white">
             {/* Hero Section - Technology Radar */}
-            <section className="h-screen w-full bg-gradient-to-br from-indigo-800 via-purple-700 to-blue-700 px-4 sm:px-6 text-center relative overflow-hidden flex items-center justify-center">
+            <section className="h-screen w-full bg-linear-to-br from-indigo-800 via-purple-700 to-blue-700 px-4 sm:px-6 text-center relative overflow-hidden flex items-center justify-center">
                 <img
                     src="/vigitech_home_radar.jpg"
                     alt="Radar globe"
@@ -20,15 +20,15 @@ export const TechnologyRadarHome: React.FC = () => {
                         Navega el panorama de las tecnologías emergentes.
                     </h1>
                     <p className="text-base sm:text-lg md:text-xl text-white/80 mb-8">
-                        El Radar Tecnológico te brinda acceso dinámico a las tendencias globales en evolución. 
-                        Descubre innovaciones, evalúa su nivel de madurez y visualiza 
+                        El Radar Tecnológico te brinda acceso dinámico a las tendencias globales en evolución.
+                        Descubre innovaciones, evalúa su nivel de madurez y visualiza
                         cómo la tecnología está moldeando el futuro en todos los sectores.
                     </p>
                     <button
                         onClick={() =>
                             document.getElementById("info")?.scrollIntoView({ behavior: "smooth" })
                         }
-                        className="bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-8 py-3 rounded-xl shadow-xl hover:scale-105 hover:shadow-violet-950 hover:shadow-xl transition duration-300 ring-2 ring-white/20">
+                        className="bg-linear-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-8 py-3 rounded-xl shadow-xl hover:scale-105 hover:shadow-violet-950 hover:shadow-xl transition duration-300 ring-2 ring-white/20">
                         ¡¡ Exploremos cómo funciona el Radar !!
                     </button>
                 </div>
@@ -79,8 +79,8 @@ export const TechnologyRadarHome: React.FC = () => {
                     ].map(({ title, imgSrc, description, animation }, index) => (
                         <div key={index} className="flex flex-col items-center max-w-[360px] justify-center" data-aos={animation} data-aos-duration="1000">
                             <h3 className="text-2xl font-semibold text-center mb-20">
-                                <span className="inline-block bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white px-3 py-1 rounded-md mr-3 shadow-md">
-                                    1
+                                <span className="inline-block bg-linear-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white px-3 py-1 rounded-md mr-3 shadow-md">
+                                    {index + 1}
                                 </span>
                                 {title}
                             </h3>
@@ -90,7 +90,7 @@ export const TechnologyRadarHome: React.FC = () => {
                                     <div className="flip-card-front">
                                         <img
                                             alt="Illustration"
-                                            className="rounded-[1em] absolute w-full h-full top-0 mb-[1rem]"
+                                            className="rounded-[1em] absolute w-full h-full top-0 mb-4"
                                             src={imgSrc}
                                         />
                                     </div>

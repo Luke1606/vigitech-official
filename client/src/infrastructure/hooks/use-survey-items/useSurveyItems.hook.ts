@@ -1,6 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
 import {
-	type SurveyItemsState,
 	type SurveyItem,
 	addToSelectedItems,
 	removeFromSelectedItems,

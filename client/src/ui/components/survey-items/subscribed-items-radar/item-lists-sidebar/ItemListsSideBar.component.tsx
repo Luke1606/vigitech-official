@@ -6,7 +6,6 @@ import {
     getQuadrantLightColor,
     getRingColor,
     getRingLightColor,
-    useUserItemLists,
     type UserItemList
 } from '../../../../../infrastructure';
 import {
@@ -33,7 +32,7 @@ import { CustomItemsList } from './custom-item-list';
 import { UUID } from 'crypto';
 import blips from '../../../../../assets/data/radarMock';
 import { useUserItemListsAPI } from '../../../../../infrastructure/hooks/use-item-lists/api/useUserItemListsAPI.hook';
-
+import { useUserItemLists } from '../../../../../infrastructure';
 export const ItemListsSideBar: React.FC<{
     visible: boolean
     toggleVisible: () => void
@@ -41,16 +40,16 @@ export const ItemListsSideBar: React.FC<{
     visible,
     toggleVisible
 }) => {
-        // const {
-        //     lists,
-        //     createList,
-        //     updateList,
-        //     removeList,
-        //     appendAllItems,
-        //     removeAllItems,
-        // } = useUserItemLists();
+        const {
+            lists,
+            createList,
+            updateList,
+            removeList,
+            appendAllItems,
+            removeAllItems,
+        } = useUserItemLists();
         const query = useUserItemListsAPI();
-        const { data: lists } = query.findAll
+        //const { data: lists } = query.findAll
 
         const [newListName, setNewListName] = useState('');
         const [open, setOpen] = useState(false);
@@ -161,9 +160,10 @@ export const ItemListsSideBar: React.FC<{
                                 name='crearLista'
                                 onClick={() => {
                                     if (newListName.trim()) {
-                                        query.createList(
-                                            newListName.trim(),
-                                        );
+                                        // query.createList(
+                                        //     newListName.trim(),
+                                        // );
+                                        createList(newListName)
                                         setNewListName('');
                                         setOpen(false);
                                     }
@@ -195,7 +195,8 @@ export const ItemListsSideBar: React.FC<{
                             name='renombrarLista'
                             onClick={() => {
                                 if (newListName.trim()) {
-                                    query.updateList({ listId: renameTarget, listNewName: newListName.trim() });
+                                    //query.updateList({ listId: renameTarget, listNewName: newListName.trim() });
+                                    updateList(renameTarget, newListName)
                                     setRenameTarget(null);
                                     setNewListName('');
                                 }
@@ -233,7 +234,8 @@ export const ItemListsSideBar: React.FC<{
                             name='eliminarLista'
                             variant="destructive"
                             onClick={() => {
-                                query.deleteList(deleteTarget);
+                                //query.deleteList(deleteTarget);
+                                removeList(deleteTarget)
                                 setDeleteTarget(null);
                             }}
                         >
@@ -334,7 +336,7 @@ export const ItemListsSideBar: React.FC<{
                                         selectedItems.includes(item.id)
                                 )
 
-                                //appendAllItems(addTarget.id, updatedItems);
+                                appendAllItems(addTarget.id, updatedItems);
                                 setSelectedItems([]);
                                 setAddTarget(null);
                                 setElements(getAvailableItemsForTarget(addTarget));
@@ -367,10 +369,10 @@ export const ItemListsSideBar: React.FC<{
                             name='eliminarElemento'
                             variant="destructive"
                             onClick={() => {
-                                // removeAllItems(
-                                //     removeElementTarget.listId,
-                                //     removeElementTarget.itemIds
-                                // );
+                                removeAllItems(
+                                    removeElementTarget.listId,
+                                    removeElementTarget.itemIds
+                                );
                                 setRemoveElementTarget(null);
                             }}>
                             Remover
@@ -405,11 +407,11 @@ export const ItemListsSideBar: React.FC<{
                                     {createButton}
 
                                     {
-                                        query.findAll.isPending ?
-                                            <div className='flex justify-center'>
-                                                <Loader2 className='animate-spin ' />
-                                            </div>
-                                            :
+                                        // query.findAll.isPending ?
+                                        //     <div className='flex justify-center'>
+                                        //         <Loader2 className='animate-spin ' />
+                                        //     </div>
+                                        //     :
                                             listElements
                                     }
 

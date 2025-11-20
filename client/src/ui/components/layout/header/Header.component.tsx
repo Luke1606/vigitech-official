@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useLocation, NavLink } from 'react-router-dom';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 import {
@@ -13,13 +13,12 @@ import { PathOption } from '../../../../infrastructure';
 import { NotificationCenter } from '../../notification-center';
 import styles from './Header.styles';
 import { ServiceCard, type ServiceCardProps } from './service-card';
+import { SettingsModal } from '../../config-button';
 
 export const Header: React.FC = () => {
     const location = useLocation();
     const currentPath: PathOption = location.pathname as PathOption;
-
     const separator = <div className={styles.separator}></div>
-
     const servicesInfo: {
         to: PathOption,
         service: ServiceCardProps
@@ -184,30 +183,30 @@ export const Header: React.FC = () => {
                             </NavigationMenuItem>
                         </>
                     )}
-
-                    <NavigationMenuItem>
-                        <NavigationMenuLink
-                            asChild
-                            className={styles.navigationMenuLink}
-                        >
-                            <SignedOut>
+                    <SignedOut>
+                        <NavigationMenuItem >
+                            <NavigationMenuLink
+                                asChild
+                                className={`${styles.navigationMenuLink} 'important bg-blue-400 shadow-md shadow-blue-800 font-bold'`}
+                            >
                                 <SignInButton />
-                            </SignedOut>
-                        </NavigationMenuLink>
-                    </NavigationMenuItem>
+                            </NavigationMenuLink>
+                        </NavigationMenuItem>
+                    </SignedOut>
 
-                    <NavigationMenuItem>
-                        <NavigationMenuLink
-                            asChild
-                            className={styles.navigationMenuLink}
-                        >
-                            <SignedIn>
+                    <SignedIn>
+                        <NavigationMenuItem>
+                            <NavigationMenuLink
+                                asChild
+                                className={styles.navigationMenuLink}
+                            >
                                 <UserButton />
-                            </SignedIn>
-                        </NavigationMenuLink>
-                    </NavigationMenuItem>
+                            </NavigationMenuLink>
+                        </NavigationMenuItem>
+                    </SignedIn>
                 </NavigationMenuList>
             </NavigationMenu>
+            <SettingsModal />
         </header >
     )
 }

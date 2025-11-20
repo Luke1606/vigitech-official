@@ -6,10 +6,12 @@ import { userItemListsKey } from '../constants';
 export const findAllQueryOptions = () => queryOptions({
     queryKey: [userItemListsKey],
     queryFn: () => userItemListRepository.findAll(),
+    refetchOnWindowFocus: false
 })
 
 export const findOneQueryOptions = (listId: UUID) => queryOptions({
     queryKey: [userItemListsKey, listId],
     queryFn: () => userItemListRepository.findOne(listId),
     enabled: !!listId,
+    refetchOnWindowFocus: false
 })

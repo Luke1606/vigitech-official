@@ -36,7 +36,7 @@ export const useRemoveOneItemMutationOptions = () => {
             if (context?.previousList) {
                 queryClient.setQueryData([userItemListsKey, listId], context.previousList);
             }
-            toast.error("Error al remover el elemento de la lista. Compruebe su conexión o inténtelo de nuevo.")
+            //toast.error("Error al remover el elemento de la lista. Compruebe su conexión o inténtelo de nuevo.")
         },
 
         onSuccess: (_, { listId }) => {

@@ -5,8 +5,8 @@ import {
     changelogReducer,
     surveyItemsReducer
 } from "./reducers";
-import storage from 'redux-persist/lib/storage';
 import persistReducer from "redux-persist/es/persistReducer";
+import storage from 'redux-persist/lib/storage';
 import { persistStore } from "redux-persist";
 import {
     FLUSH,
@@ -27,15 +27,17 @@ const userItemListsPersistConfig = {
     storage
 }
 
-const changeLogPersistConfig = {
-    key: 'changeLog',
-    storage
-}
+// ELIMINA esta configuración de persistencia para changeLog
+// const changeLogPersistConfig = {
+//     key: 'changeLog',
+//     storage
+// }
 
 const rootReducer = combineReducers({
     surveyItems: persistReducer(surveyItemsPersistConfig, surveyItemsReducer),
     userItemLists: persistReducer(userItemListsPersistConfig, userItemListsReducer),
-    changeLog: persistReducer(changeLogPersistConfig, changelogReducer)
+    // Usa el reducer directamente sin persistReducer para changeLog
+    changeLog: changelogReducer
 });
 
 export const store = configureStore({

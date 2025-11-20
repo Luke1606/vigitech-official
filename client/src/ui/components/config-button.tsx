@@ -9,26 +9,28 @@ import {
     DialogTrigger,
 } from ".";
 import { Label } from ".";
-import { Input } from ".";
 import { Switch } from ".";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".";
+import { AnalysisFrequency } from "../../infrastructure";
 
 export function SettingsModal() {
     const [open, setOpen] = useState(false);
 
     // Estados para los campos de configuración
-    const [username, setUsername] = useState("");
     const [notifications, setNotifications] = useState(true);
     const [theme, setTheme] = useState("oscuro");
-    const [language, setLanguage] = useState("español");
-    const [fontSize, setFontSize] = useState(14);
+    const [analysisFreq, setAnalysisFreq] = useState("10 minutos");
     const [autoSave, setAutoSave] = useState(true);
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={setOpen} >
             <DialogTrigger asChild>
-                <Button variant="outline" size="icon" className="absolute top-18 bg-blue-500 text-white hover:bg-blue-700">
-                    <Settings className="h-4 w-4" />
+                <Button size="icon" className="bg-blue-800 shadow-blue-950 shadow-sm border-none">
+                    <Settings className={`
+                        min-h-6 min-w-6 
+                        transition-transform duration-300 ease-in-out
+                        ${open ? 'rotate-90' : '-rotate-90'}
+                    `} />
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
@@ -36,65 +38,41 @@ export function SettingsModal() {
                     <DialogTitle>Configuración de la Aplicación</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
-                    {/* Campo de nombre de usuario */}
-                    <div className="grid gap-2">
-                        <Label htmlFor="username">Nombre de usuario</Label>
-                        <Input
-                            id="username"
-                            type="text"
-                            placeholder="Ingresa tu nombre"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                        />
-                    </div>
 
-                    {/* Campo de tema */}
-                    <div className="grid gap-2">
-                        <Label htmlFor="theme">Tema de la aplicación</Label>
-                        <Select value={theme} onValueChange={setTheme}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="claro">Claro</SelectItem>
-                                <SelectItem value="oscuro">Oscuro</SelectItem>
-                                <SelectItem value="auto">Automático</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <div className="flex justify-around">
+                        {/* Campo de tema */}
+                        <div className="grid gap-2">
+                            <Label htmlFor="theme">Frecuencia de análisis</Label>
+                            <Select value={analysisFreq} onValueChange={setAnalysisFreq}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="10 minutos">{AnalysisFrequency.EVERY_10_MINUTES}</SelectItem>
+                                    <SelectItem value="30 minutos">{AnalysisFrequency.EVERY_30_MINUTES}</SelectItem>
+                                    <SelectItem value="1 hora">{AnalysisFrequency.HOURLY}</SelectItem>
+                                    <SelectItem value="6 horas">{AnalysisFrequency.EVERY_6_HOURS}</SelectItem>
+                                    <SelectItem value="Diario">{AnalysisFrequency.DAILY}</SelectItem>
+                                    <SelectItem value="2 días">{AnalysisFrequency.EVERY_TWO_DAYS}</SelectItem>
+                                    <SelectItem value="4 días">{AnalysisFrequency.EVERY_FOUR_DAYS}</SelectItem>
+                                    <SelectItem value="Semanal">{AnalysisFrequency.WEEKLY}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                    {/* Campo de idioma */}
-                    <div className="grid gap-2">
-                        <Label htmlFor="language">Idioma</Label>
-                        <Select value={language} onValueChange={setLanguage}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="español">Español</SelectItem>
-                                <SelectItem value="inglés">Inglés</SelectItem>
-                                <SelectItem value="francés">Francés</SelectItem>
-                                <SelectItem value="alemán">Alemán</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Campo de tamaño de fuente */}
-                    <div className="grid gap-2">
-                        <Label htmlFor="fontSize">
-                            Tamaño de fuente: {fontSize}px
-                        </Label>
-                        <Input
-                            id="fontSize"
-                            type="range"
-                            min="10"
-                            max="24"
-                            value={fontSize}
-                            onChange={(e) => setFontSize(Number(e.target.value))}
-                        />
-                        <div className="flex justify-between text-xs text-gray-500">
-                            <span>10px</span>
-                            <span>24px</span>
+                        {/* Campo de tema */}
+                        <div className="grid gap-2">
+                            <Label htmlFor="theme">Tema de la aplicación</Label>
+                            <Select value={theme} onValueChange={setTheme}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="claro">Claro</SelectItem>
+                                    <SelectItem value="oscuro">Oscuro</SelectItem>
+                                    <SelectItem value="auto">Automático</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
@@ -128,17 +106,8 @@ export function SettingsModal() {
                             />
                         </div>
                     </div>
-
-                    {/* Información adicional */}
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                        <h4 className="font-semibold text-sm mb-2">Información de la aplicación</h4>
-                        <div className="text-xs text-gray-600 space-y-1">
-                            <p>Versión: 1.0.0</p>
-                            <p>Última actualización: 15 Nov 2024</p>
-                        </div>
-                    </div>
                 </div>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }
