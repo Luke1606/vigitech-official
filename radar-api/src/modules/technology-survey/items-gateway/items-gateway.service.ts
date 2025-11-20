@@ -1,11 +1,11 @@
 import type { UUID } from 'crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 
-import { ItemAnalysis, SurveyItem, UserSubscribedItem, UserHiddenItem, RadarRing } from '@prisma/client';
+import { UserSubscribedItem, Item } from '@prisma/client';
 
 import { ClassifiedItemType } from './types/classified-item.type';
 import { CreateSurveyItemType } from './types/create-item.type';
-import { PrismaService } from '../../../common/services/prisma.service';
+import { PrismaService } from '@/common/services/prisma.service';
 
 @Injectable()
 export class ItemsGatewayService {
@@ -13,66 +13,37 @@ export class ItemsGatewayService {
 
     constructor(private readonly prisma: PrismaService) {}
 
-    async findAllRecommended(userId: UUID): Promise<ClassifiedItemType[]> {
+    async findAllRecommended(userId: UUID): Promise<Item[]> {
         this.logger.log('Executed findAllRecommended');
 
-        const subscribedItems = await this.prisma.userSubscribedItem.findMany({
-            where: { userId },
-            select: { itemId: true },
-        });
-
-        const hiddenItems = await this.prisma.userHiddenItem.findMany({
-            where: { userId },
-            select: { itemId: true },
-        });
-
-        const excludedItemIds: UUID[] = [
-            ...subscribedItems.map((item: UserSubscribedItem) => item.id as UUID),
-            ...hiddenItems.map((item: UserHiddenItem) => item.id as UUID),
-        ];
-
-        const items: SurveyItem[] = await this.prisma.surveyItem.findMany({
+        return this.prisma.item.findMany({
             where: {
-                id: {
-                    notIn: excludedItemIds,
+                subscribedBy: {
+                    none: { userId },
+                },
+                hiddenBy: {
+                    none: { userId },
                 },
             },
         });
-
-        const classifiedItems: ClassifiedItemType[] = [];
-
-        return classifiedItems;
     }
 
-    async findAllSubscribed(userId: UUID): Promise<ClassifiedItemType[]> {
+    async findAllSubscribed(userId: string): Promise<Item[]> {
         this.logger.log('Executed findAllSubscribed');
 
-        const userSubscribedItems = await this.prisma.userSubscribedItem.findMany({
-            where: { userId },
-            include: { item: true },
+        return this.prisma.item.findMany({
+            where: {
+                subscribedBy: {
+                    some: { userId },
+                },
+            },
         });
-
-        const itemsWithAnalysis: ClassifiedItemType[] = [];
-
-        for (let index = 0; index < userSubscribedItems.length; index++) {
-            const userSubscribedItem = userSubscribedItems[index];
-
-            const lastAnalysis: ItemAnalysis = await this.itemAnalysisService.findLastAnalysisFromItem(
-                userSubscribedItem.itemId as UUID,
-            );
-
-            itemsWithAnalysis.push({
-                item: userSubscribedItem.item,
-                lastAnalysis,
-            });
-        }
-        return itemsWithAnalysis;
     }
 
-    async findOne(id: UUID, userId: UUID): Promise<ClassifiedItemType> {
+    async findOne(id: UUID, userId: UUID): Promise<Item> {
         this.logger.log(`Executed findOne of ${id}`);
 
-        const item: SurveyItem = await this.prisma.surveyItem.findUniqueOrThrow({
+        const item: Item = await this.prisma.item.findUniqueOrThrow({
             where: { id },
         });
 
@@ -87,25 +58,20 @@ export class ItemsGatewayService {
         });
 
         if (isHidden) {
-            throw new Error(`El item de id ${id} no está disponible`);
+            throw new ForbiddenException(`El item de id ${id} no está disponible para este usuario`);
         }
 
-        const lastAnalysis: ItemAnalysis = await this.itemAnalysisService.findLastAnalysisFromItem(item.id as UUID);
-
-        if (!item) throw new Error(`No existe el item de id ${id}`);
-
-        return {
-            item,
-            lastAnalysis,
-        };
+        return item;
     }
 
-    async create(data: CreateSurveyItemType, insertedById: UUID): Promise<SurveyItem> {
+    async create(data: CreateSurveyItemType, insertedById: UUID): Promise<Item> {
         this.logger.log('Executed create');
 
-        const item: SurveyItem = await this.prisma.surveyItem.create({
+        const classifiedItem: ClassifiedItemType = await this.classifyItem(data);
+
+        const item: Item = await this.prisma.item.create({
             data: {
-                ...data,
+                ...classifiedItem,
                 insertedById,
             },
         });
@@ -117,20 +83,17 @@ export class ItemsGatewayService {
 
     async subscribeOne(id: UUID, userId: UUID): Promise<UserSubscribedItem> {
         this.logger.log(`Executed subscribe of ${id}`);
-        await this.findOne(id, userId);
+
+        await this.prisma.item.findUniqueOrThrow({ where: { id } });
 
         await this.prisma.userHiddenItem.deleteMany({
-            where: {
-                userId,
-                itemId: id,
-            },
+            where: { userId, itemId: id },
         });
 
-        return await this.prisma.userSubscribedItem.create({
-            data: {
-                userId,
-                itemId: id,
-            },
+        return this.prisma.userSubscribedItem.upsert({
+            where: { userId_itemId: { userId, itemId: id } },
+            create: { userId, itemId: id },
+            update: {},
         });
     }
 
@@ -145,85 +108,77 @@ export class ItemsGatewayService {
         });
     }
 
-    async removeOne(id: UUID, userId: UUID): Promise<UserHiddenItem> {
+    async removeOne(id: UUID, userId: UUID): Promise<void> {
         this.logger.log(`Executed remove of ${id}`);
 
-        await this.prisma.userSubscribedItem.deleteMany({
-            where: {
-                userId,
-                itemId: id,
-            },
+        const item = await this.prisma.item.findUniqueOrThrow({
+            where: { id },
+            select: { insertedById: true },
         });
 
-        return await this.prisma.userHiddenItem.create({
-            data: {
-                userId,
-                itemId: id,
-            },
-        });
+        if ((item.insertedById as UUID) === userId) {
+            this.logger.log(`Item ${id} created by user. Deleting permanently.`);
+
+            await this.prisma.item.delete({
+                where: { id },
+            });
+        } else {
+            this.logger.log(`Item ${id} is a recommendation. Hiding.`);
+
+            await this.prisma.userSubscribedItem.deleteMany({
+                where: {
+                    itemId: id,
+                    userId,
+                },
+            });
+
+            await this.prisma.userHiddenItem.create({
+                data: { itemId: id, userId },
+            });
+        }
     }
 
-    async createBatch(data: CreateSurveyItemType[], userId: UUID): Promise<void> {
-        this.logger.log(`Executed subscribe of ${ids.length} items`);
+    async createBatch(data: CreateSurveyItemType[], userId?: UUID): Promise<void> {
+        const mode = userId ? 'MANUAL (User)' : 'AUTOMATIC (System)';
+        this.logger.log(`Executed createBatch [${mode}] of ${data.length} items`);
 
-        await this.prisma.surveyItem.createMany({
-            data: data.map((itemData) => ({
-                ...itemData,
-                insertedById: userId,
+        const classifiedItems: ClassifiedItemType[] = await this.classifyBatch(data);
+
+        const createdItems: Item[] = await this.prisma.item.createManyAndReturn({
+            data: classifiedItems.map((item) => ({
+                ...item,
+                insertedById: userId ? (userId as string) : undefined,
             })),
             skipDuplicates: true,
         });
 
-        await Promise.all(
-            ids.map((itemId) =>
-                this.prisma.userSubscribedItem.upsert({
-                    where: {
-                        userId_itemId: {
-                            userId,
-                            itemId,
-                        },
-                    },
-                    create: {
-                        userId,
-                        itemId,
-                    },
-                    update: {},
-                }),
-            ),
-        );
+        if (createdItems.length > 0 && userId) {
+            this.logger.log(`Auto-subscribing user ${userId} to ${createdItems.length} items`);
+
+            await this.prisma.userSubscribedItem.createMany({
+                data: createdItems.map((item: Item) => ({
+                    userId: userId as string,
+                    itemId: item.id,
+                })),
+                skipDuplicates: true,
+            });
+        }
     }
 
     async subscribeBatch(ids: UUID[], userId: UUID): Promise<void> {
         this.logger.log(`Executed subscribe of ${ids.length} items`);
 
-        await this.prisma.userHiddenItem.deleteMany({
-            where: {
+        await this.prisma.userSubscribedItem.createMany({
+            data: ids.map((itemId) => ({
                 userId,
-                itemId: { in: ids },
-            },
+                itemId,
+            })),
+            skipDuplicates: true,
         });
-
-        await Promise.all(
-            ids.map((itemId) =>
-                this.prisma.userSubscribedItem.upsert({
-                    where: {
-                        userId_itemId: {
-                            userId,
-                            itemId,
-                        },
-                    },
-                    create: {
-                        userId,
-                        itemId,
-                    },
-                    update: {},
-                }),
-            ),
-        );
     }
 
     async unsubscribeBatch(ids: UUID[], userId: UUID): Promise<void> {
-        this.logger.log(`Executed unsubscribe of ${ids.length} items`);
+        this.logger.log(`Executed unsubscribeBatch of ${ids.length} items`);
 
         await this.prisma.userSubscribedItem.deleteMany({
             where: {
@@ -236,143 +191,54 @@ export class ItemsGatewayService {
     async removeBatch(ids: UUID[], userId: UUID): Promise<void> {
         this.logger.log(`Executed remove of ${ids.length} items`);
 
-        await this.prisma.userSubscribedItem.deleteMany({
-            where: {
-                userId,
-                itemId: { in: ids },
-            },
+        const itemsToCheck = await this.prisma.item.findMany({
+            where: { id: { in: ids } },
+            select: { id: true, insertedById: true },
         });
 
-        await Promise.all(
-            ids.map((itemId) =>
-                this.prisma.userHiddenItem.upsert({
-                    where: {
-                        userId_itemId: {
-                            userId,
-                            itemId,
-                        },
-                    },
-                    create: {
-                        userId,
-                        itemId,
-                    },
-                    update: {},
-                }),
-            ),
-        );
-    }
+        const idsToDelete: string[] = [];
+        const idsToHide: string[] = [];
 
-    // ejecutar periodicamente segun la config
-    private async renewItemRecommendations(userId: UUID): Promise<void> {
-        this.logger.log('Executed renewItems');
-
-        // Obtener items suscritos del usuario
-        const userSubscribedItems = await this.prisma.userSubscribedItem.findMany({
-            where: { userId },
-            include: { item: true },
-        });
-
-        const subscribedItems: CreateSurveyItemType[] = userSubscribedItems.map((userSubscribedItem) => {
-            const { title, summary, radarQuadrant } = userSubscribedItem.item;
-            return {
-                title,
-                summary,
-                radarQuadrant,
-            } as CreateSurveyItemType;
-        });
-
-        // obtener nuevos
-        const trendingItems: CreateSurveyItemType[] = await this.externalDataUsageService.getNewTrendings();
-
-        const stillRelevant: CreateSurveyItemType[] = [];
-        const newTrendings: CreateSurveyItemType[] = [];
-
-        trendingItems.forEach((trendingItem: CreateSurveyItemType) => {
-            if (
-                subscribedItems.some(
-                    (subItem) =>
-                        subItem.title === trendingItem.title && subItem.radarQuadrant === trendingItem.radarQuadrant,
-                )
-            ) {
-                stillRelevant.push(trendingItem);
+        for (const item of itemsToCheck) {
+            if (item.insertedById === userId) {
+                idsToDelete.push(item.id);
             } else {
-                newTrendings.push(trendingItem);
+                idsToHide.push(item.id);
             }
-        });
+        }
 
-        const notRelevantAnymore: CreateSurveyItemType[] = subscribedItems.filter(
-            (subItem) =>
-                !stillRelevant.some(
-                    (relItem) => relItem.title === subItem.title && relItem.radarQuadrant === subItem.radarQuadrant,
-                ),
-        );
-
-        // Crear nuevos items
-        const createdNewTrendings: SurveyItem[] = await Promise.all(
-            newTrendings.map((trendingItem) =>
-                this.prisma.surveyItem.create({
-                    data: {
-                        title: trendingItem.title,
-                        summary: trendingItem.summary,
-                        radarQuadrant: trendingItem.radarQuadrant,
-                        radarRing: RadarRing.UNKNOWN,
-                    },
-                }),
-            ),
-        );
-
-        // insertar el primer analisis de cada uno
-        await this.itemAnalysisService.createAndGetAnalysisesFromSurveyItems(createdNewTrendings);
-
-        // Eliminar suscripciones de items no relevantes
-        const notRelevantItemIds = userSubscribedItems
-            .filter((userSubItem) =>
-                notRelevantAnymore.some(
-                    (nrItem) =>
-                        nrItem.title === userSubItem.item.title &&
-                        nrItem.radarQuadrant === userSubItem.item.radarQuadrant,
-                ),
-            )
-            .map((userSubItem) => userSubItem.itemId);
-
-        if (notRelevantItemIds.length > 0) {
-            await this.prisma.userSubscribedItem.deleteMany({
-                where: {
-                    userId,
-                    itemId: { in: notRelevantItemIds },
-                },
+        if (idsToDelete.length > 0) {
+            this.logger.log(`Deleting ${idsToDelete.length} user-owned items`);
+            await this.prisma.item.deleteMany({
+                where: { id: { in: idsToDelete } },
             });
         }
 
-        this.logger.log(`Removed ${notRelevantAnymore.length} items that are no longer relevant`);
-    }
+        if (idsToHide.length > 0) {
+            this.logger.log(`Hiding ${idsToHide.length} recommended items`);
 
-    // ejecutar periodicamente segun la config
-    private async renewItemAnalysises(userId: UUID) {
-        const userSubscribedItems = await this.prisma.userSubscribedItem.findMany({
-            where: { userId },
-            include: { item: true },
-        });
-
-        const items: SurveyItem[] = userSubscribedItems.map((usi) => usi.item);
-
-        const newAnalysises: ItemAnalysis[] =
-            await this.itemAnalysisService.createAndGetAnalysisesFromSurveyItems(items);
-
-        const changes: number = 0;
-        this.logger.log(`Analysises renewed. It has ${changes} changes in ${newAnalysises.length} items`);
-    }
-
-    async findAllInsideIntervalFromObjective(itemId: UUID, startDate: Date, endDate: Date) {
-        return await this.prisma.itemAnalysis.findMany({
-            where: {
-                itemId,
-                createdAt: {
-                    gte: startDate,
-                    lte: endDate,
+            await this.prisma.userSubscribedItem.deleteMany({
+                where: {
+                    userId: userId,
+                    itemId: { in: idsToHide },
                 },
-            },
-            orderBy: { createdAt: 'asc' },
-        });
+            });
+
+            await this.prisma.userHiddenItem.createMany({
+                data: idsToHide.map((itemId) => ({
+                    userId: userId,
+                    itemId,
+                })),
+                skipDuplicates: true,
+            });
+        }
+    }
+
+    private async classifyItem(item: CreateSurveyItemType): Promise<ClassifiedItemType> {
+        return Promise.resolve(item as ClassifiedItemType);
+    }
+
+    private async classifyBatch(items: CreateSurveyItemType[]): Promise<ClassifiedItemType[]> {
+        return Promise.resolve(items as ClassifiedItemType[]);
     }
 }

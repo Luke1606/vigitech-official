@@ -90,7 +90,7 @@ model UserSubscribedItem {
   userId    String
   user      User       @relation(fields: [userId], references: [id])
   itemId    String
-  item      Item       @relation(fields: [itemId], references: [id])
+  item      Item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   createdAt DateTime   @default(now())
 
@@ -103,7 +103,7 @@ model UserHiddenItem {
   userId    String
   user      User       @relation(fields: [userId], references: [id])
   itemId    String
-  item      Item       @relation(fields: [itemId], references: [id])
+  item      Item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   createdAt DateTime   @default(now())
 
@@ -288,7 +288,7 @@ model ItemClassification {
   analyzedAt              DateTime              @default(now())
 
   itemId                  String
-  item                    Item                  @relation("ItemAnalysisHistory", fields: [itemId], references: [id])
+  item                    Item                  @relation("ItemAnalysisHistory", fields: [itemId], references: [id], onDelete: Cascade)
 
   radarRing               Classification 
 
@@ -308,7 +308,7 @@ model ItemCitedFragment {
   
   // Relación con el Item
   itemId                  String
-  item                    Item                @relation(fields: [itemId], references: [id])
+  item                    Item                @relation(fields: [itemId], references: [id], onDelete: Cascade)
   
   // Relación con el Fragmento de Conocimiento
   fragmentId              String

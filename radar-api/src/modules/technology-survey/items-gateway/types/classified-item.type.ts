@@ -7,6 +7,6 @@ export type ClassifiedItemType = {
     id: UUID;
     title: string;
     summary: string;
-    field: Field;
+    itemField: Field;
     classification: Classification;
 };

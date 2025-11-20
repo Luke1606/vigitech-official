@@ -1,48 +1,44 @@
 import type { UUID } from 'crypto';
-import { Get, Body, Patch, Param, Logger, Delete, Controller, ParseUUIDPipe, Req } from '@nestjs/common';
-import { UserSubscribedItem, UserHiddenItem, SurveyItem } from '@prisma/client';
+import { Get, Body, Patch, Param, Logger, Delete, Controller, ParseUUIDPipe, Req, Post } from '@nestjs/common';
+import { UserSubscribedItem, Item } from '@prisma/client';
+import type { AuthenticatedRequest } from '@/shared/types/authenticated-request.type';
 import { ItemsGatewayService } from './items-gateway.service';
-import type { AuthenticatedRequest } from '../../../shared/types/authenticated-request.type';
 import { CreateItemDto } from './dto/create-item.dto';
-import { ClassifiedItemType } from './types/classified-item.type';
 
 @Controller('survey-items')
 export class ItemsGatewayController {
     private readonly logger: Logger = new Logger('SurveyItemsController');
 
-    constructor(private readonly surveyItemsService: ItemsGatewayService) {
+    constructor(private readonly itemsService: ItemsGatewayService) {
         this.logger.log('Initialized');
     }
 
     @Get('recommended')
-    async findAllRecommendations(@Req() request: AuthenticatedRequest): Promise<ClassifiedItemType[]> {
+    async findAllRecommendations(@Req() request: AuthenticatedRequest): Promise<Item[]> {
         this.logger.log('Executed findAllRecommendations');
         const userId: UUID = request.userId as UUID;
-        return await this.surveyItemsService.findAllRecommended(userId);
+        return await this.itemsService.findAllRecommended(userId);
     }
 
     @Get('subscribed')
-    async findAllSubscribed(@Req() request: AuthenticatedRequest): Promise<ClassifiedItemType[]> {
+    async findAllSubscribed(@Req() request: AuthenticatedRequest): Promise<Item[]> {
         this.logger.log('Executed findAllSubscribed');
         const userId: UUID = request.userId as UUID;
-        return await this.surveyItemsService.findAllSubscribed(userId);
+        return await this.itemsService.findAllSubscribed(userId);
     }
 
     @Get(':id')
-    async findOne(
-        @Param('id', new ParseUUIDPipe()) id: UUID,
-        @Req() request: AuthenticatedRequest,
-    ): Promise<ClassifiedItemType> {
+    async findOne(@Param('id', new ParseUUIDPipe()) id: UUID, @Req() request: AuthenticatedRequest): Promise<Item> {
         this.logger.log('Executed findOne');
         const userId: UUID = request.userId as UUID;
-        return await this.surveyItemsService.findOne(id, userId);
+        return await this.itemsService.findOne(id, userId);
     }
 
-    @Patch('create')
-    async create(@Body() data: CreateItemDto, @Req() request: AuthenticatedRequest): Promise<SurveyItem> {
+    @Post('create')
+    async create(@Body() data: CreateItemDto, @Req() request: AuthenticatedRequest): Promise<Item> {
         this.logger.log('Executed create');
         const userId: UUID = request.userId as UUID;
-        return await this.surveyItemsService.create(data, userId);
+        return await this.itemsService.create(data, userId);
     }
 
     @Patch('subscribe/:id')
@@ -52,51 +48,48 @@ export class ItemsGatewayController {
     ): Promise<UserSubscribedItem> {
         this.logger.log('Executed subscribe');
         const userId: UUID = request.userId as UUID;
-        return await this.surveyItemsService.subscribeOne(id, userId);
+        return await this.itemsService.subscribeOne(id, userId);
     }
 
     @Patch('unsubscribe/:id')
     async unsubscribe(@Param('id', new ParseUUIDPipe()) id: UUID, @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed unsubscribe');
         const userId: UUID = request.userId as UUID;
-        return await this.surveyItemsService.unsubscribeOne(id, userId);
+        return await this.itemsService.unsubscribeOne(id, userId);
     }
 
     @Delete(':id')
-    async remove(
-        @Param('id', new ParseUUIDPipe()) id: UUID,
-        @Req() request: AuthenticatedRequest,
-    ): Promise<UserHiddenItem> {
+    async remove(@Param('id', new ParseUUIDPipe()) id: UUID, @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed remove');
         const userId: UUID = request.userId as UUID;
-        return await this.surveyItemsService.removeOne(id, userId);
+        return await this.itemsService.removeOne(id, userId);
     }
 
     @Patch('create/batch')
     async createBatch(@Body() data: CreateItemDto[], @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed create');
         const userId: UUID = request.userId as UUID;
-        return await this.surveyItemsService.createBatch(data, userId);
+        return await this.itemsService.createBatch(data, userId);
     }
 
     @Patch('subscribe/batch')
     async subscribeBatch(@Body() itemIds: UUID[], @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed subscribeBatch');
         const userId: UUID = request.userId as UUID;
-        return await this.surveyItemsService.subscribeBatch(itemIds, userId);
+        return await this.itemsService.subscribeBatch(itemIds, userId);
     }
 
     @Patch('unsubscribe/batch')
     async unsubscribeBatch(@Body() itemIds: UUID[], @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed unsubscribeBatch');
         const userId: UUID = request.userId as UUID;
-        return await this.surveyItemsService.unsubscribeBatch(itemIds, userId);
+        return await this.itemsService.unsubscribeBatch(itemIds, userId);
     }
 
     @Delete('batch')
     async removeBatch(@Body() itemIds: UUID[], @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed removeBatch');
         const userId: UUID = request.userId as UUID;
-        return await this.surveyItemsService.removeBatch(itemIds, userId);
+        return await this.itemsService.removeBatch(itemIds, userId);
     }
 }
