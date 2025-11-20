@@ -184,12 +184,12 @@ export const Header: React.FC = () => {
                         </>
                     )}
                     <SignedOut>
-                        <NavigationMenuItem >
+                        <NavigationMenuItem>
                             <NavigationMenuLink
                                 asChild
                                 className={`${styles.navigationMenuLink} 'important bg-blue-400 shadow-md shadow-blue-800 font-bold'`}
                             >
-                                <SignInButton />
+                                <SignInButton>Autenticarse</SignInButton>
                             </NavigationMenuLink>
                         </NavigationMenuItem>
                     </SignedOut>
