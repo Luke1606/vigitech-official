@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CentralizedAiAgentService } from '../../centralized-ai-agent/centralized-ai-agent.service';
+import { AiAgentsService } from '../../ai-agents/ai-agents.service';
 import { PrismaService } from '../../../common/services/prisma.service';
 import { Field } from '@prisma/client';
 
@@ -8,7 +8,7 @@ export class ItemsIdentifyingService {
     private readonly logger = new Logger(ItemsIdentifyingService.name);
 
     constructor(
-        private readonly aiAgentService: CentralizedAiAgentService,
+        private readonly aiAgentService: AiAgentsService,
         private readonly prisma: PrismaService,
     ) {}
 

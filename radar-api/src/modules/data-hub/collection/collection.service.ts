@@ -1,5 +1,5 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, RawData } from '@prisma/client';
 import { BaseFetcher } from './base.fetcher';
 import { FETCHERS_ARRAY_TOKEN } from './constants';
 import { PrismaService } from '../../../common/services/prisma.service';
@@ -17,7 +17,7 @@ export class CollectionService {
         this.logger.log(`CollectionService initialized with ${this.fetchers.length} fetcher strategies.`);
     }
 
-    public async collectAllDataAndSave(): Promise<void> {
+    public async collectAllDataAndSave(): Promise<RawData[]> {
         this.logger.log('--- Starting massive data collection across all fetchers ---');
 
         const allRawDataToInsert: Prisma.RawDataCreateManyInput[] = [];
@@ -55,17 +55,21 @@ export class CollectionService {
         if (allRawDataToInsert.length > 0) {
             this.logger.log(`Consolidated a total of ${allRawDataToInsert.length} raw data records.`);
             try {
-                const result = await this.prisma.rawData.createMany({
+                const result = await this.prisma.rawData.createManyAndReturn({
                     data: allRawDataToInsert,
                     skipDuplicates: true,
                 });
-                this.logger.log(`Successfully saved ${result.count} raw data records using createMany. 🎉`);
+
+                this.logger.log(`Successfully saved ${result.length} raw data records using createMany. 🎉`);
+
+                return result;
             } catch (error) {
                 this.logger.error('FATAL: Error during Prisma createMany operation.', error);
                 throw error;
             }
         } else {
             this.logger.log('No raw data collected to save.');
+            return [];
         }
     }
 }

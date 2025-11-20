@@ -1,9 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { PrismaService } from '@/common/services/prisma.service';
 import { CollectionService } from '../collection/collection.service';
 import { ProcessingService } from '../processing/processing.service';
-import { RawDataSource } from '@prisma/client';
-import { PrismaService } from '../../../common/services/prisma.service';
 
 @Injectable()
 export class OrchestrationService {
@@ -15,29 +14,25 @@ export class OrchestrationService {
         private readonly prisma: PrismaService,
     ) {}
 
-    @Cron(CronExpression.EVERY_HOUR) // Example: Run every hour
+    @Cron(CronExpression.EVERY_HOUR)
     async handleDataCollectionCron() {
         this.logger.log('Starting scheduled data collection...');
-        // Example: Collect data from GitHub for a specific query
-        await this.collectionService.collectData(RawDataSource.GITHUB, 'nestjs');
+
+        await this.collectionService.collectAllDataAndSave();
+
         this.logger.log('Data collection finished.');
     }
 
-    @Cron(CronExpression.EVERY_30_SECONDS) // Example: Run every 30 seconds for unprocessed data
+    @Cron(CronExpression.EVERY_30_SECONDS)
     async handleDataProcessingCron() {
         this.logger.log('Starting scheduled data processing...');
-        const unprocessedRawData = await (this.prisma as any).tech_survey.rawData.findMany({
+        const unprocessedRawData = await this.prisma.rawData.findMany({
             where: {
                 processedAt: null,
             },
-            select: {
-                id: true,
-            },
         });
 
-        for (const rawDataItem of unprocessedRawData) {
-            await this.processingService.processRawData(rawDataItem.id);
-        }
+        await this.processingService.processRawData(unprocessedRawData);
         this.logger.log('Data processing finished.');
     }
 }

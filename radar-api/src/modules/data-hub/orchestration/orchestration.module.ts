@@ -7,6 +7,5 @@ import { ProcessingModule } from '../processing/processing.module';
 @Module({
     imports: [ScheduleModule.forRoot(), CollectionModule, ProcessingModule],
     providers: [OrchestrationService],
-    exports: [OrchestrationService],
 })
 export class OrchestrationModule {}
