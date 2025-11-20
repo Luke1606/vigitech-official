@@ -3,7 +3,7 @@ import { KnowledgeFragment } from '@prisma/client';
 import { DataGatewayService } from './data-gateway.service';
 import { SearchQueryDto } from './dto/query.dto';
 
-@Controller('data-gateway')
+@Controller('datahub-gateway')
 export class DataGatewayController {
     private readonly logger = new Logger(DataGatewayController.name);
 

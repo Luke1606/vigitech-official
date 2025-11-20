@@ -1,10 +1,9 @@
 import { UUID } from 'crypto';
 import { Injectable, Logger } from '@nestjs/common';
-
+import { UserPreferences } from '@prisma/client';
+import { PrismaService } from '@/common/services/prisma.service';
 import { CreateDefaultUserPreferenceDto } from './dto/create-default-user-preference.dto';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
-import { UserPreferences } from '@prisma/client';
-import { PrismaService } from '../../../common/services/prisma.service';
 
 @Injectable()
 export class UserPreferencesService {
