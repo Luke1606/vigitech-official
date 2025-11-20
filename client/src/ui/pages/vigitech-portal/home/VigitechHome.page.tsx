@@ -12,7 +12,7 @@ export const PortalHome: React.FC = () => {
 
   return (
     <main className="min-h-screen bg-blue-600 text-white overflow-x-hidden">
-      <section className="h-screen w-full bg-gradient-to-br from-indigo-800 via-purple-700 to-blue-700 text-white px-6 text-center relative overflow-hidden flex items-center justify-center">
+      <section className="min-h-screen min-w-full bg-linear-to-br from-indigo-800 via-purple-700 to-blue-700 text-white text-center relative overflow-hidden flex items-center justify-center">
         <img
           src="/vigitech_home_welcome.jpg"
           alt="Futuristic world"
@@ -30,7 +30,7 @@ export const PortalHome: React.FC = () => {
             onClick={() =>
               document.getElementById("services")?.scrollIntoView({ behavior: "smooth" })
             }
-            className="bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-8 py-3 rounded-xl shadow-xl hover:scale-105 hover:shadow-violet-950 hover:shadow-xl transition duration-300 ring-2 ring-white/20">
+            className="bg-linear-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-8 py-3 rounded-xl shadow-xl hover:scale-105 hover:shadow-violet-950 hover:shadow-xl transition duration-300 ring-2 ring-white/20">
             ¡¡ Comienza a explorar !!
           </button>
         </div>
@@ -57,13 +57,13 @@ export const PortalHome: React.FC = () => {
               Nuestro radar ofrece una visualización dinámica de innovaciones en diversos sectores,
               ayudándote a mantenerte a la vanguardia en estrategia y adopción.
             </p>
-            <NavLink to={PathOption.TECHNOLOGY_RADAR_PORTAL} className="bg-gradient-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xl transition duration-300">
+            <NavLink to={PathOption.TECHNOLOGY_RADAR_PORTAL} className="bg-linear-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xl transition duration-300">
               Accede al Radar
             </NavLink>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-12 mb-24 items-center md:flex-row-reverse">
+        <div className="grid md:grid-cols-2 gap-12 mb-24 items-center md:flex-row-reverse ">
           <img
             src="/vigitech_home_browser.jpg"
             alt="Technology Browser"
@@ -83,7 +83,7 @@ export const PortalHome: React.FC = () => {
               Ya sea que estés investigando o realizando análisis comparativos,
               nuestro navegador te ofrece datos seleccionados al alcance de tu mano.
             </p>
-            <button className="bg-gradient-to-br from-indigo-500 via-purple-600 to-sky-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xxl transition duration-300">
+            <button className="bg-linear-to-br from-indigo-500 via-purple-600 to-sky-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xxl transition duration-300">
               Busca Tecnologías
             </button>
           </div>

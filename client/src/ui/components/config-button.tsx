@@ -23,7 +23,7 @@ export function SettingsModal() {
     const [autoSave, setAutoSave] = useState(true);
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={setOpen} >
             <DialogTrigger asChild>
                 <Button size="icon" className="bg-blue-800 shadow-blue-950 shadow-sm border-none">
                     <Settings className={`
