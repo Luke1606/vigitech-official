@@ -124,7 +124,7 @@ export const Header: React.FC = () => {
                                         ${currentPath === PathOption.VIGITECH_PORTAL_ABOUT &&
                                         styles.navigationMenuLinkFocused}
                                         }`}>
-                                    <NavLink to={PathOption.VIGITECH_PORTAL_ABOUT}>ABOUT</NavLink>
+                                    <NavLink to={PathOption.VIGITECH_PORTAL_ABOUT}>ACERCA DE</NavLink>
                                 </NavigationMenuLink>
                             </NavigationMenuItem>
                         </>
