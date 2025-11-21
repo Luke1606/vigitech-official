@@ -1,3 +1,9 @@
+/**
+ * Módulo para la recolección de datos de diversas fuentes externas.
+ * Organiza e inyecta múltiples implementaciones de `BaseFetcher`
+ * para consolidar la recolección de datos brutos.
+ * @module CollectionModule
+ */
 import { HttpModule } from '@nestjs/axios';
 import { Logger, Module } from '@nestjs/common';
 import { CollectionService } from './collection.service';

@@ -1,9 +1,9 @@
 import type { UUID } from 'crypto';
 import {
     PrismaClient,
-    RadarQuadrant,
-    RadarRing,
-    SurveyItem,
+    Field,
+    Classification,
+    Item,
     UserItemList,
     UserSubscribedItem,
     UserHiddenItem,
@@ -29,11 +29,11 @@ export const mockSurveyItem = {
     id: MOCK_ITEM_ID,
     title: 'Item de Prueba Global',
     summary: 'Resumen',
-    radarQuadrant: RadarQuadrant.BUSSINESS_INTEL,
-    radarRing: RadarRing.ADOPT,
+    itemField: Field.BUSSINESS_INTEL,
+    latestClassificationId: Classification.ADOPT,
     createdAt: new Date(),
     updatedAt: new Date(),
-} as SurveyItem;
+} as Item;
 
 export const mockUserItemList = {
     id: MOCK_LIST_ID,

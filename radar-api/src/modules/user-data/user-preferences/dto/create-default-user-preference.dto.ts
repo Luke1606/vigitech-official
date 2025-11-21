@@ -5,10 +5,23 @@ import { NotificationChannelOption } from '../../../../common/enums/notification
 import { FrequencyValue, LanguageValue, ThemeValue } from '../enum/user-preferences-options';
 import { Frequency, NotificationChannel, Theme, Language } from '@prisma/client';
 
+/**
+ * DTO para la creación de preferencias de usuario predeterminadas.
+ * Define la estructura para establecer las preferencias iniciales de un usuario,
+ * incluyendo la frecuencia de análisis, la frecuencia de actualización de recomendaciones,
+ * el tema, el idioma y el canal de notificación por defecto.
+ */
 export class CreateDefaultUserPreferenceDto {
+    /**
+     * La referencia al ID del usuario al que pertenecen estas preferencias.
+     */
     @ApiProperty({ description: 'Referencia al usuario' })
     userId!: UUID;
 
+    /**
+     * Frecuencia con la que se realizará el análisis de los ítems que el usuario sigue.
+     * Por defecto es SEMANAL.
+     */
     @ApiProperty({
         description: 'Frecuencia en la que realizar el analisis de los items a los que el usuario sigue',
     })
@@ -16,6 +29,10 @@ export class CreateDefaultUserPreferenceDto {
     @IsEnum(Frequency)
     analysisFrequency?: Frequency = Frequency.WEEKLY;
 
+    /**
+     * Frecuencia con la que se renovarán las recomendaciones de ítems para el usuario.
+     * Por defecto es SEMANAL.
+     */
     @ApiProperty({
         description: 'Frecuencia en la que renovar las recomendaciones de items para el usuario',
     })
@@ -24,6 +41,10 @@ export class CreateDefaultUserPreferenceDto {
     })
     recommendationsUpdateFrequency?: Frequency = Frequency.WEEKLY;
 
+    /**
+     * Tema preferido por el usuario para la interfaz.
+     * Es opcional y por defecto es SYSTEM.
+     */
     @ApiProperty({ description: 'Tema preferido por el usuario' })
     @IsString()
     @IsOptional()
@@ -32,6 +53,10 @@ export class CreateDefaultUserPreferenceDto {
     })
     theme?: Theme = Theme.SYSTEM;
 
+    /**
+     * Idioma preferido por el usuario para la aplicación.
+     * Es opcional y por defecto es ES (Español).
+     */
     @ApiProperty({ description: 'Idioma preferido por el usuario' })
     @IsString()
     @IsOptional()
@@ -40,6 +65,10 @@ export class CreateDefaultUserPreferenceDto {
     })
     language?: Language = Language.ES;
 
+    /**
+     * Canal de notificaciones predeterminado preferido por el usuario.
+     * Es opcional y por defecto es PUSH.
+     */
     @ApiProperty({
         description: 'Canal de notificaciones predeterminado preferido por el usuario',
     })

@@ -1,3 +1,8 @@
+/**
+ * Módulo para la orquestación y programación de tareas relacionadas con el Hub de Datos.
+ * Gestiona la ejecución programada de la recolección y procesamiento de datos.
+ * @module OrchestrationModule
+ */
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { OrchestrationService } from './orchestration.service';

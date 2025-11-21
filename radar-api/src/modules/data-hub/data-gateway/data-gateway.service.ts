@@ -1,3 +1,8 @@
+/**
+ * Servicio para el acceso y búsqueda de `KnowledgeFragment`s.
+ * Soporta búsquedas por identidad (texto), búsquedas semánticas (embeddings) y búsquedas híbridas.
+ * @class DataGatewayService
+ */
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/common/services/prisma.service';
 import { AiAgentsService } from '../../ai-agents/ai-agents.service';
@@ -8,6 +13,10 @@ import { KnowledgeFragment, Prisma, RawDataSource, RawDataType } from '@prisma/c
 export class DataGatewayService {
     private readonly logger = new Logger(DataGatewayService.name);
 
+    /**
+     * @param prisma Servicio Prisma para interactuar con la base de datos.
+     * @param aiAgentService Servicio de agentes de IA para generar embeddings.
+     */
     constructor(
         private readonly prisma: PrismaService,
         private readonly aiAgentService: AiAgentsService,
@@ -15,6 +24,12 @@ export class DataGatewayService {
         this.logger.log('Initialized');
     }
 
+    /**
+     * Realiza una búsqueda de `KnowledgeFragment`s basada en varios criterios.
+     * Puede realizar búsquedas por identidad (texto), semánticas (vectores) o una combinación de ambas.
+     * @param queryDto Objeto DTO con los parámetros de búsqueda.
+     * @returns Una promesa que resuelve con un array de `KnowledgeFragment`s que coinciden con la consulta.
+     */
     async search(queryDto: SearchQueryDto): Promise<KnowledgeFragment[]> {
         const { query, sources, dataTypes, limit, offset, k } = queryDto;
 
@@ -29,12 +44,12 @@ export class DataGatewayService {
 
         if (query) {
             if (k && k > 0) {
-                // Semantic Search
+                // Búsqueda Semántica: Utiliza embeddings para encontrar fragmentos relacionados semánticamente.
                 this.logger.log(`Performing semantic search for query: "${query}"`);
                 const embeddings = await this.aiAgentService.generateEmbeddings([query]);
                 const queryEmbedding = embeddings[0];
 
-                // Perform vector search using raw SQL
+                // Realiza la búsqueda vectorial utilizando una consulta SQL raw (debido al tipo `Unsupported("vector")` de Prisma)
                 const rawResults = await this.prisma.$queryRaw<KnowledgeFragment[]>(
                     Prisma.sql`
                         SELECT
@@ -52,7 +67,7 @@ export class DataGatewayService {
                 );
                 knowledgeFragments = rawResults;
             } else {
-                // Identity Search (text-based)
+                // Búsqueda por Identidad (basada en texto): Busca fragmentos que contengan el texto de la consulta.
                 this.logger.log(`Performing identity search for query: "${query}"`);
                 knowledgeFragments = await this.prisma.knowledgeFragment.findMany({
                     where: {
@@ -67,7 +82,7 @@ export class DataGatewayService {
                 });
             }
         } else {
-            // No query, just filters and pagination
+            // Sin consulta de texto, solo filtrado y paginación.
             this.logger.log('Performing filtered search without a text query.');
             knowledgeFragments = await this.prisma.knowledgeFragment.findMany({
                 where: whereClause,
@@ -79,6 +94,12 @@ export class DataGatewayService {
         return knowledgeFragments;
     }
 
+    /**
+     * Construye la cláusula WHERE para la consulta SQL raw, filtrando por fuentes y tipos de datos de `RawData`.
+     * @param sources (Opcional) Array de `RawDataSource` para filtrar.
+     * @param dataTypes (Opcional) Array de `RawDataType` para filtrar.
+     * @returns Un objeto `Prisma.Sql` que representa la cláusula WHERE.
+     */
     private buildRawDataWhereClause(sources?: RawDataSource[], dataTypes?: RawDataType[]): Prisma.Sql {
         const conditions: Prisma.Sql[] = [];
 

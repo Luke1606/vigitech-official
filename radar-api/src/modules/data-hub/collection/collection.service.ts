@@ -1,14 +1,23 @@
+/**
+ * Servicio encargado de orquestar la recolección masiva de datos de múltiples fuentes
+ * y su almacenamiento en la base de datos como `RawData`.
+ * @class CollectionService
+ */
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Prisma, RawData } from '@prisma/client';
-import { BaseFetcher } from './base.fetcher';
+import { PrismaService } from '@/common/services/prisma.service';
 import { FETCHERS_ARRAY_TOKEN } from './constants';
-import { PrismaService } from '../../../common/services/prisma.service';
+import { BaseFetcher } from './base.fetcher';
 
 @Injectable()
 export class CollectionService {
     private readonly logger = new Logger(CollectionService.name);
     private readonly fetchers: BaseFetcher[];
 
+    /**
+     * @param injectedFetchers Array de implementaciones de `BaseFetcher` inyectadas.
+     * @param prisma Servicio Prisma para interactuar con la base de datos.
+     */
     constructor(
         @Inject(FETCHERS_ARRAY_TOKEN) injectedFetchers: BaseFetcher[],
         private readonly prisma: PrismaService,
@@ -17,6 +26,12 @@ export class CollectionService {
         this.logger.log(`CollectionService initialized with ${this.fetchers.length} fetcher strategies.`);
     }
 
+    /**
+     * Recopila datos de todas las fuentes configuradas y los guarda masivamente en la base de datos.
+     * Los datos se almacenan como `RawData`.
+     * @returns Una promesa que resuelve con un array de los `RawData` insertados.
+     * @throws {Error} Si ocurre un error fatal durante la inserción masiva en Prisma.
+     */
     public async collectAllDataAndSave(): Promise<RawData[]> {
         this.logger.log('--- Starting massive data collection across all fetchers ---');
 
@@ -51,7 +66,6 @@ export class CollectionService {
 
         await Promise.all(fetchPromises);
 
-        // 3. Inserción Masiva
         if (allRawDataToInsert.length > 0) {
             this.logger.log(`Consolidated a total of ${allRawDataToInsert.length} raw data records.`);
             try {
