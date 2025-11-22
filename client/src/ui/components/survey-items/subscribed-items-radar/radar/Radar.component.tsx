@@ -7,7 +7,6 @@ import {
     generateBlipPositions,
     ringBounds,
     quadrantLabels,
-    isTextOverlapping,
     useSurveyItems
 } from '../../../../../infrastructure';
 import { RadarMenu } from './radar-menu/RadarMenu.component';
@@ -72,7 +71,6 @@ export const Radar: React.FC<{
         }, [entries, visibleQuadrants]);
 
         const blipPositions = React.useMemo(() => generateBlipPositions(filteredEntries), [filteredEntries]);
-        const labelPositions: { x: number; y: number }[] = [];
 
         // Función para alternar la visibilidad de un cuadrante
         const toggleQuadrantVisibility = (quadrant: RadarQuadrant) => {
@@ -98,6 +96,36 @@ export const Radar: React.FC<{
             } else {
                 // Si no está seleccionado, seleccionar
                 setSelectedBlipId(blip.id);
+            }
+        };
+
+        // NUEVO MANEJADOR: Para seleccionar blip en el semicírculo y abrir menú
+        const handleMobileBlipClick = (blip: Blip, position: { x: number; y: number }, event: React.MouseEvent) => {
+            event.stopPropagation();
+
+            // Seleccionar el blip (activar animación de pulso)
+            setSelectedBlipId(blip.id);
+
+            // Obtener la posición real del blip en la pantalla
+            const svgElement = event.currentTarget.closest('svg');
+            const svgRect = svgElement?.getBoundingClientRect();
+
+            if (svgRect && position) {
+                const scaleX = svgRect.width / 400;
+                const scaleY = svgRect.height / 200;
+
+                const screenX = svgRect.left + (position.x * scaleX);
+                const screenY = svgRect.top + (position.y * scaleY);
+
+                handleBlipClick(blip, {
+                    x: screenX,
+                    y: screenY
+                });
+            } else {
+                handleBlipClick(blip, {
+                    x: event.clientX,
+                    y: event.clientY
+                });
             }
         };
 
@@ -284,7 +312,7 @@ export const Radar: React.FC<{
                                                 className="w-full h-full"
                                                 preserveAspectRatio="xMidYMid meet"
                                             >
-                                                {/* Fondo del semicírculo */}
+                                                {/* 1. Fondo del semicírculo */}
                                                 <path
                                                     d="M 50,180 
                                                Q 200,30 350,180 
@@ -295,7 +323,7 @@ export const Radar: React.FC<{
                                                     strokeWidth="1"
                                                 />
 
-                                                {/* Anillos del semicírculo */}
+                                                {/* 2. Anillos del semicírculo */}
                                                 {[
                                                     { min: 0, max: 80, ring: RadarRing.ADOPT },
                                                     { min: 80, max: 120, ring: RadarRing.TEST },
@@ -326,10 +354,25 @@ export const Radar: React.FC<{
                                                     );
                                                 })}
 
-                                                {/* Líneas divisorias del semicírculo */}
+                                                {/* 3. Líneas divisorias del semicírculo */}
                                                 <line x1="50" y1="180" x2="350" y2="180" stroke="#999" strokeWidth="1" />
                                                 <line x1="200" y1="180" x2="200" y2="30" stroke="#999" strokeDasharray="4 2" />
 
+                                                {/* 4. Etiquetas de anillos en el semicírculo - RENDERIZAR ANTES DE LOS BLIPS */}
+                                                <text x="200" y="135" fontSize="10" fill={getRingColor(RadarRing.ADOPT)} textAnchor="middle" fontWeight="bold">
+                                                    ADOPTAR
+                                                </text>
+                                                <text x="200" y="90" fontSize="10" fill={getRingColor(RadarRing.TEST)} textAnchor="middle" fontWeight="bold">
+                                                    PROBAR
+                                                </text>
+                                                <text x="200" y="45" fontSize="10" fill={getRingColor(RadarRing.SUSTAIN)} textAnchor="middle" fontWeight="bold">
+                                                    EVALUAR
+                                                </text>
+                                                <text x="200" y="0" fontSize="10" fill={getRingColor(RadarRing.HOLD)} textAnchor="middle" fontWeight="bold">
+                                                    DETENER
+                                                </text>
+
+                                                {/* 5. Blips en el semicírculo móvil - RENDERIZAR AL FINAL PARA QUE ESTÉN ENCIMA */}
                                                 {quadrantBlips.map((blip) => {
                                                     const position = mobileBlipPositions[blip.id];
 
@@ -354,18 +397,22 @@ export const Radar: React.FC<{
                                                                 setHoveredBlipId(null);
                                                             }}
                                                             onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                const rect = e.currentTarget.getBoundingClientRect();
-                                                                handleBlipClick(blip, {
-                                                                    x: rect.left + rect.width / 2,
-                                                                    y: rect.top + rect.height / 2
-                                                                });
+                                                                // USAR EL NUEVO MANEJADOR QUE ACTIVA LA ANIMACIÓN Y ABRE EL MENÚ
+                                                                handleMobileBlipClick(blip, position, e);
                                                             }}
                                                             style={{
                                                                 cursor: 'pointer',
                                                             }}
                                                         >
-                                                            {/* Círculo principal con transición suave - POSICIÓN FIJA */}
+                                                            {/* Círculo invisible más grande para mejor área de clic */}
+                                                            <circle
+                                                                cx={0}
+                                                                cy={0}
+                                                                r={20}
+                                                                fill="transparent"
+                                                            />
+
+                                                            {/* Círculo principal con transición suave */}
                                                             <circle
                                                                 cx={0}
                                                                 cy={0}
@@ -388,44 +435,14 @@ export const Radar: React.FC<{
                                                                     fill="none"
                                                                     stroke={getRingColor(blip.radarRing)}
                                                                     strokeWidth={6}
-                                                                    className='pulseCircle'
+                                                                    className="pulseCircle"
                                                                 />
                                                             )}
 
-                                                            {/* MOSTRAR NOMBRE SOLO EN HOVER, NO EN SELECCIÓN */}
-                                                            {isActive && !isSelected && (
-                                                                <text
-                                                                    x={8}
-                                                                    y={-8}
-                                                                    fontSize={10}
-                                                                    fill="#000"
-                                                                    fontWeight="bold"
-                                                                    textAnchor="middle"
-                                                                    style={{
-                                                                        transition: 'opacity 0.3s ease',
-                                                                        opacity: isActive ? 1 : 0
-                                                                    }}
-                                                                >
-                                                                    {blip.title}
-                                                                </text>
-                                                            )}
+                                                            {/* ELIMINAR EL TEXTO DEL NOMBRE - SOLO MOSTRAR ANIMACIÓN DE PULSO */}
                                                         </g>
                                                     );
                                                 })}
-
-                                                {/* Etiquetas de anillos en el semicírculo */}
-                                                <text x="200" y="135" fontSize="10" fill={getRingColor(RadarRing.ADOPT)} textAnchor="middle" fontWeight="bold">
-                                                    ADOPTAR
-                                                </text>
-                                                <text x="200" y="90" fontSize="10" fill={getRingColor(RadarRing.TEST)} textAnchor="middle" fontWeight="bold">
-                                                    PROBAR
-                                                </text>
-                                                <text x="200" y="45" fontSize="10" fill={getRingColor(RadarRing.SUSTAIN)} textAnchor="middle" fontWeight="bold">
-                                                    EVALUAR
-                                                </text>
-                                                <text x="200" y="0" fontSize="10" fill={getRingColor(RadarRing.HOLD)} textAnchor="middle" fontWeight="bold">
-                                                    DETENER
-                                                </text>
                                             </svg>
                                         </div>
                                     )}
@@ -481,55 +498,39 @@ export const Radar: React.FC<{
                         })}
                     </div>
 
-                    {/* Menú contextual para móvil */}
+                    {/* Menú contextual para móvil - USANDO DIALOG DE SHADCN */}
                     {menuOpen && selectedBlip && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50">
-                            <div
-                                className="bg-white rounded-t-2xl w-full max-w-md p-4 animate-slide-up"
-                                style={{
-                                    position: 'fixed',
-                                    bottom: 0,
-                                    left: '50%',
-                                    transform: 'translateX(-50%)',
-                                    maxHeight: '80vh',
-                                    overflowY: 'auto'
-                                }}
-                            >
-                                <RadarMenu
-                                    item={selectedBlip as unknown as SurveyItem}
-                                    position={{ x: 0, y: 0 }}
-                                    onViewDetails={handleViewDetails}
-                                    onUnsubscribe={handleUnsubscribe}
-                                    onRemove={handleRemove}
-                                    onSelect={handleSelect}
-                                    onUnselect={handleUnselect}
-                                    isSelected={false}
-                                />
-                                <button
-                                    onClick={() => setMenuOpen(false)}
-                                    className="w-full mt-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                                >
-                                    Cerrar
-                                </button>
-                            </div>
-                        </div>
+                        <RadarMenu
+                            item={selectedBlip as unknown as SurveyItem}
+                            position={menuPosition}
+                            onViewDetails={handleViewDetails}
+                            onUnsubscribe={handleUnsubscribe}
+                            onRemove={handleRemove}
+                            onSelect={handleSelect}
+                            onUnselect={handleUnselect}
+                            isSelected={false}
+                        />
                     )}
 
                     {/* Estilos CSS para la animación de pulso */}
                     <style>{`
                         @keyframes pulse {
                             0% {
-                                transform: scale(1);
-                                opacity: 0.6;
+                                r: 14;
+                                stroke-opacity: 0.6;
                             }
                             50% {
-                                transform: scale(1.1);
-                                opacity: 0.3;
+                                r: 18;
+                                stroke-opacity: 0.3;
                             }
                             100% {
-                                transform: scale(1);
-                                opacity: 0.6;
+                                r: 14;
+                                stroke-opacity: 0.6;
                             }
+                        }
+                        .pulseCircle {
+                            animation: pulse 2s infinite;
+                            transform-origin: center center;
                         }
                     `}</style>
                 </div>
@@ -773,7 +774,7 @@ export const Radar: React.FC<{
                                         fill="none"
                                         stroke={getRingColor(blip.radarRing)}
                                         strokeWidth={10}
-                                        className='pulseCircle'
+                                        className="pulseCircle"
                                     />
                                 )}
                             </g>
@@ -794,8 +795,6 @@ export const Radar: React.FC<{
                         isSelected={false}
                     />
                 )}
-
-
             </div>
-        )
+        );
     };
