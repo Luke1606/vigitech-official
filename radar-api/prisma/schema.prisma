@@ -69,18 +69,18 @@ enum Frequency {
 }
 
 model UserPreferences {
-  id                           String              @id @default(uuid())
-  theme                        Theme               @default(SYSTEM)
-  language                     Language            @default(ES)
-  defaultNotificationChannel   NotificationChannel @default(IN_APP)
-  analysisFrequency            Frequency           @default(EVERY_6_HOURS)
-  recommendationsUpdateFrequency Frequency           @default(DAILY)
+  id                           String                 @id @default(uuid())
+  theme                           Theme               @default(SYSTEM)
+  language                        Language            @default(ES)
+  defaultNotificationChannel      NotificationChannel @default(IN_APP)
+  reClasificationFrequency        Frequency           @default(EVERY_6_HOURS)
+  recommendationsUpdateFrequency  Frequency           @default(DAILY)
 
-  createdAt                    DateTime            @default(now())
-  updatedAt                    DateTime            @updatedAt
+  createdAt                       DateTime            @default(now())
+  updatedAt                       DateTime            @updatedAt
 
-  userId                       String              @unique
-  user                         User?               @relation(fields: [userId], references: [id])
+  userId                          String              @unique
+  user                            User?               @relation(fields: [userId], references: [id])
 
   @@schema("user_data")
 }
@@ -269,7 +269,7 @@ model Item {
   citedFragments          ItemCitedFragment[] 
 
   // Historial completo de clasificaciones
-  analysisHistory         ItemClassification[] @relation("ItemAnalysisHistory") 
+  classificationHistory  ItemClassification[]  @relation("ItemClassificationHistory") 
 
   // Relaciones de usuario
   lists                   UserItemList[]        @relation("ListItems")
@@ -288,9 +288,9 @@ model ItemClassification {
   analyzedAt              DateTime              @default(now())
 
   itemId                  String
-  item                    Item                  @relation("ItemAnalysisHistory", fields: [itemId], references: [id], onDelete: Cascade)
+  item                    Item                  @relation("ItemClassificationHistory", fields: [itemId], references: [id], onDelete: Cascade)
 
-  radarRing               Classification 
+  classification               Classification 
 
   // El insight textual (justificación) y las métricas de razonamiento del LLM
   insightsValues          Json
@@ -299,7 +299,6 @@ model ItemClassification {
   itemAsLatest            Item?                 @relation("LatestClassification")
 
   @@schema("tech_survey")
-  @@map("ItemAnalysis")
 }
 
 // Tabla intermedia para citar qué KnowledgeFragment se usó para la última clasificación de un Item

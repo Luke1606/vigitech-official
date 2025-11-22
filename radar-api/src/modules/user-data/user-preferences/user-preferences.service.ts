@@ -2,6 +2,7 @@ import { UUID } from 'crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { UserPreferences } from '@prisma/client';
 import { PrismaService } from '@/common/services/prisma.service';
+import { SurveyOrchestratorUserPreferences } from '@/shared/types/survey-orquestrator-user-preferences.type';
 import { CreateDefaultUserPreferenceDto } from './dto/create-default-user-preference.dto';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 
@@ -66,6 +67,22 @@ export class UserPreferencesService {
                 id: newPreferences.id,
             },
             data: newPreferences,
+        });
+    }
+
+    /**
+     * Busca todas las preferencias de todos los usuarios.
+     * @returns Una Promesa que resuelve con el objeto UserPreferences[]
+     */
+    async findAllPreferences(): Promise<SurveyOrchestratorUserPreferences[]> {
+        this.logger.log('Executed findAllPreferences for orchestration');
+
+        return this.prisma.userPreferences.findMany({
+            select: {
+                userId: true,
+                recommendationsUpdateFrequency: true,
+                reClasificationFrequency: true,
+            },
         });
     }
 }

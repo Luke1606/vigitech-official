@@ -11,8 +11,7 @@ echo.
 set /p choice="Selecciona una opcion (1-4): "
 
 if "%choice%"=="1" (
-    set /p name="Nombre de la migracion: "
-    npm run db:migrate:dev --name %name%
+    npm run db:migrate:dev
 ) else if "%choice%"=="2" (
     npm run db:migrate:deploy
 ) else if "%choice%"=="3" (

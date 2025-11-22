@@ -53,7 +53,7 @@ export class ProcessingService {
                 fragments: KnowledgeFragmentWithoutVectorize[];
             };
 
-            const aiResponse: KnowledgeAiResponse = (await this.aiAgentService.generateText(
+            const aiResponse: KnowledgeAiResponse = (await this.aiAgentService.generateResponse(
                 prompt,
                 rawDataBatch,
             )) as KnowledgeAiResponse;

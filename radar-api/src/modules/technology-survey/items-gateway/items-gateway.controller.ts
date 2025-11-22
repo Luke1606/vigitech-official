@@ -3,7 +3,7 @@ import { Get, Body, Patch, Param, Logger, Delete, Controller, ParseUUIDPipe, Req
 import { UserSubscribedItem, Item } from '@prisma/client';
 import type { AuthenticatedRequest } from '@/shared/types/authenticated-request.type';
 import { ItemsGatewayService } from './items-gateway.service';
-import { CreateItemDto } from './dto/create-item.dto';
+import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-item.dto';
 
 @Controller('survey-items')
 export class ItemsGatewayController {
@@ -35,7 +35,7 @@ export class ItemsGatewayController {
     }
 
     @Post('create')
-    async create(@Body() data: CreateItemDto, @Req() request: AuthenticatedRequest): Promise<Item> {
+    async create(@Body() data: CreateUnclassifiedItemDto, @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed create');
         const userId: UUID = request.userId as UUID;
         return await this.itemsService.create(data, userId);
@@ -66,7 +66,7 @@ export class ItemsGatewayController {
     }
 
     @Patch('create/batch')
-    async createBatch(@Body() data: CreateItemDto[], @Req() request: AuthenticatedRequest): Promise<void> {
+    async createBatch(@Body() data: CreateUnclassifiedItemDto[], @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed create');
         const userId: UUID = request.userId as UUID;
         return await this.itemsService.createBatch(data, userId);

@@ -1,22 +1,14 @@
-/**
- * Servicio para el acceso y búsqueda de `KnowledgeFragment`s.
- * Soporta búsquedas por identidad (texto), búsquedas semánticas (embeddings) y búsquedas híbridas.
- * @class DataGatewayService
- */
+// data-hub/data-gateway/data-gateway.service.ts
 import { Injectable, Logger } from '@nestjs/common';
+import { KnowledgeFragment, Prisma, RawDataSource, RawDataType } from '@prisma/client';
 import { PrismaService } from '@/common/services/prisma.service';
 import { AiAgentsService } from '../../ai-agents/ai-agents.service';
-import { SearchQueryDto } from './dto/query.dto';
-import { KnowledgeFragment, Prisma, RawDataSource, RawDataType } from '@prisma/client';
+import { SearchQueryDto } from './dto/search-query.dto';
 
 @Injectable()
 export class DataGatewayService {
     private readonly logger = new Logger(DataGatewayService.name);
 
-    /**
-     * @param prisma Servicio Prisma para interactuar con la base de datos.
-     * @param aiAgentService Servicio de agentes de IA para generar embeddings.
-     */
     constructor(
         private readonly prisma: PrismaService,
         private readonly aiAgentService: AiAgentsService,
@@ -25,31 +17,75 @@ export class DataGatewayService {
     }
 
     /**
-     * Realiza una búsqueda de `KnowledgeFragment`s basada en varios criterios.
-     * Puede realizar búsquedas por identidad (texto), semánticas (vectores) o una combinación de ambas.
-     * @param queryDto Objeto DTO con los parámetros de búsqueda.
-     * @returns Una promesa que resuelve con un array de `KnowledgeFragment`s que coinciden con la consulta.
+     * Construye la cláusula WHERE para la consulta SQL raw, filtrando por fecha de creación de KnowledgeFragment.
+     * @param startDate (Opcional) Fecha de inicio.
+     * @param endDate (Opcional) Fecha de fin.
+     * @returns Un objeto `Prisma.Sql` que representa la cláusula WHERE.
      */
+    private buildDateWhereClause(startDate?: Date, endDate?: Date): Prisma.Sql {
+        const conditions: Prisma.Sql[] = [];
+
+        if (startDate) {
+            conditions.push(Prisma.sql`kf."createdAt" >= ${startDate}`);
+        }
+        if (endDate) {
+            conditions.push(Prisma.sql`kf."createdAt" <= ${endDate}`);
+        }
+
+        return conditions.length > 0 ? Prisma.join(conditions, ' AND ') : Prisma.empty;
+    }
+
+    /**
+     * Construye la cláusula WHERE para la consulta SQL raw, filtrando por fuentes y tipos de datos de `RawData`.
+     * (Método original, no modificado)
+     */
+    private buildRawDataWhereClause(sources?: RawDataSource[], dataTypes?: RawDataType[]): Prisma.Sql {
+        const conditions: Prisma.Sql[] = [];
+
+        if (sources && sources.length > 0) {
+            conditions.push(Prisma.sql`rd.source IN (${Prisma.join(sources.map((s) => Prisma.raw(`'${s}'`)))})`);
+        }
+        if (dataTypes && dataTypes.length > 0) {
+            conditions.push(
+                Prisma.sql`rd."dataType" IN (${Prisma.join(dataTypes.map((dt) => Prisma.raw(`'${dt}'`)))})`,
+            );
+        }
+
+        return conditions.length === 0 ? Prisma.empty : Prisma.join(conditions, ' AND ');
+    }
+
     async search(queryDto: SearchQueryDto): Promise<KnowledgeFragment[]> {
-        const { query, sources, dataTypes, limit, offset, k } = queryDto;
+        const { query, sources, dataTypes, startDate, endDate, limit, offset, k } = queryDto;
 
         let knowledgeFragments: KnowledgeFragment[] = [];
 
+        // Esta cláusula es solo para búsquedas NO vectoriales (findMany)
         const whereClause: Prisma.KnowledgeFragmentWhereInput = {
             AND: [
                 sources && sources.length > 0 ? { sourceRawData: { source: { in: sources } } } : {},
                 dataTypes && dataTypes.length > 0 ? { sourceRawData: { dataType: { in: dataTypes } } } : {},
+                startDate ? { createdAt: { gte: startDate } } : {},
+                endDate ? { createdAt: { lte: endDate } } : {},
             ],
         };
 
         if (query) {
             if (k && k > 0) {
-                // Búsqueda Semántica: Utiliza embeddings para encontrar fragmentos relacionados semánticamente.
-                this.logger.log(`Performing semantic search for query: "${query}"`);
+                // Búsqueda Híbrida (Vectorial + Filtros)
+                this.logger.log(`Performing hybrid semantic search for query: "${query}"`);
                 const embeddings = await this.aiAgentService.generateEmbeddings([query]);
                 const queryEmbedding = embeddings[0];
 
-                // Realiza la búsqueda vectorial utilizando una consulta SQL raw (debido al tipo `Unsupported("vector")` de Prisma)
+                const rawDataConditions = this.buildRawDataWhereClause(sources, dataTypes);
+                const dateConditions = this.buildDateWhereClause(startDate, endDate);
+
+                const whereClauses: Prisma.Sql[] = [];
+                if (rawDataConditions !== Prisma.empty) whereClauses.push(rawDataConditions);
+                if (dateConditions !== Prisma.empty) whereClauses.push(dateConditions);
+
+                const finalWhereClause =
+                    whereClauses.length > 0 ? Prisma.sql`WHERE ${Prisma.join(whereClauses, ' AND ')}` : Prisma.empty;
+
                 const rawResults = await this.prisma.$queryRaw<KnowledgeFragment[]>(
                     Prisma.sql`
                         SELECT
@@ -58,8 +94,7 @@ export class DataGatewayService {
                             "tech_survey"."KnowledgeFragment" AS kf
                         JOIN
                             "tech_survey"."RawData" AS rd ON kf."sourceRawDataId" = rd.id
-                        WHERE
-                            ${this.buildRawDataWhereClause(sources, dataTypes)}
+                        ${finalWhereClause}
                         ORDER BY
                             kf.embedding <-> ${Prisma.join(queryEmbedding)}::vector
                         LIMIT ${limit} OFFSET ${offset};
@@ -67,7 +102,7 @@ export class DataGatewayService {
                 );
                 knowledgeFragments = rawResults;
             } else {
-                // Búsqueda por Identidad (basada en texto): Busca fragmentos que contengan el texto de la consulta.
+                // Búsqueda por Identidad (sin K)
                 this.logger.log(`Performing identity search for query: "${query}"`);
                 knowledgeFragments = await this.prisma.knowledgeFragment.findMany({
                     where: {
@@ -82,7 +117,6 @@ export class DataGatewayService {
                 });
             }
         } else {
-            // Sin consulta de texto, solo filtrado y paginación.
             this.logger.log('Performing filtered search without a text query.');
             knowledgeFragments = await this.prisma.knowledgeFragment.findMany({
                 where: whereClause,
@@ -92,30 +126,5 @@ export class DataGatewayService {
         }
 
         return knowledgeFragments;
-    }
-
-    /**
-     * Construye la cláusula WHERE para la consulta SQL raw, filtrando por fuentes y tipos de datos de `RawData`.
-     * @param sources (Opcional) Array de `RawDataSource` para filtrar.
-     * @param dataTypes (Opcional) Array de `RawDataType` para filtrar.
-     * @returns Un objeto `Prisma.Sql` que representa la cláusula WHERE.
-     */
-    private buildRawDataWhereClause(sources?: RawDataSource[], dataTypes?: RawDataType[]): Prisma.Sql {
-        const conditions: Prisma.Sql[] = [];
-
-        if (sources && sources.length > 0) {
-            conditions.push(Prisma.sql`rd.source IN (${Prisma.join(sources.map((s) => Prisma.raw(`'${s}'`)))})`);
-        }
-        if (dataTypes && dataTypes.length > 0) {
-            conditions.push(
-                Prisma.sql`rd."dataType" IN (${Prisma.join(dataTypes.map((dt) => Prisma.raw(`'${dt}'`)))})`,
-            );
-        }
-
-        if (conditions.length === 0) {
-            return Prisma.empty;
-        }
-
-        return Prisma.join(conditions, ' AND ');
     }
 }

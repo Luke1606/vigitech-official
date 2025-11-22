@@ -1,75 +1,74 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { KnowledgeFragment } from '@prisma/client';
+import { DataFetchService } from '../data-fetch/data-fetch.service';
 import { AiAgentsService } from '../../ai-agents/ai-agents.service';
-import { PrismaService } from '../../../common/services/prisma.service';
-import { Field } from '@prisma/client';
+import { ItemsGatewayService } from '../items-gateway/items-gateway.service';
+import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-item.dto';
 
 @Injectable()
 export class ItemsIdentifyingService {
-    private readonly logger = new Logger(ItemsIdentifyingService.name);
+    private readonly logger: Logger = new Logger(ItemsIdentifyingService.name);
 
     constructor(
-        private readonly aiAgentService: AiAgentsService,
-        private readonly prisma: PrismaService,
+        private readonly dataFetchService: DataFetchService,
+        private readonly itemsGatewayService: ItemsGatewayService,
+        private readonly aiAgentsService: AiAgentsService,
     ) {}
 
-    async identifyAndCreateItem(knowledgeFragmentId: string): Promise<any> {
-        this.logger.log(`Identifying item from KnowledgeFragment ID: ${knowledgeFragmentId}`);
+    /**
+     * Identifica nuevas tecnologías o tendencias emergentes a partir de los fragmentos de conocimiento.
+     * Utiliza RAG Negativo (lista de ítems existentes) y RAG Positivo (fragmentos de conocimiento).
+     * @returns Promesa vacía al completar la identificación y la creación de lotes.
+     */
+    async identifyNewItems(): Promise<void> {
+        this.logger.log('Identifying new items from various data sources...');
 
-        const knowledgeFragment = await (this.prisma as any).tech_survey.knowledgeFragment.findUnique({
-            where: { id: knowledgeFragmentId },
-        });
+        const existingTitles: string[] = await this.itemsGatewayService.findAllItemTitles();
+        const existingTitlesList = existingTitles.map((title) => `"${title}"`).join(', '); // 2. Obtener contexto RAG (Evidencia Positiva)
 
-        if (!knowledgeFragment) {
-            this.logger.error(`KnowledgeFragment with ID ${knowledgeFragmentId} not found.`);
-            throw new Error(`KnowledgeFragment with ID ${knowledgeFragmentId} not found.`);
-        }
+        const context: KnowledgeFragment[] = await this.dataFetchService.fetchDataForTrendAnalysis();
 
-        const textSnippet = knowledgeFragment.textSnippet;
+        this.logger.log(`Fetched ${context.length} knowledge fragments. Excluding ${existingTitles.length} items.`);
 
-        // Use LLM to identify potential technology item and its field
-        const identificationPrompt = `Analyze the following text snippet and determine if it describes a technology item. If it does, extract its title, a concise summary, and classify its field into one of these categories: ${Object.values((this.prisma as any).tech_survey.Field).join(', ')}. Return the output as a JSON object with 'isTechnologyItem' (boolean), 'title' (string), 'summary' (string), and 'field' (string, matching one of the categories).
-        Text: ${textSnippet}`;
+        const contextText = context
+            .map((fragment: KnowledgeFragment) => `---FRAGMENT ID: ${fragment.id}\n${fragment.textSnippet}`)
+            .join('\n\n');
 
-        const identificationJson = await this.aiAgentService.generateText(identificationPrompt);
-        let identifiedData: { isTechnologyItem: boolean; title?: string; summary?: string; field?: Field } = {
-            isTechnologyItem: false,
-        };
+        const prompt: string = `
+            Eres un Analista de Tendencias Tecnológicas experto. Tu tarea es identificar y extraer tecnologías, herramientas, plataformas o conceptos emergentes mencionados en el contexto RAG proporcionado.
 
-        try {
-            identifiedData = JSON.parse(identificationJson || '{}');
-        } catch (e: any) {
-            this.logger.error(`Failed to parse identification data from LLM response: ${e.message}`);
-        }
+            --- REGLAS DE EXTRACCIÓN ---
+            1. Solo extrae tecnologías nuevas que puedan ser candidatas para el Radar.
+            2. Cada tecnología extraída debe tener un TÍTULO claro y un RESUMEN conciso (máx. 3-4 oraciones) que resuma su valor o tendencia principal.
+            3. No incluyas tecnologías muy maduras o bien conocidas (ej., JavaScript, React, PostgreSQL).
+            4. Genera un MÍNIMO de 1 y un MÁXIMO de 5 ítems nuevos si la evidencia lo permite.
 
-        if (identifiedData.isTechnologyItem && identifiedData.title && identifiedData.summary && identifiedData.field) {
-            // Check if item already exists to avoid duplicates
-            const existingItem = await (this.prisma as any).tech_survey.item.findFirst({
-                where: { title: identifiedData.title },
-            });
+            --- FILTRO NEGATIVO CRÍTICO (Anti-Duplicidad)
+            NO debes proponer NINGUNA tecnología cuyo título coincida EXACTAMENTE con los siguientes ítems que ya existen en el Radar:
+            [${existingTitlesList}]
 
-            if (existingItem) {
-                this.logger.log(`Item "${identifiedData.title}" already exists. Skipping creation.`);
-                return existingItem;
+            --- CONTEXTO RAG (EVIDENCIA) ---
+            ${contextText}
+
+            --- FORMATO DE SALIDA REQUERIDO (JSON Array) ---
+            Responde ÚNICAMENTE con un array JSON que coincida con el tipo CreateUnclassifiedItemDto[].
+
+            type CreateUnclassifiedItemDto = {
+                title: string; // Nombre de la tecnología.
+                summary: string; // Resumen conciso de la tendencia o tecnología.
             }
+        `;
 
-            // Create the new Item
-            const newItem = await (this.prisma as any).tech_survey.item.create({
-                data: {
-                    title: identifiedData.title,
-                    summary: identifiedData.summary,
-                    itemField: identifiedData.field,
-                    citedFragments: {
-                        create: {
-                            fragmentId: knowledgeFragment.id,
-                        },
-                    },
-                },
-            });
-            this.logger.log(`New technology item "${newItem.title}" created with ID: ${newItem.id}`);
-            return newItem;
+        const newItems = (await this.aiAgentsService.generateResponse(prompt, context)) as CreateUnclassifiedItemDto[];
+
+        if (newItems.length > 0) {
+            this.logger.log(`Identified ${newItems.length} potential new items. Creating and classifying them...`);
+
+            await this.itemsGatewayService.createBatch(newItems);
+
+            this.logger.log('New items created and classified successfully.');
         } else {
-            this.logger.log(`KnowledgeFragment ID ${knowledgeFragmentId} did not yield a new technology item.`);
-            return null;
+            this.logger.log('No new items identified.');
         }
     }
 }

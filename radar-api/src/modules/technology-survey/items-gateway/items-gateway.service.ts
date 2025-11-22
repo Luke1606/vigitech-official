@@ -1,18 +1,30 @@
 import type { UUID } from 'crypto';
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
-
 import { UserSubscribedItem, Item } from '@prisma/client';
-
-import { ClassifiedItemType } from './types/classified-item.type';
-import { CreateSurveyItemType } from './types/create-item.type';
 import { PrismaService } from '@/common/services/prisma.service';
+import { ItemsClassificationService } from '../items-classification/items-classification.service';
+import {
+    CreateExistentItemClassification,
+    CreateNewItemClassification,
+} from '../shared/types/create-item-classification.type';
+import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-item.dto';
+import { ItemWithClassification } from '../shared/types/classified-item.type';
 
 @Injectable()
 export class ItemsGatewayService {
-    private readonly logger: Logger = new Logger('SurveyItemsService');
+    private readonly logger: Logger = new Logger(ItemsGatewayService.name);
 
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly itemsClassificationService: ItemsClassificationService,
+    ) {}
 
+    /**
+     * Busca todos los Items que son recomendados para el usuario actual.
+     * Excluye aquellos que el usuario ha suscrito o ha marcado como ocultos.
+     * @param userId UUID del usuario.
+     * @returns Promesa que resuelve con un array de Items.
+     */
     async findAllRecommended(userId: UUID): Promise<Item[]> {
         this.logger.log('Executed findAllRecommended');
 
@@ -25,9 +37,17 @@ export class ItemsGatewayService {
                     none: { userId },
                 },
             },
+            include: {
+                latestClassification: true,
+            },
         });
     }
 
+    /**
+     * Busca todos los Items a los que el usuario se ha suscrito.
+     * @param userId UUID del usuario.
+     * @returns Promesa que resuelve con un array de Items suscritos.
+     */
     async findAllSubscribed(userId: string): Promise<Item[]> {
         this.logger.log('Executed findAllSubscribed');
 
@@ -37,9 +57,20 @@ export class ItemsGatewayService {
                     some: { userId },
                 },
             },
+            include: {
+                latestClassification: true,
+            },
         });
     }
 
+    /**
+     * Busca un Item específico por ID.
+     * Lanza una ForbiddenException si el Item está marcado como oculto por el usuario.
+     * @param id UUID del Item.
+     * @param userId UUID del usuario que realiza la consulta.
+     * @returns Promesa que resuelve con el Item encontrado.
+     * @throws ForbiddenException si el Item está oculto.
+     */
     async findOne(id: UUID, userId: UUID): Promise<Item> {
         this.logger.log(`Executed findOne of ${id}`);
 
@@ -47,7 +78,6 @@ export class ItemsGatewayService {
             where: { id },
         });
 
-        // Verificar si el item está oculto para el usuario
         const isHidden = await this.prisma.userHiddenItem.findUnique({
             where: {
                 userId_itemId: {
@@ -64,23 +94,30 @@ export class ItemsGatewayService {
         return item;
     }
 
-    async create(data: CreateSurveyItemType, insertedById: UUID): Promise<Item> {
+    /**
+     * Crea un nuevo Item, lo clasifica mediante IA, lo guarda de forma atómica
+     * junto con su clasificación inicial y suscribe al usuario que lo insertó.
+     * La lógica de persistencia se delega a _saveNewItem (transaccional).
+     * @param data DTO del Item sin clasificar.
+     * @param insertedById UUID del usuario que inserta el Item.
+     * @returns Promesa vacía al completar la creación.
+     */
+    async create(data: CreateUnclassifiedItemDto, insertedById: UUID): Promise<void> {
         this.logger.log('Executed create');
 
-        const classifiedItem: ClassifiedItemType = await this.classifyItem(data);
+        const classificationInfo: CreateNewItemClassification =
+            await this.itemsClassificationService.classifyNewItem(data);
 
-        const item: Item = await this.prisma.item.create({
-            data: {
-                ...classifiedItem,
-                insertedById,
-            },
-        });
-
-        await this.subscribeOne(item.id as UUID, insertedById);
-
-        return item;
+        await this._saveNewItem(classificationInfo, insertedById);
     }
 
+    /**
+     * Suscribe al usuario a un Item específico.
+     * También elimina cualquier registro de "oculto" para ese Item y usuario.
+     * @param id UUID del Item a suscribir.
+     * @param userId UUID del usuario.
+     * @returns Promesa que resuelve con el registro de UserSubscribedItem creado/actualizado.
+     */
     async subscribeOne(id: UUID, userId: UUID): Promise<UserSubscribedItem> {
         this.logger.log(`Executed subscribe of ${id}`);
 
@@ -97,6 +134,12 @@ export class ItemsGatewayService {
         });
     }
 
+    /**
+     * Desuscribe al usuario de un Item específico.
+     * @param id UUID del Item a desuscribir.
+     * @param userId UUID del usuario.
+     * @returns Promesa vacía al completar la operación.
+     */
     async unsubscribeOne(id: UUID, userId: UUID): Promise<void> {
         this.logger.log(`Executed unsubscribe of ${id}`);
 
@@ -108,6 +151,14 @@ export class ItemsGatewayService {
         });
     }
 
+    /**
+     * Procesa la eliminación o el ocultamiento de un solo Item.
+     * Si el usuario creó el Item, se elimina permanentemente.
+     * Si el Item es una recomendación, se oculta para el usuario.
+     * @param id UUID del Item.
+     * @param userId UUID del usuario que realiza la acción.
+     * @returns Promesa vacía al completar la operación.
+     */
     async removeOne(id: UUID, userId: UUID): Promise<void> {
         this.logger.log(`Executed remove of ${id}`);
 
@@ -138,33 +189,36 @@ export class ItemsGatewayService {
         }
     }
 
-    async createBatch(data: CreateSurveyItemType[], userId?: UUID): Promise<void> {
-        const mode = userId ? 'MANUAL (User)' : 'AUTOMATIC (System)';
+    /**
+     * Crea un lote de Items.
+     * 1. Clasifica todos los Items en batch (optimización de I/O con LLM).
+     * 2. Persiste cada Item de forma concurrente en una transacción atómica (DB)
+     * para garantizar la integridad del puntero de clasificación.
+     * @param data Array de DTOs de Items sin clasificar.
+     * @param insertedById ID del usuario que insertó el lote (opcional para inserción de sistema).
+     * @returns Promesa vacía al completar la creación de todo el lote.
+     */
+    async createBatch(data: CreateUnclassifiedItemDto[], insertedById?: UUID): Promise<void> {
+        const mode = insertedById ? 'MANUAL (User)' : 'AUTOMATIC (System)';
         this.logger.log(`Executed createBatch [${mode}] of ${data.length} items`);
 
-        const classifiedItems: ClassifiedItemType[] = await this.classifyBatch(data);
+        const classifiedItems: CreateNewItemClassification[] =
+            await this.itemsClassificationService.classifyNewBatch(data);
 
-        const createdItems: Item[] = await this.prisma.item.createManyAndReturn({
-            data: classifiedItems.map((item) => ({
-                ...item,
-                insertedById: userId ? (userId as string) : undefined,
-            })),
-            skipDuplicates: true,
+        const savePromises = classifiedItems.map((classificationInfo) => {
+            return this._saveNewItem(classificationInfo, insertedById);
         });
 
-        if (createdItems.length > 0 && userId) {
-            this.logger.log(`Auto-subscribing user ${userId} to ${createdItems.length} items`);
-
-            await this.prisma.userSubscribedItem.createMany({
-                data: createdItems.map((item: Item) => ({
-                    userId: userId as string,
-                    itemId: item.id,
-                })),
-                skipDuplicates: true,
-            });
-        }
+        // Ejecutamos todas las promesas de guardado concurrentemente.
+        await Promise.all(savePromises);
     }
 
+    /**
+     * Suscribe al usuario a un lote de Items de forma masiva (createMany).
+     * @param ids Array de UUIDs de Items a suscribir.
+     * @param userId UUID del usuario.
+     * @returns Promesa vacía al completar la operación.
+     */
     async subscribeBatch(ids: UUID[], userId: UUID): Promise<void> {
         this.logger.log(`Executed subscribe of ${ids.length} items`);
 
@@ -177,6 +231,12 @@ export class ItemsGatewayService {
         });
     }
 
+    /**
+     * Desuscribe al usuario de un lote de Items de forma masiva (deleteMany).
+     * @param ids Array de UUIDs de Items a desuscribir.
+     * @param userId UUID del usuario.
+     * @returns Promesa vacía al completar la operación.
+     */
     async unsubscribeBatch(ids: UUID[], userId: UUID): Promise<void> {
         this.logger.log(`Executed unsubscribeBatch of ${ids.length} items`);
 
@@ -188,6 +248,13 @@ export class ItemsGatewayService {
         });
     }
 
+    /**
+     * Procesa la eliminación o el ocultamiento de un lote de Items.
+     * Divide la operación en Items propios (a eliminar) y Items recomendados (a ocultar).
+     * @param ids Array de UUIDs de Items.
+     * @param userId UUID del usuario que realiza la acción.
+     * @returns Promesa vacía al completar la operación.
+     */
     async removeBatch(ids: UUID[], userId: UUID): Promise<void> {
         this.logger.log(`Executed remove of ${ids.length} items`);
 
@@ -234,11 +301,134 @@ export class ItemsGatewayService {
         }
     }
 
-    private async classifyItem(item: CreateSurveyItemType): Promise<ClassifiedItemType> {
-        return Promise.resolve(item as ClassifiedItemType);
+    /**
+     * Lógica transaccional central para crear un Item, su clasificación inicial
+     * y actualizar el puntero rápido (latestClassificationId).
+     * Incluye la autosuscripción del usuario que lo insertó si el ID está presente.
+     * @param classificationInfo Datos clasificados y el DTO original.
+     * @param insertedById UUID del usuario que insertó el Item (opcional).
+     * @returns Promesa vacía que se ejecuta dentro de una transacción.
+     */
+    private async _saveNewItem(classificationInfo: CreateNewItemClassification, insertedById?: UUID): Promise<void> {
+        const { unclassifiedItem, itemField, insightsValues, classification } = classificationInfo;
+
+        return this.prisma.$transaction(async (tx) => {
+            // 1. Crear item
+            const item = await tx.item.create({
+                data: {
+                    title: unclassifiedItem.title,
+                    summary: unclassifiedItem.summary,
+                    itemField,
+                    insertedById,
+                },
+            });
+
+            // 2. Crear primera clasificación (Historial)
+            const itemClassification = await tx.itemClassification.create({
+                data: {
+                    itemId: item.id,
+                    insightsValues,
+                    classification,
+                },
+            });
+
+            // 3. Actualizar puntero
+            const finalItem = await tx.item.update({
+                where: { id: item.id },
+                data: { latestClassificationId: itemClassification.id },
+            });
+
+            // 4. Autosuscribir si es insertado por el usuario
+            if (insertedById) {
+                await tx.userSubscribedItem.upsert({
+                    where: { userId_itemId: { userId: insertedById, itemId: finalItem.id } },
+                    create: { userId: insertedById, itemId: finalItem.id },
+                    update: {},
+                });
+            }
+        });
     }
 
-    private async classifyBatch(items: CreateSurveyItemType[]): Promise<ClassifiedItemType[]> {
-        return Promise.resolve(items as ClassifiedItemType[]);
+    /**
+     * Busca todos los títulos de ítems existentes en la base de datos.
+     * Utilizado por ItemsIdentifyingService para el filtro negativo RAG.
+     * @returns Promesa que resuelve con un array de strings (títulos).
+     */
+    async findAllItemTitles(): Promise<string[]> {
+        this.logger.log('Executed findAllItemTitles for RAG negative filtering.');
+
+        const items = await this.prisma.item.findMany({
+            select: { title: true },
+        });
+
+        return items.map((item: { title: string }) => item.title);
+    }
+
+    /**
+     * Procesa la re-clasificación periódica de todos los ítems suscritos por un usuario.
+     * Este método encapsula la obtención, clasificación y persistencia.
+     * @param userId ID del usuario.
+     */
+    async reclassifySubscribedItems(userId: UUID): Promise<void> {
+        this.logger.log(`Starting reclassification flow for subscribed items of user: ${userId}`);
+
+        const itemsToReclassify = await this.findAllSubscribed(userId);
+
+        if (itemsToReclassify.length === 0) {
+            this.logger.log(`User ${userId} has no items to reclassify.`);
+            return;
+        }
+
+        this.logger.log(`Processing ${itemsToReclassify.length} items for reclassification.`);
+
+        // 2. Clasificar el lote de ítems (usando el servicio que invoca el LLM)
+        const newClassifications: CreateExistentItemClassification[] =
+            await this.itemsClassificationService.classifyExistentBatch(
+                itemsToReclassify as unknown as ItemWithClassification[],
+            );
+
+        // 3. Persistir las nuevas clasificaciones y actualizar punteros (Batch)
+        await this._saveReclassificationBatch(newClassifications);
+
+        this.logger.log(`Reclassification completed for user: ${userId}`);
+    }
+
+    /**
+     * Persiste un lote de re-clasificaciones de Items existentes de forma transaccional.
+     * @param classifications Array de clasificaciones (incluye itemId).
+     */
+    private async _saveReclassificationBatch(classifications: CreateExistentItemClassification[]): Promise<void> {
+        this.logger.log(`Executing _saveReclassificationBatch for ${classifications.length} items.`);
+
+        const savePromises = classifications.map((classificationInfo) => {
+            return this._saveReclassification(classificationInfo);
+        });
+
+        await Promise.all(savePromises);
+    }
+
+    /**
+     * Lógica transaccional para guardar una nueva clasificación de un Item existente.
+     */
+    private async _saveReclassification(classificationInfo: CreateExistentItemClassification): Promise<void> {
+        const { item, insightsValues, classification } = classificationInfo;
+        const itemId = item.id;
+
+        return this.prisma.$transaction(async (tx) => {
+            // 1. Crear nueva clasificación (Historial)
+            const itemClassification = await tx.itemClassification.create({
+                data: {
+                    itemId: itemId,
+                    insightsValues,
+                    classification,
+                },
+            });
+
+            // 2. Actualizar el puntero rápido (latestClassificationId)
+            await tx.item.update({
+                where: { id: itemId },
+                data: { latestClassificationId: itemClassification.id, updatedAt: new Date() },
+            });
+        });
     }
 }
