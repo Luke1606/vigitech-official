@@ -7,7 +7,6 @@ import {
     generateBlipPositions,
     ringBounds,
     quadrantLabels,
-    isTextOverlapping,
     useSurveyItems
 } from '../../../../../infrastructure';
 import { RadarMenu } from './radar-menu/RadarMenu.component';
@@ -38,6 +37,9 @@ export const Radar: React.FC<{
         const [selectedBlip, setSelectedBlip] = React.useState<Blip | null>(null);
         const [menuPosition, setMenuPosition] = React.useState({ x: 0, y: 0 });
 
+        // Estado para controlar qué blip está seleccionado en la lista móvil
+        const [selectedBlipId, setSelectedBlipId] = React.useState<string | null>(null);
+
         // Estado para controlar la visibilidad de los cuadrantes
         const [visibleQuadrants, setVisibleQuadrants] = React.useState<Record<RadarQuadrant, boolean>>(() => {
             const initialVisibility: Record<RadarQuadrant, boolean> = {
@@ -49,13 +51,26 @@ export const Radar: React.FC<{
             return initialVisibility;
         });
 
+        // Estado para detectar si es móvil
+        const [isMobile, setIsMobile] = React.useState(false);
+
+        // Detectar cambio de tamaño de pantalla
+        React.useEffect(() => {
+            const checkMobile = () => {
+                setIsMobile(window.innerWidth < 768);
+            };
+
+            checkMobile();
+            window.addEventListener('resize', checkMobile);
+            return () => window.removeEventListener('resize', checkMobile);
+        }, []);
+
         // Filtrar entradas basado en la visibilidad de cuadrantes
         const filteredEntries = React.useMemo(() => {
             return entries?.filter(blip => visibleQuadrants[blip.radarQuadrant]) ?? [];
         }, [entries, visibleQuadrants]);
 
         const blipPositions = React.useMemo(() => generateBlipPositions(filteredEntries), [filteredEntries]);
-        const labelPositions: { x: number; y: number }[] = [];
 
         // Función para alternar la visibilidad de un cuadrante
         const toggleQuadrantVisibility = (quadrant: RadarQuadrant) => {
@@ -71,6 +86,47 @@ export const Radar: React.FC<{
             setMenuPosition(position);
             setMenuOpen(true);
             onBlipClick?.(blip, position);
+        };
+
+        // Manejador para seleccionar/deseleccionar blip en la lista móvil
+        const handleMobileBlipSelect = (blip: Blip) => {
+            if (selectedBlipId === blip.id) {
+                // Si ya está seleccionado, deseleccionar
+                setSelectedBlipId(null);
+            } else {
+                // Si no está seleccionado, seleccionar
+                setSelectedBlipId(blip.id);
+            }
+        };
+
+        // NUEVO MANEJADOR: Para seleccionar blip en el semicírculo y abrir menú
+        const handleMobileBlipClick = (blip: Blip, position: { x: number; y: number }, event: React.MouseEvent) => {
+            event.stopPropagation();
+
+            // Seleccionar el blip (activar animación de pulso)
+            setSelectedBlipId(blip.id);
+
+            // Obtener la posición real del blip en la pantalla
+            const svgElement = event.currentTarget.closest('svg');
+            const svgRect = svgElement?.getBoundingClientRect();
+
+            if (svgRect && position) {
+                const scaleX = svgRect.width / 400;
+                const scaleY = svgRect.height / 200;
+
+                const screenX = svgRect.left + (position.x * scaleX);
+                const screenY = svgRect.top + (position.y * scaleY);
+
+                handleBlipClick(blip, {
+                    x: screenX,
+                    y: screenY
+                });
+            } else {
+                handleBlipClick(blip, {
+                    x: event.clientX,
+                    y: event.clientY
+                });
+            }
         };
 
         // Manejadores para las acciones del menú
@@ -117,6 +173,371 @@ export const Radar: React.FC<{
             };
         }, [menuOpen]);
 
+        // Effect: Cerrar el highlight cuando se hace clic fuera del listado
+        React.useEffect(() => {
+            const handleClickOutsideList = (event: MouseEvent) => {
+                // Verificar si el clic fue fuera de cualquier listado de blips
+                const target = event.target as HTMLElement;
+                const isClickInsideList = target.closest('.blip-list-container');
+
+                if (!isClickInsideList) {
+                    setSelectedBlipId(null);
+                }
+            };
+
+            if (isMobile) {
+                document.addEventListener('click', handleClickOutsideList);
+            }
+
+            return () => {
+                document.removeEventListener('click', handleClickOutsideList);
+            };
+        }, [isMobile]);
+
+        // Función para generar posiciones de blips en semicírculo móvil
+        const generateMobileBlipPositions = (blips: Blip[], quadrant: RadarQuadrant) => {
+            const positions: Record<string, { x: number; y: number }> = {};
+            const centerX = 200;
+            const baseY = 180;
+
+            // DEFINICIÓN DE ANILLOS CONTINUOS SIN ESPACIOS
+            const ringRanges = {
+                [RadarRing.ADOPT]: { min: 0, max: 80 },
+                [RadarRing.TEST]: { min: 80, max: 120 },
+                [RadarRing.SUSTAIN]: { min: 120, max: 160 },
+                [RadarRing.HOLD]: { min: 160, max: 200 }
+            };
+
+            // Agrupar blips por ring
+            const blipsByRing: Record<RadarRing, Blip[]> = {
+                [RadarRing.ADOPT]: [],
+                [RadarRing.TEST]: [],
+                [RadarRing.SUSTAIN]: [],
+                [RadarRing.HOLD]: []
+            };
+
+            blips.forEach(blip => {
+                if (blipsByRing[blip.radarRing]) {
+                    blipsByRing[blip.radarRing].push(blip);
+                }
+            });
+
+            // Para cada ring, distribuir los blips uniformemente en el arco del semicírculo
+            Object.entries(blipsByRing).forEach(([ring, ringBlips]) => {
+                const radarRing = ring as RadarRing;
+                const range = ringRanges[radarRing];
+
+                // Calcular el radio medio dentro del rango del anillo
+                const midRadius = (range.min + range.max) / 2;
+
+                // Solo procesar si hay blips en este ring
+                if (ringBlips.length > 0) {
+                    ringBlips.forEach((blip, index) => {
+                        // Distribuir uniformemente en el semicírculo del ring específico
+                        const totalBlipsInRing = ringBlips.length;
+
+                        // Calcular ángulo (evitando los extremos)
+                        let angle;
+                        if (totalBlipsInRing === 1) {
+                            angle = Math.PI / 2; // Centro si solo hay uno
+                        } else {
+                            const margin = 0.2; // Margen para evitar bordes
+                            angle = margin + (index / (totalBlipsInRing - 1)) * (Math.PI - 2 * margin);
+                        }
+
+                        // Calcular posición dentro del rango del anillo
+                        const radius = midRadius;
+                        const x = centerX + radius * Math.cos(angle);
+                        const y = baseY - radius * Math.sin(angle);
+
+                        positions[blip.id] = { x, y };
+                    });
+                }
+            });
+
+            return positions;
+        };
+
+        // Vista móvil - Cuadrantes apilados verticalmente como semicírculos
+        if (isMobile) {
+            return (
+                <div className="w-full min-h-screen flex flex-col items-center py-4 px-2 bg-gray-50">
+                    {/* Contenedor de cuadrantes móviles */}
+                    <div className="w-full max-w-md space-y-6">
+                        {quadrantLabels.map((quadrant, index) => {
+                            if (!entries) return null;
+
+                            // Filtrar blips por cuadrante y visibilidad
+                            const quadrantBlips = entries.filter((b) =>
+                                b.radarQuadrant === quadrant.label && visibleQuadrants[quadrant.label]
+                            );
+
+                            // Generar posiciones específicas para móvil SOLO si hay blips
+                            const mobileBlipPositions = quadrantBlips.length > 0
+                                ? generateMobileBlipPositions(quadrantBlips, quadrant.label)
+                                : {};
+
+                            return (
+                                <div
+                                    key={quadrant.label}
+                                    className="bg-white rounded-lg shadow-lg p-4 border border-gray-200"
+                                >
+                                    {/* Header del cuadrante móvil */}
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center space-x-2">
+                                            <button
+                                                onClick={() => toggleQuadrantVisibility(quadrant.label)}
+                                                className="flex items-center justify-center w-8 h-8 rounded border border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors"
+                                            >
+                                                {visibleQuadrants[quadrant.label] ? (
+                                                    <Eye size={16} className="text-gray-700" />
+                                                ) : (
+                                                    <EyeOff size={16} className="text-gray-500" />
+                                                )}
+                                            </button>
+                                            <h3 className="text-lg font-bold text-gray-800">
+                                                {quadrant.label}
+                                            </h3>
+                                        </div>
+                                        <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                            {quadrantBlips.length} items
+                                        </span>
+                                    </div>
+
+                                    {/* Semicírculo del cuadrante móvil */}
+                                    {visibleQuadrants[quadrant.label] && (
+                                        <div className="relative w-full h-56 mb-4">
+                                            <svg
+                                                viewBox="0 0 400 200"
+                                                className="w-full h-full"
+                                                preserveAspectRatio="xMidYMid meet"
+                                            >
+                                                {/* 1. Fondo del semicírculo */}
+                                                <path
+                                                    d="M 50,180 
+                                               Q 200,30 350,180 
+                                               L 350,180 
+                                               L 50,180 Z"
+                                                    fill="#f8f9fa"
+                                                    stroke="#e9ecef"
+                                                    strokeWidth="1"
+                                                />
+
+                                                {/* 2. Anillos del semicírculo */}
+                                                {[
+                                                    { min: 0, max: 80, ring: RadarRing.ADOPT },
+                                                    { min: 80, max: 120, ring: RadarRing.TEST },
+                                                    { min: 120, max: 160, ring: RadarRing.SUSTAIN },
+                                                    { min: 160, max: 200, ring: RadarRing.HOLD }
+                                                ].map(({ min, max, ring }) => {
+                                                    const centerX = 200;
+                                                    const baseY = 180;
+
+                                                    // Crear anillo con relleno
+                                                    const path = `
+        M ${centerX - max},${baseY}
+        A ${max} ${max} 0 0 1 ${centerX + max},${baseY}
+        L ${centerX + min},${baseY}
+        A ${min} ${min} 0 0 0 ${centerX - min},${baseY}
+        Z
+    `;
+
+                                                    return (
+                                                        <path
+                                                            key={ring}
+                                                            d={path}
+                                                            fill={getRingColor(ring)}
+                                                            fillOpacity={0.2}
+                                                            stroke={getRingColor(ring)}
+                                                            strokeWidth={1}
+                                                        />
+                                                    );
+                                                })}
+
+                                                {/* 3. Líneas divisorias del semicírculo */}
+                                                <line x1="50" y1="180" x2="350" y2="180" stroke="#999" strokeWidth="1" />
+                                                <line x1="200" y1="180" x2="200" y2="30" stroke="#999" strokeDasharray="4 2" />
+
+                                                {/* 4. Etiquetas de anillos en el semicírculo - RENDERIZAR ANTES DE LOS BLIPS */}
+                                                <text x="200" y="135" fontSize="10" fill={getRingColor(RadarRing.ADOPT)} textAnchor="middle" fontWeight="bold">
+                                                    ADOPTAR
+                                                </text>
+                                                <text x="200" y="90" fontSize="10" fill={getRingColor(RadarRing.TEST)} textAnchor="middle" fontWeight="bold">
+                                                    PROBAR
+                                                </text>
+                                                <text x="200" y="45" fontSize="10" fill={getRingColor(RadarRing.SUSTAIN)} textAnchor="middle" fontWeight="bold">
+                                                    EVALUAR
+                                                </text>
+                                                <text x="200" y="0" fontSize="10" fill={getRingColor(RadarRing.HOLD)} textAnchor="middle" fontWeight="bold">
+                                                    DETENER
+                                                </text>
+
+                                                {/* 5. Blips en el semicírculo móvil - RENDERIZAR AL FINAL PARA QUE ESTÉN ENCIMA */}
+                                                {quadrantBlips.map((blip) => {
+                                                    const position = mobileBlipPositions[blip.id];
+
+                                                    // Si no hay posición, no renderizar el blip
+                                                    if (!position) {
+                                                        console.warn(`No position found for blip: ${blip.id} in quadrant ${quadrant.label}`);
+                                                        return null;
+                                                    }
+
+                                                    const isActive = hoveredBlipId === blip.id;
+                                                    const isSelected = selectedBlipId === blip.id;
+
+                                                    return (
+                                                        <g
+                                                            key={blip.id}
+                                                            transform={`translate(${position.x}, ${position.y})`}
+                                                            onMouseEnter={() => {
+                                                                setHoveredBlipId(blip.id);
+                                                                onBlipHover?.(blip);
+                                                            }}
+                                                            onMouseLeave={() => {
+                                                                setHoveredBlipId(null);
+                                                            }}
+                                                            onClick={(e) => {
+                                                                // USAR EL NUEVO MANEJADOR QUE ACTIVA LA ANIMACIÓN Y ABRE EL MENÚ
+                                                                handleMobileBlipClick(blip, position, e);
+                                                            }}
+                                                            style={{
+                                                                cursor: 'pointer',
+                                                            }}
+                                                        >
+                                                            {/* Círculo invisible más grande para mejor área de clic */}
+                                                            <circle
+                                                                cx={0}
+                                                                cy={0}
+                                                                r={20}
+                                                                fill="transparent"
+                                                            />
+
+                                                            {/* Círculo principal con transición suave */}
+                                                            <circle
+                                                                cx={0}
+                                                                cy={0}
+                                                                r={isSelected ? 10 : 6}
+                                                                fill={getRingColor(blip.radarRing)}
+                                                                stroke={isSelected ? '#000' : (isActive ? '#000' : '#333')}
+                                                                strokeWidth={isSelected ? 3 : (isActive ? 2 : 1)}
+                                                                style={{
+                                                                    transition: 'r 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease',
+                                                                    transformOrigin: 'center center'
+                                                                }}
+                                                            />
+
+                                                            {/* Efecto de pulso FIJADO en la posición del blip */}
+                                                            {isSelected && (
+                                                                <circle
+                                                                    cx={0}
+                                                                    cy={0}
+                                                                    r={14}
+                                                                    fill="none"
+                                                                    stroke={getRingColor(blip.radarRing)}
+                                                                    strokeWidth={6}
+                                                                    className="pulseCircle"
+                                                                />
+                                                            )}
+
+                                                            {/* ELIMINAR EL TEXTO DEL NOMBRE - SOLO MOSTRAR ANIMACIÓN DE PULSO */}
+                                                        </g>
+                                                    );
+                                                })}
+                                            </svg>
+                                        </div>
+                                    )}
+
+                                    {/* Lista de blips del cuadrante - CON HIGHLIGHT MANTENIDO */}
+                                    {visibleQuadrants[quadrant.label] && quadrantBlips.length > 0 && (
+                                        <div className="mt-4 border-t border-gray-200 pt-4 blip-list-container">
+                                            <div className="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto">
+                                                {quadrantBlips.map((blip) => {
+                                                    const isSelected = selectedBlipId === blip.id;
+
+                                                    return (
+                                                        <div
+                                                            key={blip.id}
+                                                            className={`flex items-center space-x-3 p-2 rounded cursor-pointer transition-all duration-300 border ${isSelected
+                                                                ? 'bg-blue-50 border-blue-200 shadow-sm'
+                                                                : 'border-transparent hover:border-gray-200 hover:bg-gray-50'
+                                                                }`}
+                                                            onMouseEnter={() => setHoveredBlipId(blip.id)}
+                                                            onMouseLeave={() => setHoveredBlipId(null)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // Manejar selección/deselección del blip
+                                                                handleMobileBlipSelect(blip);
+                                                            }}
+                                                        >
+                                                            <div
+                                                                className="w-4 h-4 rounded-full flex-shrink-0 border border-white shadow-sm transition-all duration-300"
+                                                                style={{
+                                                                    backgroundColor: getRingColor(blip.radarRing),
+                                                                    transform: isSelected ? 'scale(1.2)' : 'scale(1)'
+                                                                }}
+                                                            />
+                                                            <span className={`text-sm flex-1 transition-all duration-300 ${isSelected ? 'font-bold text-blue-900' :
+                                                                hoveredBlipId === blip.id ? 'font-bold text-gray-900' : 'text-gray-700'
+                                                                }`}>
+                                                                {blip.title}
+                                                            </span>
+                                                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded transition-all duration-300">
+                                                                {blip.radarRing === RadarRing.ADOPT ? 'ADOPTAR' :
+                                                                    blip.radarRing === RadarRing.TEST ? 'PROBAR' :
+                                                                        blip.radarRing === RadarRing.SUSTAIN ? 'EVALUAR' :
+                                                                            blip.radarRing === RadarRing.HOLD ? 'DETENER' : blip.radarRing}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Menú contextual para móvil - USANDO DIALOG DE SHADCN */}
+                    {menuOpen && selectedBlip && (
+                        <RadarMenu
+                            item={selectedBlip as unknown as SurveyItem}
+                            position={menuPosition}
+                            onViewDetails={handleViewDetails}
+                            onUnsubscribe={handleUnsubscribe}
+                            onRemove={handleRemove}
+                            onSelect={handleSelect}
+                            onUnselect={handleUnselect}
+                            isSelected={false}
+                        />
+                    )}
+
+                    {/* Estilos CSS para la animación de pulso */}
+                    <style>{`
+                        @keyframes pulse {
+                            0% {
+                                r: 14;
+                                stroke-opacity: 0.6;
+                            }
+                            50% {
+                                r: 18;
+                                stroke-opacity: 0.3;
+                            }
+                            100% {
+                                r: 14;
+                                stroke-opacity: 0.6;
+                            }
+                        }
+                        .pulseCircle {
+                            animation: pulse 2s infinite;
+                            transform-origin: center center;
+                        }
+                    `}</style>
+                </div>
+            );
+        }
+
+        // Vista desktop - Sin nombres de blips y con animación de pulso
         return (
             <div className="w-screen h-screen flex flex-col items-center justify-center overflow-x-hidden -mt-3 -mb-24">
                 <svg
@@ -135,14 +556,14 @@ export const Radar: React.FC<{
                                 {/* Sombreado */}
                                 <path
                                     d={`
-                                    M ${rMax} 0
-                                    A ${rMax} ${rMax} 0 1 0 ${-rMax} 0
-                                    A ${rMax} ${rMax} 0 1 0 ${rMax} 0
-                                    M ${rMin} 0
-                                    A ${rMin} ${rMin} 0 1 1 ${-rMin} 0
-                                    A ${rMin} ${rMin} 0 1 1 ${rMin} 0
-                                    Z
-                                `}
+                            M ${rMax} 0
+                            A ${rMax} ${rMax} 0 1 0 ${-rMax} 0
+                            A ${rMax} ${rMax} 0 1 0 ${rMax} 0
+                            M ${rMin} 0
+                            A ${rMin} ${rMin} 0 1 1 ${-rMin} 0
+                            A ${rMin} ${rMin} 0 1 1 ${rMin} 0
+                            Z
+                        `}
                                     fill={color}
                                     opacity={0.08}
                                 />
@@ -162,7 +583,6 @@ export const Radar: React.FC<{
                             </g>
                         );
                     })}
-
 
                     {/* Anillos */}
                     {[140, 230, 310, 380].map((radious, index) => {
@@ -196,13 +616,13 @@ export const Radar: React.FC<{
                         const getButtonX = () => {
                             switch (quadrant.label) {
                                 case RadarQuadrant.BUSSINESS_INTEL:
-                                    return titleX - 160; // 60px a la izquierda del título (más a la izquierda)
+                                    return titleX - 160;
                                 case RadarQuadrant.SCIENTIFIC_STAGE:
-                                    return titleX - 235; // 60px a la izquierda del título (más a la izquierda)
+                                    return titleX - 235;
                                 case RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES:
-                                    return titleX - 40; // 40px a la izquierda del título (posición normal)
+                                    return titleX - 40;
                                 case RadarQuadrant.LANGUAGES_AND_FRAMEWORKS:
-                                    return titleX - 40; // 40px a la izquierda del título (posición normal)
+                                    return titleX - 40;
                                 default:
                                     return titleX - 40;
                             }
@@ -307,22 +727,12 @@ export const Radar: React.FC<{
                         );
                     })}
 
-                    {/* Blips en el radar (solo los de cuadrantes visibles) */}
+                    {/* Blips en el radar (solo los de cuadrantes visibles) - SIN NOMBRES Y CON ANIMACIÓN DE PULSO */}
                     {filteredEntries.map((blip) => {
                         const { x, y } = blipPositions[blip.id];
                         const isActive = hoveredBlipId === blip.id;
 
-                        // Ajuste de posición del texto para evitar colisiones
-                        const labelX = 10;
-                        let labelY = 4;
-                        while (isTextOverlapping(x + labelX, y + labelY, labelPositions)) {
-                            labelY += 12;
-                        }
-                        labelPositions.push({ x: x + labelX, y: y + labelY });
-
-                        const transform = isActive
-                            ? `translate(${x}, ${y}) scale(1.5)`
-                            : `translate(${x}, ${y})`;
+                        const transform = `translate(${x}, ${y})`;
 
                         return (
                             <g
@@ -339,29 +749,37 @@ export const Radar: React.FC<{
                                     e.stopPropagation();
                                     handleBlipClick(blip, { x: e.clientX, y: e.clientY });
                                 }}
-                                style={{ cursor: 'pointer', transition: 'transform 0.3s ease' }}
+                                style={{ cursor: 'pointer' }}
                             >
+                                {/* Círculo principal con transición suave */}
                                 <circle
                                     cx={0}
                                     cy={0}
-                                    r={8}
+                                    r={isActive ? 10 : 8}
                                     fill={getRingColor(blip.radarRing)}
                                     stroke={isActive ? '#000' : '#333'}
-                                    strokeWidth={isActive ? 2 : 1}
+                                    strokeWidth={isActive ? 3 : 1}
+                                    style={{
+                                        transition: 'r 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease',
+                                        transformOrigin: 'center center'
+                                    }}
                                 />
-                                <text
-                                    x={labelX}
-                                    y={labelY}
-                                    fontSize={16}
-                                    fill={isActive ? '#000' : '#000'}
-                                    fontWeight={isActive ? 'bold' : '500'}
-                                >
-                                    {blip.title}
-                                </text>
+
+                                {/* Efecto de pulso cuando está activo (hover) */}
+                                {isActive && (
+                                    <circle
+                                        cx={0}
+                                        cy={0}
+                                        r={14}
+                                        fill="none"
+                                        stroke={getRingColor(blip.radarRing)}
+                                        strokeWidth={10}
+                                        className="pulseCircle"
+                                    />
+                                )}
                             </g>
                         );
                     })}
-
                 </svg>
 
                 {/* Menú contextual */}
@@ -374,9 +792,9 @@ export const Radar: React.FC<{
                         onRemove={handleRemove}
                         onSelect={handleSelect}
                         onUnselect={handleUnselect}
-                        isSelected={false} // Ajusta según tu lógica de selección
+                        isSelected={false}
                     />
                 )}
-            </div >
+            </div>
         );
     };

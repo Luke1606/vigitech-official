@@ -24,7 +24,7 @@ export const SubscribedItemsRadar = () => {
                     () => setItemListsSidebarVisible(!itemListsSidebarVisible)
                 } />
 
-            <Radar entries={blips}/>
+            <Radar entries={blips} />
 
             <ChangeLogSideBar
                 visible={changeLogsSidebarVisible}

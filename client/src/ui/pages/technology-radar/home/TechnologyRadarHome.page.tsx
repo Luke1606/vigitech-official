@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { PathOption } from "../../../../infrastructure";
+import { NavLink } from "react-router-dom";
 
 export const TechnologyRadarHome: React.FC = () => {
 
@@ -7,9 +9,9 @@ export const TechnologyRadarHome: React.FC = () => {
     }, [])
 
     return (
-        <main className="min-h-screen text-white">
+        <main className="min-h-screen min-w-screen text-white">
             {/* Hero Section - Technology Radar */}
-            <section className="h-screen w-full bg-linear-to-br from-indigo-800 via-purple-700 to-blue-700 px-4 sm:px-6 text-center relative overflow-hidden flex items-center justify-center">
+            <section className="min-h-screen w-full bg-linear-to-br from-indigo-800 via-purple-700 to-blue-700 px-4 sm:px-6 text-center relative overflow-hidden flex items-center justify-center">
                 <img
                     src="/vigitech_home_radar.jpg"
                     alt="Radar globe"
@@ -34,7 +36,7 @@ export const TechnologyRadarHome: React.FC = () => {
                 </div>
             </section>
 
-            <section id="info" className="bg-white text-gray-800 px-4 sm:px-6 py-16 sm:py-20 relative overflow-hidden">
+            <section id="info" className="bg-white text-gray-800 px-4 sm:px-6 py-20 sm:py-20 relative overflow-hidden">
                 {/* Decorative Background */}
                 <img
                     src="/assets/bg-network.png"
@@ -104,6 +106,14 @@ export const TechnologyRadarHome: React.FC = () => {
                         </div>
                     ))}
                 </div>
+            </section>
+            <section className="text-black flex lg:justify-center lg:flex-row flex-col justify-center lg:gap-x-10 gap-y-5 py-10 lg:px-0 px-5 text-center">
+                <NavLink to={PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED} className="bg-linear-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xl transition duration-300">
+                    ¡¡ Veamos las recomendaciones !!
+                </NavLink>
+                <NavLink to={PathOption.TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR} className="bg-linear-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xl transition duration-300">
+                    ¡¡ Echemos un vistazo al Radar !!
+                </NavLink>
             </section>
         </main>
     )
