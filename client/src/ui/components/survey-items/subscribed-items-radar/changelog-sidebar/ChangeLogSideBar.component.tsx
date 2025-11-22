@@ -93,7 +93,7 @@ export const ChangeLogSideBar: React.FC<{
                                             )}
                                         </div>
 
-                                        <ScrollArea className="h-160">
+                                        <ScrollArea className="h-160 pb-5">
                                             <div className="">
 
                                                 {changelogs?.length === 0 ? (

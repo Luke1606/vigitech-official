@@ -7,7 +7,7 @@ export const About: React.FC = () => {
     }, [])
 
     return (
-        <main className="min-h-screen bg-blue-600 text-white">
+        <main className="min-h-screen min-w-screen bg-blue-600 text-white">
             {/* Hero Section */}
             <section className="h-screen w-full bg-gradient-to-br from-indigo-800 via-purple-700 to-blue-700 text-white px-4 sm:px-6 text-center relative overflow-hidden flex items-center justify-center">
                 <img

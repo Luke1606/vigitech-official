@@ -27,7 +27,7 @@ export const FAQ: React.FC = () => {
 
     return (
         <>
-            <section className="min-h-screen px-6 py-16 bg-linear-to-br from-indigo-800 via-purple-700 to-blue-700 text-white relative overflow-hidden">
+            <section className="min-h-screen min-w-screen px-6 py-16 bg-linear-to-br from-indigo-800 via-purple-700 to-blue-700 text-white relative overflow-hidden">
                 <div className="relative z-10 flex flex-col items-center gap-y-10">
                     {/* Títulos centrales */}
                     <section className="text-center">

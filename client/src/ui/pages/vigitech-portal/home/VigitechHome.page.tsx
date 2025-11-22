@@ -12,8 +12,8 @@ export const PortalHome: React.FC = () => {
 
   return (
     <main className="min-h-screen bg-blue-600 text-white overflow-x-hidden">
-      <section className="min-h-screen min-w-full bg-linear-to-br from-indigo-800 via-purple-700 to-blue-700 text-white text-center relative overflow-hidden flex items-center justify-center">
-        <img
+      <section className="min-h-screen min-w-full bg-linear-to-br from-indigo-800 via-purple-700 to-blue-700 text-white text-center relative overflow-hidden flex items-center justify-center px-5 lg:px-0">
+        < img
           src="/vigitech_home_welcome.jpg"
           alt="Futuristic world"
           className="absolute inset-0 w-full h-full object-cover opacity-10 pointer-events-none"
@@ -34,7 +34,7 @@ export const PortalHome: React.FC = () => {
             ¡¡ Comienza a explorar !!
           </button>
         </div>
-      </section>
+      </section >
 
       <section id="services" className="bg-white text-gray-800 px-6 py-20 relative">
         <h2 className="text-4xl font-bold text-center mb-16">Explora los servicios de Vigitech</h2>
@@ -114,6 +114,6 @@ export const PortalHome: React.FC = () => {
           </div>
         </div>
       </section>
-    </main>
+    </main >
   )
 }
