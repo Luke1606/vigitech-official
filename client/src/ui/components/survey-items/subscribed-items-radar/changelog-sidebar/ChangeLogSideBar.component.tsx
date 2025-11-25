@@ -14,9 +14,9 @@ import {
     DialogTitle,
 } from '../../..';
 import { useChangelog } from '../../../../../infrastructure/hooks/use-changelog';
-import { ChangeLogEntry, getRingColor, getRingLightColor, RadarRing } from '../../../../../infrastructure';
+import { ChangeLogEntry, RadarRing } from '../../../../../infrastructure';
 import { useEffect, useState } from 'react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 export const ChangeLogSideBar: React.FC<{
     visible: boolean
@@ -31,6 +31,21 @@ export const ChangeLogSideBar: React.FC<{
         const [currentDate, setCurrentDate] = useState('');
         const [currentTime, setCurrentTime] = useState('');
         const [timeZone, setTimeZone] = useState('');
+
+        // Mapeo de colores RGB para cada anillo - TODOS con texto blanco
+        const ringColors = {
+            [RadarRing.ADOPT]: { background: '34 197 94', text: '255 255 255' },    // green-500, texto blanco
+            [RadarRing.TEST]: { background: '234 179 8', text: '255 255 255' },     // yellow-500, texto blanco
+            [RadarRing.SUSTAIN]: { background: '249 115 22', text: '255 255 255' }, // orange-500, texto blanco
+            [RadarRing.HOLD]: { background: '239 68 68', text: '255 255 255' }      // red-500, texto blanco
+        };
+
+        // Función para convertir RGB a formato ARGB de Excel
+        const rgbToArgb = (rgb: string): string => {
+            const [r, g, b] = rgb.split(' ').map(Number);
+            // Formato ARGB: FF + RR + GG + BB
+            return `FF${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
+        };
 
         // Detectar si estamos en móvil
         useEffect(() => {
@@ -93,49 +108,258 @@ export const ChangeLogSideBar: React.FC<{
             };
         }, []);
 
-        // Función para descargar el registro de cambios como Excel
-        const downloadChangeLog = () => {
+        // Función para descargar el registro de cambios como Excel con estilos reales
+        const downloadChangeLog = async () => {
             if (changelogs.length === 0) return;
 
-            // Crear datos para el Excel
-            const excelData = [
-                // Encabezado con fecha, hora y zona horaria
-                ['Registro de Cambios'],
-                [`Fecha: ${currentDate}`],
-                [`Hora: ${currentTime}`],
-                [`Zona Horaria: ${timeZone}`],
-                [], // Línea en blanco
-                // Encabezados de la tabla
-                ['Elemento', 'Anillo Viejo', 'Anillo Nuevo'],
-                // Datos
-                ...changelogs.map(log => [log.itemTitle, log.oldRing, log.newRing])
-            ];
+            // Crear un nuevo workbook
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = 'Radar Tecnológico';
+            workbook.created = new Date();
 
-            // Crear libro de trabajo y hoja
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            // Añadir una hoja
+            const worksheet = workbook.addWorksheet('Registro de Cambios');
 
-            // Estilos básicos para el encabezado
-            if (!ws['!merges']) ws['!merges'] = [];
+            // Título principal
+            const titleRow = worksheet.getRow(1);
+            titleRow.getCell(1).value = 'REGISTRO DE CAMBIOS - RADAR TECNOLÓGICO';
+            worksheet.mergeCells('A1:E1');
+            titleRow.height = 30;
+            titleRow.getCell(1).font = {
+                name: 'Arial',
+                size: 16,
+                bold: true,
+                color: { argb: 'FFFFFF' }
+            };
+            titleRow.getCell(1).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: '2F5597' }
+            };
+            titleRow.getCell(1).alignment = {
+                vertical: 'middle',
+                horizontal: 'center'
+            };
+            titleRow.getCell(1).border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
 
-            // Aplicar estilos al encabezado
-            const headerRange = { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } };
-            if (!ws['!merges']) ws['!merges'] = [];
-            ws['!merges'].push(headerRange);
+            // Información de fecha/hora
+            worksheet.getCell('A3').value = 'Fecha de generación:';
+            worksheet.getCell('B3').value = currentDate;
+            worksheet.getCell('A4').value = 'Hora de generación:';
+            worksheet.getCell('B4').value = currentTime;
+            worksheet.getCell('A5').value = 'Zona horaria:';
+            worksheet.getCell('B5').value = timeZone;
+
+            // Estilo para la información
+            for (let i = 3; i <= 5; i++) {
+                const labelCell = worksheet.getCell(`A${i}`);
+                const valueCell = worksheet.getCell(`B${i}`);
+
+                labelCell.font = {
+                    name: 'Arial',
+                    size: 10,
+                    bold: true
+                };
+
+                valueCell.font = {
+                    name: 'Arial',
+                    size: 10
+                };
+            }
+
+            // Encabezados de la tabla (fila 7)
+            const headers = ['No.', 'ELEMENTO', 'ANILLO ANTERIOR', 'ANILLO ACTUAL', 'FECHA DE CAMBIO'];
+            const headerRow = worksheet.getRow(7);
+
+            headers.forEach((header, index) => {
+                const cell = headerRow.getCell(index + 1);
+                cell.value = header;
+                cell.font = {
+                    name: 'Arial',
+                    size: 11,
+                    bold: true,
+                    color: { argb: 'FFFFFF' }
+                };
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: '70AD47' }
+                };
+                cell.alignment = {
+                    vertical: 'middle',
+                    horizontal: 'center'
+                };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            });
+
+            headerRow.height = 25;
+
+            // Datos de la tabla
+            changelogs.forEach((log, index) => {
+                const rowNumber = 8 + index;
+                const row = worksheet.getRow(rowNumber);
+
+                const cells = [
+                    index + 1,
+                    log.itemTitle,
+                    log.oldRing.toUpperCase(), // Convertir a mayúsculas
+                    log.newRing.toUpperCase(), // Convertir a mayúsculas
+                    new Date().toLocaleDateString('es-ES')
+                ];
+
+                cells.forEach((value, cellIndex) => {
+                    const cell = row.getCell(cellIndex + 1);
+                    cell.value = value;
+
+                    // Estilo base para todas las celdas
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+
+                    // Alineación específica
+                    if (cellIndex === 0) { // Columna No.
+                        cell.alignment = { horizontal: 'center' };
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: index % 2 === 0 ? 'FFFFFF' : 'F2F2F2' }
+                        };
+                        cell.font = {
+                            name: 'Arial',
+                            size: 10,
+                            color: { argb: 'FF000000' }
+                        };
+                    }
+                    // Columna ELEMENTO
+                    else if (cellIndex === 1) {
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: index % 2 === 0 ? 'FFFFFF' : 'F2F2F2' }
+                        };
+                        cell.font = {
+                            name: 'Arial',
+                            size: 10,
+                            color: { argb: 'FF000000' }
+                        };
+                    }
+                    // Columna ANILLO ANTERIOR
+                    else if (cellIndex === 2) {
+                        const ringColor = ringColors[log.oldRing as RadarRing];
+                        const backgroundColor = rgbToArgb(ringColor.background);
+                        const textColor = rgbToArgb(ringColor.text);
+
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: backgroundColor }
+                        };
+                        cell.font = {
+                            name: 'Arial',
+                            size: 10,
+                            bold: true,
+                            color: { argb: textColor }
+                        };
+                        cell.alignment = {
+                            horizontal: 'center',
+                            vertical: 'middle'
+                        };
+                    }
+                    // Columna ANILLO ACTUAL
+                    else if (cellIndex === 3) {
+                        const ringColor = ringColors[log.newRing as RadarRing];
+                        const backgroundColor = rgbToArgb(ringColor.background);
+                        const textColor = rgbToArgb(ringColor.text);
+
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: backgroundColor }
+                        };
+                        cell.font = {
+                            name: 'Arial',
+                            size: 10,
+                            bold: true,
+                            color: { argb: textColor }
+                        };
+                        cell.alignment = {
+                            horizontal: 'center',
+                            vertical: 'middle'
+                        };
+                    }
+                    // Columna FECHA DE CAMBIO
+                    else if (cellIndex === 4) {
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: index % 2 === 0 ? 'FFFFFF' : 'F2F2F2' }
+                        };
+                        cell.font = {
+                            name: 'Arial',
+                            size: 10,
+                            color: { argb: 'FF000000' }
+                        };
+                        cell.alignment = {
+                            horizontal: 'center',
+                            vertical: 'middle'
+                        };
+                    }
+                });
+
+                row.height = 20;
+            });
+
+            // Pie de página
+            const footerRowNumber = 8 + changelogs.length + 1;
+            worksheet.mergeCells(`A${footerRowNumber}:E${footerRowNumber}`);
+            const footerCell = worksheet.getCell(`A${footerRowNumber}`);
+            footerCell.value = `Total de cambios registrados: ${changelogs.length}`;
+            footerCell.font = {
+                name: 'Arial',
+                size: 11,
+                bold: true,
+                color: { argb: '2F5597' }
+            };
+            footerCell.alignment = {
+                horizontal: 'center'
+            };
 
             // Ajustar anchos de columna
-            ws['!cols'] = [
-                { wch: 30 }, // Elemento
-                { wch: 15 }, // Anillo Viejo
-                { wch: 15 }  // Anillo Nuevo
+            worksheet.columns = [
+                { width: 6 },   // No.
+                { width: 35 },  // ELEMENTO
+                { width: 22 },  // ANILLO ANTERIOR
+                { width: 22 },  // ANILLO ACTUAL
+                { width: 22 }   // FECHA DE CAMBIO
             ];
 
-            // Añadir hoja al libro
-            XLSX.utils.book_append_sheet(wb, ws, 'Registro de Cambios');
+            // Generar buffer y descargar
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
 
-            // Generar archivo y descargar
-            const fileName = `registro-cambios-${currentDate.replace(/\//g, '-')}.xlsx`;
-            XLSX.writeFile(wb, fileName);
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `registro-cambios-${currentDate.replace(/\//g, '-')}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
         };
 
         useEffect(() => {
@@ -243,18 +467,18 @@ export const ChangeLogSideBar: React.FC<{
                                                         <span
                                                             className='p-1 mx-1 rounded-lg font-semibold'
                                                             style={{
-                                                                backgroundColor: getRingColor(log.oldRing),
-                                                                color: getRingLightColor(log.oldRing)
+                                                                backgroundColor: `rgb(${ringColors[log.oldRing as RadarRing].background})`,
+                                                                color: `rgb(${ringColors[log.oldRing as RadarRing].text})`
                                                             }}
-                                                        >{log.oldRing}</span>
+                                                        >{log.oldRing.toUpperCase()}</span>
                                                         <span>a</span>
                                                         <span
                                                             className='p-1 mx-1 rounded-lg font-semibold'
                                                             style={{
-                                                                backgroundColor: getRingColor(log.newRing),
-                                                                color: getRingLightColor(log.newRing)
+                                                                backgroundColor: `rgb(${ringColors[log.newRing as RadarRing].background})`,
+                                                                color: `rgb(${ringColors[log.newRing as RadarRing].text})`
                                                             }}
-                                                        >{log.newRing}</span>
+                                                        >{log.newRing.toUpperCase()}</span>
                                                     </p>
                                                 </div>
                                             ))
@@ -343,18 +567,18 @@ export const ChangeLogSideBar: React.FC<{
                                                     <span
                                                         className='p-1 mx-1 rounded-lg font-semibold'
                                                         style={{
-                                                            backgroundColor: getRingColor(log.oldRing),
-                                                            color: getRingLightColor(log.oldRing)
+                                                            backgroundColor: `rgb(${ringColors[log.oldRing as RadarRing].background})`,
+                                                            color: `rgb(${ringColors[log.oldRing as RadarRing].text})`
                                                         }}
-                                                    >{log.oldRing}</span>
+                                                    >{log.oldRing.toUpperCase()}</span>
                                                     <span>a</span>
                                                     <span
                                                         className='p-1 mx-1 rounded-lg font-semibold'
                                                         style={{
-                                                            backgroundColor: getRingColor(log.newRing),
-                                                            color: getRingLightColor(log.newRing)
+                                                            backgroundColor: `rgb(${ringColors[log.newRing as RadarRing].background})`,
+                                                            color: `rgb(${ringColors[log.newRing as RadarRing].text})`
                                                         }}
-                                                    >{log.newRing}</span>
+                                                    >{log.newRing.toUpperCase()}</span>
                                                 </p>
                                             </div>
                                         ))}
