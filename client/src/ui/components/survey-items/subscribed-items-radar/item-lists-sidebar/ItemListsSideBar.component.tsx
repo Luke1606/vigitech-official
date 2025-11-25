@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { EyeIcon, EyeOff, Loader2, Plus } from 'lucide-react';
+import { EyeIcon, EyeOff, Loader2, Plus, List } from 'lucide-react';
 import {
     Blip,
     getQuadrantColor,
@@ -33,6 +33,7 @@ import { UUID } from 'crypto';
 import blips from '../../../../../assets/data/radarMock';
 import { useUserItemListsAPI } from '../../../../../infrastructure/hooks/use-item-lists/api/useUserItemListsAPI.hook';
 import { useUserItemLists } from '../../../../../infrastructure';
+
 export const ItemListsSideBar: React.FC<{
     visible: boolean
     toggleVisible: () => void
@@ -64,6 +65,22 @@ export const ItemListsSideBar: React.FC<{
         const [elements, setElements] = useState<Blip[]>(blips);
 
         const [selectedItems, setSelectedItems] = useState<string[]>([]);
+        const [isMobile, setIsMobile] = useState(false);
+        const [mobileDialogOpen, setMobileDialogOpen] = useState(false);
+
+        // Detectar si estamos en móvil
+        useEffect(() => {
+            const checkMobile = () => {
+                setIsMobile(window.innerWidth < 768);
+            };
+
+            checkMobile();
+            window.addEventListener('resize', checkMobile);
+
+            return () => {
+                window.removeEventListener('resize', checkMobile);
+            };
+        }, []);
 
         const openRenameDialog = (id: UUID, name: string) => {
             setRenameTarget(id);
@@ -105,6 +122,100 @@ export const ItemListsSideBar: React.FC<{
             }
         }, [addTarget, getAvailableItemsForTarget]);
 
+        const handleMobileToggle = () => {
+            if (isMobile) {
+                setMobileDialogOpen(!mobileDialogOpen);
+            } else {
+                toggleVisible();
+            }
+        };
+
+        // Contenido reutilizable para ambos casos (sidebar y dialog)
+        const sidebarContent = (
+            <>
+                <SidebarGroup>
+                    <SidebarGroupLabel className="font-semibold text-xl pt-4 flex justify-between">
+                        Listas personalizadas
+                        <SyncButton />
+                    </SidebarGroupLabel>
+
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {/* Create Button */}
+                            <SidebarMenuItem key="create-button">
+                                <Dialog open={open} onOpenChange={setOpen}>
+                                    <DialogTrigger asChild>
+                                        <SidebarMenuButton asChild className='mt-5'>
+                                            <Button disabled={query.isPending.createList}>
+                                                {query.isPending.createList ?
+                                                    <Loader2 className='animate-spin' />
+                                                    :
+                                                    <>
+                                                        <Plus />
+                                                        Crear
+                                                    </>
+                                                }
+                                            </Button>
+                                        </SidebarMenuButton>
+                                    </DialogTrigger>
+
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Crear lista</DialogTitle>
+                                        </DialogHeader>
+
+                                        <Input
+                                            id='create-list-name'
+                                            placeholder="Nombre de la lista"
+                                            value={newListName}
+                                            onChange={(e) => setNewListName(e.target.value)}
+                                        />
+
+                                        <DialogFooter>
+                                            <Button
+                                                name='crearLista'
+                                                onClick={() => {
+                                                    if (newListName.trim()) {
+                                                        // query.createList(
+                                                        //     newListName.trim(),
+                                                        // );
+                                                        createList(newListName)
+                                                        setNewListName('');
+                                                        setOpen(false);
+                                                    }
+                                                }}>
+                                                Crear
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                            </SidebarMenuItem>
+
+                            {/* List Elements */}
+                            {!lists || lists.length === 0 ?
+                                (
+                                    <SidebarMenuItem key="none">
+                                        <p>No hay listas</p>
+                                    </SidebarMenuItem>
+                                ) : (
+                                    lists.map((list: UserItemList) => (
+                                        <SidebarMenuItem key={list.id}>
+                                            <CustomItemsList
+                                                list={list}
+                                                onRename={(id, listNewName) => openRenameDialog(id, listNewName)}
+                                                onAddItem={(id) => openAddItemDialog(id)}
+                                                onDeleteList={(id) => openDeleteDialog(id)}
+                                                onRemoveItem={(listId, itemIds) => openRemoveItemDialog(listId, itemIds)}
+                                            />
+                                        </SidebarMenuItem>
+                                    ))
+                                )
+                            }
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+            </>
+        );
 
         const listElements = !lists || lists.length === 0 ?
             (
@@ -383,51 +494,63 @@ export const ItemListsSideBar: React.FC<{
         );
 
         return (
-            <div className='flex mt-8'>
-                <Button
-                    className='absolute bottom-5 left-5 z-40'
-                    type='button'
-                    onClick={toggleVisible}>
-                    {visible ? <EyeOff /> : <EyeIcon />}
-                </Button>
+            <div className='flex mt-8 lg:mb-0 mb-24'>
+                {/* Botón para móvil - posición fixed en la parte superior */}
+                {isMobile && (
+                    <Button
+                        className='fixed top-20 left-4 z-50 flex items-center gap-2 shadow-lg'
+                        type='button'
+                        onClick={handleMobileToggle}
+                        size="sm"
+                    >
+                        <List className="h-4 w-4" />
+                        Listas
+                    </Button>
+                )}
 
-                <Sidebar
-                    side="left"
-                    className={`my-12 transition-all duration-300 ${visible ? 'w-80' : 'w-0'}`}>
-                    <SidebarContent>
-                        <SidebarGroup>
-                            <SidebarGroupLabel className="font-semibold text-xl pt-4 flex justify-between">
-                                Listas personalizadas
-                                <SyncButton />
-                            </SidebarGroupLabel>
+                {/* Botón para desktop - posición original */}
+                {!isMobile && (
+                    <Button
+                        className='absolute bottom-5 left-5 z-40'
+                        type='button'
+                        onClick={toggleVisible}>
+                        {visible ? <EyeOff /> : <EyeIcon />}
+                    </Button>
+                )}
 
-                            <SidebarGroupContent>
-                                <SidebarMenu>
+                {/* Sidebar para desktop */}
+                {!isMobile && (
+                    <Sidebar
+                        side="left"
+                        className={`my-12 transition-all duration-300 ${visible ? 'w-80' : 'w-0'}`}>
+                        <SidebarContent>
+                            {sidebarContent}
+                        </SidebarContent>
 
-                                    {createButton}
+                        {renameListDialog}
+                        {deleteListDialog}
+                        {addElementToListDialog}
+                        {removeElementFromListDialog}
+                    </Sidebar>
+                )}
 
-                                    {
-                                        // query.findAll.isPending ?
-                                        //     <div className='flex justify-center'>
-                                        //         <Loader2 className='animate-spin ' />
-                                        //     </div>
-                                        //     :
-                                            listElements
-                                    }
+                {/* Dialog para móvil */}
+                {isMobile && (
+                    <Dialog open={mobileDialogOpen} onOpenChange={setMobileDialogOpen}>
+                        <DialogContent className="max-w-[90vw] h-[80vh] flex flex-col">
+                            <div className="flex-1 overflow-y-auto mt-4">
+                                <SidebarContent>
+                                    {sidebarContent}
+                                </SidebarContent>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                )}
 
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
-                    </SidebarContent>
-
-                    {renameListDialog}
-
-                    {deleteListDialog}
-
-                    {addElementToListDialog}
-
-                    {removeElementFromListDialog}
-                </Sidebar>
-            </div >
+                {renameListDialog}
+                {deleteListDialog}
+                {addElementToListDialog}
+                {removeElementFromListDialog}
+            </div>
         )
     };
