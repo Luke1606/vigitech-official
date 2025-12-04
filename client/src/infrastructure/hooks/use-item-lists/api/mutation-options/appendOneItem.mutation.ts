@@ -31,7 +31,7 @@ export const useAppendOneItemMutationOptions = () => {
             if (context?.previousList) {
                 queryClient.setQueryData([userItemListsKey, listId], context.previousList);
             }
-            //toast.error("Error al añadir el elemento a la lista. Compruebe su conexión o inténtelo de nuevo.")
+            toast.error("Error al añadir el elemento a la lista. Compruebe su conexión o inténtelo de nuevo.")
         },
 
         onSuccess: () => {

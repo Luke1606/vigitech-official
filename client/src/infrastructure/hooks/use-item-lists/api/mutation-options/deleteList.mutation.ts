@@ -32,7 +32,7 @@ export const useDeleteListMutationOptions = () => {
             if (context?.previousLists) {
                 queryClient.setQueryData([userItemListsKey], context.previousLists);
             }
-            //toast.error("Error al eliminar la lista. Compruebe su conexión o inténtelo de nuevo.")
+            toast.error("Error al eliminar la lista. Compruebe su conexión o inténtelo de nuevo.")
         },
 
         onSuccess: () => {

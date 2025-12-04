@@ -12,11 +12,13 @@ import {
 import { RadarMenu } from './radar-menu/RadarMenu.component';
 import type { SurveyItem } from '../../../../../infrastructure';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Search, Upload } from 'lucide-react';
+import { Eye, EyeOff, Search, Upload, RefreshCw } from 'lucide-react';
 import { Button } from '../../../../components/shared';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../components/shared';
 import { Input } from '../../../../components/shared';
 import { Label } from '../../../../components/shared';
+import { useSurveyItemsAPI } from '../../../../../infrastructure/hooks/use-survey-items/api/useSurveyItemsAPI.hook';
+import * as XLSX from 'xlsx';
 
 export const Radar: React.FC<{
     entries?: Blip[];
@@ -34,6 +36,7 @@ export const Radar: React.FC<{
     onBlipClick,
     onBlipHover
 }) => {
+        const query = useSurveyItemsAPI();
         const navigate = useNavigate();
         const { addPendingUnsubscribes, addPendingRemoves } = useSurveyItems();
         const [hoveredBlipId, setHoveredBlipId] = React.useState<string | null>(null);
@@ -62,9 +65,14 @@ export const Radar: React.FC<{
         const [searchDialogOpen, setSearchDialogOpen] = React.useState(false);
         const [searchTerm, setSearchTerm] = React.useState('');
         const [excelFile, setExcelFile] = React.useState<File | null>(null);
+        const [excelError, setExcelError] = React.useState<string | null>(null);
 
-        // Estado para el hover del botón en desktop
-        const [isButtonHovered, setIsButtonHovered] = React.useState(false);
+        // Estados separados para el hover de cada botón en desktop
+        const [isSearchButtonHovered, setIsSearchButtonHovered] = React.useState(false);
+        const [isChangesButtonHovered, setIsChangesButtonHovered] = React.useState(false);
+
+        // Estado para el loading de cambios
+        const [isLoadingChanges, setIsLoadingChanges] = React.useState(false);
 
         // Detectar cambio de tamaño de pantalla
         React.useEffect(() => {
@@ -86,8 +94,8 @@ export const Radar: React.FC<{
 
         // Determinar si el botón aceptar está habilitado
         const isAcceptEnabled = React.useMemo(() => {
-            return (searchTerm.trim() !== '' && !excelFile) || (excelFile && searchTerm.trim() === '');
-        }, [searchTerm, excelFile]);
+            return (searchTerm.trim() !== '' && !excelFile) || (excelFile && searchTerm.trim() === '' && !excelError);
+        }, [searchTerm, excelFile, excelError]);
 
         // Determinar si el input de búsqueda está deshabilitado
         const isSearchInputDisabled = React.useMemo(() => {
@@ -99,9 +107,72 @@ export const Radar: React.FC<{
             return searchTerm.trim() !== '';
         }, [searchTerm]);
 
-        // Colores para el botón del SVG
-        const buttonFillColor = isButtonHovered ? '#1d4ed8' : '#2563eb'; // Azul oscuro en hover, azul normal por defecto
-        const buttonStrokeColor = isButtonHovered ? '#1e40af' : '#1d4ed8'; // Azul más oscuro en hover
+        // Colores para el botón de búsqueda de tecnología
+        const searchButtonFillColor = isSearchButtonHovered ? '#1d4ed8' : '#2563eb'; // Azul oscuro en hover, azul normal por defecto
+        const searchButtonStrokeColor = isSearchButtonHovered ? '#1e40af' : '#1d4ed8'; // Azul más oscuro en hover
+
+        // Colores para el botón de buscar cambios
+        const changesButtonFillColor = isChangesButtonHovered ? '#059669' : (isLoadingChanges ? '#059669' : '#10b981'); // Verde oscuro en hover, verde normal por defecto
+        const changesButtonStrokeColor = isChangesButtonHovered ? '#047857' : (isLoadingChanges ? '#047857' : '#059669'); // Verde más oscuro en hover
+
+        // Función para leer y validar el archivo Excel
+        const readAndValidateExcel = (file: File): Promise<string[]> => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                        const workbook = XLSX.read(data, { type: 'array' });
+
+                        // Obtener la primera hoja
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+
+                        // Convertir a JSON
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                        if (jsonData.length === 0) {
+                            reject(new Error('El archivo Excel está vacío'));
+                            return;
+                        }
+
+                        // Obtener los headers (primera fila)
+                        const headers = jsonData[0] as string[];
+
+                        // Validar que solo haya una columna llamada "Titulo"
+                        if (headers.length !== 1 || headers[0] !== 'Titulo') {
+                            reject(new Error('El archivo Excel debe tener exactamente una columna con el nombre "Titulo"'));
+                            return;
+                        }
+
+                        // Extraer los valores de la columna Titulo (excluyendo el header)
+                        const titles: string[] = [];
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i] as any[];
+                            if (row && row[0] && typeof row[0] === 'string' && row[0].trim() !== '') {
+                                titles.push(row[0].trim());
+                            }
+                        }
+
+                        if (titles.length === 0) {
+                            reject(new Error('No se encontraron valores válidos en la columna "Titulo"'));
+                            return;
+                        }
+
+                        resolve(titles);
+                    } catch (error) {
+                        reject(new Error('Error al leer el archivo Excel: ' + (error as Error).message));
+                    }
+                };
+
+                reader.onerror = () => {
+                    reject(new Error('Error al leer el archivo'));
+                };
+
+                reader.readAsArrayBuffer(file);
+            });
+        };
 
         // Función para alternar la visibilidad de un cuadrante
         const toggleQuadrantVisibility = (quadrant: RadarQuadrant) => {
@@ -198,6 +269,7 @@ export const Radar: React.FC<{
             setSearchDialogOpen(false);
             setSearchTerm('');
             setExcelFile(null);
+            setExcelError(null);
         };
 
         const handleSearchTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,29 +278,73 @@ export const Radar: React.FC<{
             // Si se escribe algo, limpiar el archivo Excel
             if (value.trim() !== '') {
                 setExcelFile(null);
+                setExcelError(null);
             }
         };
 
-        const handleExcelFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const handleExcelFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
             const file = e.target.files?.[0] || null;
             setExcelFile(file);
-            // Si se selecciona un archivo, limpiar el término de búsqueda
+            setExcelError(null); // Limpiar errores anteriores
+
             if (file) {
+                // Limpiar el término de búsqueda
                 setSearchTerm('');
+
+                try {
+                    // Leer y validar el Excel
+                    await readAndValidateExcel(file);
+                    // Si la validación es exitosa, no hacemos nada más aquí
+                    // Los títulos se leerán nuevamente en handleAccept
+                } catch (error) {
+                    const errorMessage = (error as Error).message;
+                    setExcelError(errorMessage);
+                    setExcelFile(null); // Limpiar el archivo si hay error
+
+                    // Limpiar el input file
+                    if (e.target) {
+                        e.target.value = '';
+                    }
+                }
             }
         };
 
-        const handleAccept = () => {
+        // Función para buscar cambios (ejecuta query.subscribed)
+        const handleSearchChanges = async () => {
+            console.log('Buscando cambios...');
+            setIsLoadingChanges(true);
+            try {
+                await query.subscribed;
+            } catch (error) {
+                console.error('Error buscando cambios:', error);
+            } finally {
+                setIsLoadingChanges(false);
+            }
+        };
+
+        const handleAccept = async () => {
             if (searchTerm.trim() !== '') {
                 console.log('Buscando tecnología:', searchTerm);
-                // Aquí iría la lógica para buscar la tecnología
+                query.create(searchTerm);
+                handleCloseSearchDialog();
             } else if (excelFile) {
-                console.log('Importando archivo Excel:', excelFile.name);
-                // Aquí iría la lógica para importar el Excel
-            }
+                try {
+                    console.log('Importando archivo Excel:', excelFile.name);
 
-            // Cerrar el diálogo y resetear los estados
-            handleCloseSearchDialog();
+                    // Leer el archivo para obtener los títulos
+                    const titles = await readAndValidateExcel(excelFile);
+                    console.log('Títulos a importar:', titles);
+
+                    // Llamar a createBatch con los títulos extraídos
+                    query.createBatch(titles);
+
+                    handleCloseSearchDialog();
+                } catch (error) {
+                    const errorMessage = (error as Error).message;
+                    setExcelError(errorMessage);
+                    // No cerrar el diálogo si hay error
+                }
+            }
         };
 
         // Cerrar menú cuando se hace clic fuera
@@ -335,16 +451,29 @@ export const Radar: React.FC<{
         if (isMobile) {
             return (
                 <div className="w-full min-h-screen flex flex-col items-center py-4 px-2 bg-gray-50">
-                    {/* Barra de botones móvil - BUSCAR/IMPORTAR ENTRE LISTAS PERSONALIZADAS Y CHANGELOG */}
+                    {/* Barra de botones móvil */}
                     <div className="absolute w-fit top-20 left-auto justify-between space-x-2">
-
-                        {/* Botón de Buscar/Importar Tecnología - EN MEDIO */}
+                        {/* Botón de Buscar/Importar Tecnología */}
                         <Button
                             onClick={handleOpenSearchDialog}
                             className="flex-1 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white"
                         >
                             <Search size={18} />
                             <span className="">Buscar Tecnología</span>
+                        </Button>
+
+                        {/* NUEVO: Botón de Buscar Cambios */}
+                        <Button
+                            onClick={handleSearchChanges}
+                            disabled={isLoadingChanges}
+                            className="flex-1 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                        >
+                            {isLoadingChanges ? (
+                                <RefreshCw size={18} className="animate-spin" />
+                            ) : (
+                                <RefreshCw size={18} />
+                            )}
+                            <span className="ml-2">{isLoadingChanges ? 'Buscando...' : 'Buscar Cambios'}</span>
                         </Button>
                     </div>
 
@@ -660,11 +789,21 @@ export const Radar: React.FC<{
                                             className={`${isFileInputDisabled ? "text-gray-400" : "text-muted-foreground"}`}
                                         />
                                     </div>
+
+                                    {/* Mostrar información del archivo */}
                                     {excelFile && (
                                         <p className="text-sm text-green-600">
                                             Archivo seleccionado: {excelFile.name}
                                         </p>
                                     )}
+
+                                    {/* Mostrar error de validación */}
+                                    {excelError && (
+                                        <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                                            {excelError}
+                                        </p>
+                                    )}
+
                                     {isFileInputDisabled && (
                                         <p className="text-xs text-gray-500 mt-1">
                                             Este campo está deshabilitado porque hay texto en la búsqueda
@@ -726,61 +865,136 @@ export const Radar: React.FC<{
                     preserveAspectRatio="xMidYMid meet"
                     style={{ border: '1px solid #ccc', background: '#f9f9f9' }}
                 >
-                    {/* Botón de búsqueda/importación DENTRO DEL SVG */}
-                    <g
-                        onClick={handleOpenSearchDialog}
-                        onMouseEnter={() => setIsButtonHovered(true)}
-                        onMouseLeave={() => setIsButtonHovered(false)}
-                        style={{ cursor: 'pointer' }}
-                        className="transition-all duration-200 ease-in-out"
-                    >
-                        {/* Fondo del botón */}
-                        <rect
-                            x="-90"
-                            y="-440"
-                            width="180"
-                            height="36"
-                            rx="6"
-                            fill={buttonFillColor}
-                            stroke={buttonStrokeColor}
-                            strokeWidth="1"
-                            className="transition-all duration-200 ease-in-out"
-                        />
-
-                        {/* Texto del botón */}
-                        <text
-                            x="15"
-                            y="-416"
-                            fontSize="16"
-                            fill="white"
-                            textAnchor="middle"
-                            fontWeight="500"
-                            style={{ userSelect: 'none', pointerEvents: 'none' }}
+                    {/* Grupo de botones DENTRO DEL SVG */}
+                    <g className="transition-all duration-200 ease-in-out">
+                        {/* Botón de Buscar Tecnología */}
+                        <g
+                            onClick={handleOpenSearchDialog}
+                            onMouseEnter={() => setIsSearchButtonHovered(true)}
+                            onMouseLeave={() => setIsSearchButtonHovered(false)}
+                            style={{ cursor: 'pointer' }}
                             className="transition-all duration-200 ease-in-out"
                         >
-                            Buscar Tecnología
-                        </text>
+                            {/* Fondo del botón */}
+                            <rect
+                                x="-190"
+                                y="-440"
+                                width="180"
+                                height="36"
+                                rx="6"
+                                fill={searchButtonFillColor}
+                                stroke={searchButtonStrokeColor}
+                                strokeWidth="1"
+                                className="transition-all duration-200 ease-in-out"
+                            />
 
-                        {/* Ícono de búsqueda */}
-                        <g transform="translate(-70, -422)" style={{ pointerEvents: 'none' }}>
-                            <circle
-                                cx="0"
-                                cy="0"
-                                r="8"
-                                fill="none"
-                                stroke="white"
-                                strokeWidth="1.5"
+                            {/* Texto del botón */}
+                            <text
+                                x="-90"
+                                y="-416"
+                                fontSize="16"
+                                fill="white"
+                                textAnchor="middle"
+                                fontWeight="500"
+                                style={{ userSelect: 'none', pointerEvents: 'none' }}
+                                className="transition-all duration-200 ease-in-out"
+                            >
+                                Buscar Tecnología
+                            </text>
+
+                            {/* Ícono de búsqueda */}
+                            <g transform="translate(-170, -422)" style={{ pointerEvents: 'none' }}>
+                                <circle
+                                    cx="0"
+                                    cy="0"
+                                    r="8"
+                                    fill="none"
+                                    stroke="white"
+                                    strokeWidth="1.5"
+                                    className="transition-all duration-200 ease-in-out"
+                                />
+                                <line
+                                    x1="5.5"
+                                    y1="5.5"
+                                    x2="10"
+                                    y2="10"
+                                    stroke="white"
+                                    strokeWidth="1.5"
+                                    className="transition-all duration-200 ease-in-out"
+                                />
+                            </g>
+                        </g>
+
+                        {/* NUEVO: Botón de Buscar Cambios */}
+                        <g
+                            onClick={handleSearchChanges}
+                            onMouseEnter={() => setIsChangesButtonHovered(true)}
+                            onMouseLeave={() => setIsChangesButtonHovered(false)}
+                            style={{ cursor: 'pointer' }}
+                            className="transition-all duration-200 ease-in-out"
+                        >
+                            {/* Fondo del botón (verde) */}
+                            <rect
+                                x="10"
+                                y="-440"
+                                width="180"
+                                height="36"
+                                rx="6"
+                                fill={changesButtonFillColor}
+                                stroke={changesButtonStrokeColor}
+                                strokeWidth="1"
                                 className="transition-all duration-200 ease-in-out"
                             />
-                            <line
-                                x1="5.5"
-                                y1="5.5"
-                                x2="10"
-                                y2="10"
-                                stroke="white"
-                                strokeWidth="1.5"
+
+                            {/* Texto del botón */}
+                            <text
+                                x="115"
+                                y="-416"
+                                fontSize="16"
+                                fill="white"
+                                textAnchor="middle"
+                                fontWeight="500"
+                                style={{ userSelect: 'none', pointerEvents: 'none' }}
                                 className="transition-all duration-200 ease-in-out"
-                            />
+                            >
+                                {isLoadingChanges ? 'Buscando...' : 'Buscar Cambios'}
+                            </text>
+
+                            {/* Ícono de refresh */}
+                            <g transform="translate(35, -422)" style={{ pointerEvents: 'none' }}>
+                                {isLoadingChanges ? (
+                                    // Ícono de loading (spinner)
+                                    <circle
+                                        cx="0"
+                                        cy="0"
+                                        r="8"
+                                        fill="none"
+                                        stroke="white"
+                                        strokeWidth="1.5"
+                                        className="animate-spin"
+                                    />
+                                ) : (
+                                    // Ícono de refresh normal
+                                    <circle
+                                        cx="0"
+                                        cy="0"
+                                        r="8"
+                                        fill="none"
+                                        stroke="white"
+                                        strokeWidth="1.5"
+                                        className="transition-all duration-200 ease-in-out"
+                                    />
+                                )}
+                                {!isLoadingChanges && (
+                                    <path
+                                        d="M 4 -4 L 0 -8 L -4 -4 M 0 -8 L 0 6 M 4 4 L 0 8 L -4 4"
+                                        stroke="white"
+                                        strokeWidth="1.5"
+                                        fill="none"
+                                        className="transition-all duration-200 ease-in-out"
+                                    />
+                                )}
+                            </g>
                         </g>
                     </g>
 
@@ -1096,11 +1310,21 @@ export const Radar: React.FC<{
                                         className={`${isFileInputDisabled ? "text-gray-400" : "text-muted-foreground"}`}
                                     />
                                 </div>
+
+                                {/* Mostrar información del archivo */}
                                 {excelFile && (
                                     <p className="text-sm text-green-600">
                                         Archivo seleccionado: {excelFile.name}
                                     </p>
                                 )}
+
+                                {/* Mostrar error de validación */}
+                                {excelError && (
+                                    <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                                        {excelError}
+                                    </p>
+                                )}
+
                                 {isFileInputDisabled && (
                                     <p className="text-xs text-gray-500 mt-1">
                                         Este campo está deshabilitado porque hay texto en la búsqueda
