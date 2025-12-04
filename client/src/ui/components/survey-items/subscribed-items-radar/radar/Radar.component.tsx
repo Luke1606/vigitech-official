@@ -12,13 +12,20 @@ import {
 import { RadarMenu } from './radar-menu/RadarMenu.component';
 import type { SurveyItem } from '../../../../../infrastructure';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Search, Upload, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, Search, Upload, RefreshCw, Menu, X } from 'lucide-react';
 import { Button } from '../../../../components/shared';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../components/shared';
 import { Input } from '../../../../components/shared';
 import { Label } from '../../../../components/shared';
 import { useSurveyItemsAPI } from '../../../../../infrastructure/hooks/use-survey-items/api/useSurveyItemsAPI.hook';
 import * as XLSX from 'xlsx';
+// Importar componentes de menú de shadcn
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "../../../../components/shared";
 
 export const Radar: React.FC<{
     entries?: Blip[];
@@ -73,6 +80,9 @@ export const Radar: React.FC<{
 
         // Estado para el loading de cambios
         const [isLoadingChanges, setIsLoadingChanges] = React.useState(false);
+
+        // Estado para el menú móvil
+        const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
         // Detectar cambio de tamaño de pantalla
         React.useEffect(() => {
@@ -262,6 +272,7 @@ export const Radar: React.FC<{
 
         // Manejadores para el diálogo de búsqueda/importación
         const handleOpenSearchDialog = () => {
+            setMobileMenuOpen(false); // Cerrar el menú móvil
             setSearchDialogOpen(true);
         };
 
@@ -312,6 +323,7 @@ export const Radar: React.FC<{
         // Función para buscar cambios (ejecuta query.subscribed)
         const handleSearchChanges = async () => {
             console.log('Buscando cambios...');
+            setMobileMenuOpen(false); // Cerrar el menú móvil
             setIsLoadingChanges(true);
             try {
                 await query.subscribed;
@@ -451,30 +463,44 @@ export const Radar: React.FC<{
         if (isMobile) {
             return (
                 <div className="w-full min-h-screen flex flex-col items-center py-4 px-2 bg-gray-50">
-                    {/* Barra de botones móvil */}
-                    <div className="absolute w-fit top-20 left-auto justify-between space-x-2">
-                        {/* Botón de Buscar/Importar Tecnología */}
-                        <Button
-                            onClick={handleOpenSearchDialog}
-                            className="flex-1 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                            <Search size={18} />
-                            <span className="">Buscar Tecnología</span>
-                        </Button>
-
-                        {/* NUEVO: Botón de Buscar Cambios */}
-                        <Button
-                            onClick={handleSearchChanges}
-                            disabled={isLoadingChanges}
-                            className="flex-1 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
-                        >
-                            {isLoadingChanges ? (
-                                <RefreshCw size={18} className="animate-spin" />
-                            ) : (
-                                <RefreshCw size={18} />
-                            )}
-                            <span className="ml-2">{isLoadingChanges ? 'Buscando...' : 'Buscar Cambios'}</span>
-                        </Button>
+                    {/* Contenedor del menú móvil - CENTRADO HORIZONTALMENTE EN LA PARTE SUPERIOR */}
+                    <div className="absolute top-18">
+                        <DropdownMenu open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="rounded-full w-12 h-12 bg-white shadow-md border-gray-200 hover:bg-gray-50 transition-all duration-200"
+                                >
+                                    {mobileMenuOpen ? (
+                                        <X size={24} className="text-gray-700" />
+                                    ) : (
+                                        <Menu size={24} className="text-gray-700" />
+                                    )}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="center" className="w-56 mt-2">
+                                <DropdownMenuItem
+                                    onClick={handleOpenSearchDialog}
+                                    className="flex items-center cursor-pointer py-3"
+                                >
+                                    <Search size={18} className="mr-3" />
+                                    <span className="text-base">Buscar Tecnología</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={handleSearchChanges}
+                                    disabled={isLoadingChanges}
+                                    className="flex items-center cursor-pointer py-3"
+                                >
+                                    {isLoadingChanges ? (
+                                        <RefreshCw size={18} className="mr-3 animate-spin" />
+                                    ) : (
+                                        <RefreshCw size={18} className="mr-3" />
+                                    )}
+                                    <span className="text-base">{isLoadingChanges ? 'Buscando...' : 'Buscar Cambios'}</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
 
                     {/* Contenedor de cuadrantes móviles */}
