@@ -2,6 +2,7 @@ import type { UUID } from "crypto";
 import { mutationOptions, useQueryClient } from "@tanstack/react-query";
 import { surveyItemsRepository, type SurveyItem } from "../../../..";
 import { surveyItemsKey, recommendedKey, subscribedKey } from "../constants";
+import { toast } from "react-toastify";
 
 export const useRemoveOneMutationOptions = () => {
     const queryClient = useQueryClient();
@@ -68,6 +69,25 @@ export const useRemoveOneMutationOptions = () => {
 					context.previousSubscribed
 				);
 			}
+
+			toast.error("Error al remover el elemento seleccionado. Compruebe su conexión o inténtelo de nuevo.")
+		},
+
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: [
+					surveyItemsKey,
+					recommendedKey
+				]
+			});
+
+			queryClient.invalidateQueries({
+				queryKey: [
+					surveyItemsKey,
+					subscribedKey
+				]
+			});
+			toast.success("Se removió con éxito el elemento.")
 		},
 
 		onSettled: () => {

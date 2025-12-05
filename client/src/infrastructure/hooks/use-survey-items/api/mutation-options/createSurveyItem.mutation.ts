@@ -10,10 +10,11 @@ export const useCreateSurveyItemMutationOptions = () => {
         mutationFn: (title: string) => surveyItemsRepository.create(title),
 
         onError: (_error, _variables) => {
-            toast.error("Error al crear la lista. Compruebe su conexión o inténtelo de nuevo.")
+            toast.error("Error al añadir el elemento. Compruebe su conexión o inténtelo de nuevo.")
         },
 
         onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [surveyItemsKey] });
             toast.success("Se añadió con éxito el elemento.")
         },
 

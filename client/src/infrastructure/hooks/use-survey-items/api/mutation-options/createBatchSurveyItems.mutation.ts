@@ -10,10 +10,11 @@ export const useCreateBatchSurveyItemsMutationOptions = () => {
         mutationFn: (titles: string[]) => surveyItemsRepository.createBatch(titles),
 
         onError: (_error, _variables) => {
-            toast.error("Error al crear los elementos. Compruebe su conexión o inténtelo de nuevo.")
+            toast.error("Error al añadir los elementos. Compruebe su conexión o inténtelo de nuevo.")
         },
 
         onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [surveyItemsKey] });
             toast.success("Se añadieron con éxito los elementos.")
         },
 

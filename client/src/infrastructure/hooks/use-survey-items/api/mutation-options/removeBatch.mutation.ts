@@ -2,6 +2,7 @@ import type { UUID } from "crypto";
 import { mutationOptions, useQueryClient } from "@tanstack/react-query";
 import { surveyItemsRepository, type SurveyItem } from "../../../..";
 import { surveyItemsKey, recommendedKey, subscribedKey } from "../constants";
+import { toast } from "react-toastify";
 
 export const useRemoveBatchMutationOptions = () => {
     const queryClient = useQueryClient();
@@ -78,6 +79,22 @@ export const useRemoveBatchMutationOptions = () => {
 					context.previousSubscribed
 				);
 			}
+
+			toast.error("Error al remover los elementos seleccionados. Compruebe su conexión o inténtelo de nuevo.")
+		},
+
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: [surveyItemsKey, recommendedKey]
+			});
+
+			queryClient.invalidateQueries({
+				queryKey: [
+					surveyItemsKey,
+					subscribedKey
+				]
+			});
+			toast.success("Se removieron con éxito los elementos.")
 		},
 
 		onSettled: () => {
