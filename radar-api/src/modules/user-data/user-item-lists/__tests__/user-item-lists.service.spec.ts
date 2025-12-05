@@ -79,17 +79,30 @@ describe('UserItemListsService', () => {
     // Añadir item a la lista (appendOneItem)
     describe('appendOneItem', () => {
         it('debe añadir un item a la lista y devolver la lista actualizada', async () => {
+            // Mock para item.findUniqueOrThrow
+            (mockPrismaClient.item.findUniqueOrThrow as jest.Mock).mockResolvedValue(mockSurveyItem);
             const listWithItem = { ...mockUserItemList, items: [mockSurveyItem] };
             (mockPrismaClient.userItemList.update as jest.Mock).mockResolvedValue(listWithItem);
 
             const result = await service.appendOneItem(MOCK_USER_ID, MOCK_LIST_ID, MOCK_ITEM_ID);
 
             expect(result).toEqual(listWithItem);
+            expect(mockPrismaClient.item.findUniqueOrThrow).toHaveBeenCalledWith(
+                expect.objectContaining({ where: { id: MOCK_ITEM_ID } }),
+            );
             expect(mockPrismaClient.userItemList.update).toHaveBeenCalledWith(
                 expect.objectContaining({
                     where: { id: MOCK_LIST_ID, ownerId: MOCK_USER_ID },
                     data: { items: { connect: { id: MOCK_ITEM_ID } } },
                 }),
+            );
+        });
+
+        it('debe lanzar Prisma.NotFoundError si el item a añadir no existe', async () => {
+            (mockPrismaClient.item.findUniqueOrThrow as jest.Mock).mockRejectedValue(notFoundError);
+
+            await expect(service.appendOneItem(MOCK_USER_ID, MOCK_LIST_ID, MOCK_ITEM_ID)).rejects.toThrow(
+                notFoundError,
             );
         });
     });

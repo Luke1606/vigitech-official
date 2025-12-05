@@ -8,7 +8,7 @@ import {
     UserSubscribedItem,
     UserHiddenItem,
 } from '@prisma/client';
-import { AuthenticatedRequest } from '../../../shared/types/authenticated-request.type';
+import { AuthenticatedRequest } from '@/shared/types/authenticated-request.type';
 
 // ===========================================
 // 1. CONSTANTES Y DATOS BASE
@@ -147,6 +147,11 @@ export const mockPrismaClient = {
         findUniqueOrThrow: jest.fn(),
     } as MockDelegate,
 
+    item: { // Add the item delegate to the mock
+        findUniqueOrThrow: jest.fn(),
+        findMany: jest.fn(),
+    } as MockDelegate,
+
     userSubscribedItem: {
         create: jest.fn(),
         findMany: jest.fn(),
@@ -160,6 +165,8 @@ export const mockPrismaClient = {
         deleteMany: jest.fn(),
     } as MockDelegate,
 } as unknown as PrismaClient;
+
+// Mock para la solicitud autenticada (Controller)
 
 // Mock para la solicitud autenticada (Controller)
 export const mockAuthenticatedRequest = {

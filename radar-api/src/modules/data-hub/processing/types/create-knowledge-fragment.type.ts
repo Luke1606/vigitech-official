@@ -20,7 +20,7 @@ export type CreateKnowledgeFragment = {
      */
     associatedKPIs: Prisma.JsonValue;
     /**
-     * Un array de UUIDs correspondientes a las entradas de datos crudos originales de las cuales se derivó este fragmento.
+     * El UUID correspondiente a la entrada de datos crudos original de la cual se derivó este fragmento.
      */
-    sourceRawDataIds: UUID[];
+    sourceRawDataId: UUID;
 };

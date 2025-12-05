@@ -50,7 +50,11 @@ export class OrchestrationService {
             },
         });
 
-        await this.processingService.processRawData(unprocessedRawData);
-        this.logger.log('Data processing finished.');
+        if (unprocessedRawData.length > 0) {
+            await this.processingService.processRawData(unprocessedRawData);
+            this.logger.log('Data processing finished.');
+        } else {
+            this.logger.log('No unprocessed raw data found.');
+        }
     }
 }

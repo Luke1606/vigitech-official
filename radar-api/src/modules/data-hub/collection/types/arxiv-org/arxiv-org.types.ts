@@ -15,10 +15,10 @@ export type ArxivPaper = {
     id: string;
     title: string;
     summary: string;
-    authors: ArxivAuthor[];
+    authors: ArxivAuthor[] | ArxivAuthor;
     published: string;
     updated: string;
-    categories: ArxivCategory[];
+    categories: ArxivCategory[] | ArxivCategory;
     primaryCategory: ArxivCategory;
     link: string;
 };

@@ -29,36 +29,42 @@ export class ProcessingService {
         this.logger.log(`Procesando lote de datos crudos de ${rawDataBatch.length} elementos`);
 
         if (rawDataBatch.length > 0) {
+            const rawDataSummaries = rawDataBatch.map((data) => ({
+                id: data.id,
+                source: data.source,
+                dataType: data.dataType,
+                contentSnippet: JSON.stringify(data.content).substring(0, 500), // Limitar el tamaño para el prompt
+            }));
+
             const prompt: string = `
                 Eres un asistente de IA especializado en la extracción de fragmentos de conocimiento y KPIs asociados a partir de datos crudos.
-                Tu tarea es analizar un lote de entradas de datos crudos y convertirlos en un array estructurado de fragmentos de conocimiento.
+                Tu tarea es analizar el siguiente lote de entradas de datos crudos y convertirlos en un array estructurado de fragmentos de conocimiento.
                 Cada fragmento de conocimiento debe contener un 'textSnippet' (un texto conciso y limpio listo para la inyección en LLM y para la búsqueda semántica)
                 y 'associatedKPIs' (métricas estructuradas en formato JSON que viajan con el vector para la búsqueda híbrida).
 
                 Considera las siguientes reglas:
-                - Una única entrada de datos crudos podría generar múltiples fragmentos de conocimiento, o múltiples entradas de datos crudos podrían contribuir a un único fragmento de conocimiento.
+                - Una única entrada de datos crudos podría generar múltiples fragmentos de conocimiento.
                 - El 'textSnippet' debe ser un resumen o una pieza clave de información derivada de los datos crudos.
                 - Los 'associatedKPIs' deben ser métricas relevantes o puntos de datos estructurados extraídos de los datos crudos. Si no se encuentran KPIs específicos, proporciona un objeto JSON vacío.
-                - La salida debe ser un JSON con una propiedad 'fragments' que es un array de objetos, donde cada objeto tiene 'textSnippet' (cadena), 'associatedKPIs' (objeto JSON), y 'sourceRawDataIds' (array de cadenas, correspondientes al id original de cada RawData en la que te basaste).
+                - La salida debe ser un JSON con una propiedad 'fragments' que es un array de objetos, donde cada objeto tiene 'textSnippet' (cadena), 'associatedKPIs' (objeto JSON), y 'sourceRawDataId' (cadena, correspondiente al id original de la RawData en la que te basaste).
 
-                Aquí está el lote de datos crudos en formato JSON:
-                ${JSON.stringify(rawDataBatch)}
+                Aquí están los resúmenes de las entradas de datos crudos en formato JSON:
+                ${JSON.stringify(rawDataSummaries)}
 
-                Por favor, devuelve solo el array JSON de fragmentos de conocimiento.
+                Por favor, devuelve solo el array JSON de fragmentos de conocimiento en una propiedad 'fragments'.
             `;
 
-            type KnowledgeFragmentWithoutVectorize = Omit<CreateKnowledgeFragment, 'vector'>;
+            type KnowledgeFragmentWithoutEmbedding = Omit<CreateKnowledgeFragment, 'embedding'>;
 
             type KnowledgeAiResponse = {
-                fragments: KnowledgeFragmentWithoutVectorize[];
+                fragments: KnowledgeFragmentWithoutEmbedding[];
             };
 
             const aiResponse: KnowledgeAiResponse = (await this.aiAgentService.generateResponse(
                 prompt,
-                rawDataBatch,
             )) as KnowledgeAiResponse;
 
-            const knowledgeFragmentsData: KnowledgeFragmentWithoutVectorize[] = aiResponse.fragments || [];
+            const knowledgeFragmentsData: KnowledgeFragmentWithoutEmbedding[] = aiResponse.fragments || [];
 
             if (knowledgeFragmentsData.length > 0) {
                 const textSnippets: string[] = knowledgeFragmentsData.map((fragment) => fragment.textSnippet);
@@ -69,23 +75,29 @@ export class ProcessingService {
                         textSnippet: fragment.textSnippet,
                         embedding: embeddings[index],
                         associatedKPIs: fragment.associatedKPIs,
-                        sourceRawDataIds: fragment.sourceRawDataIds,
+                        sourceRawDataId: fragment.sourceRawDataId,
                     }),
                 );
 
-                // Dado que createMany de Prisma no soporta directamente el tipo Unsupported("vector"),
-                // utilizaremos una consulta SQL cruda para la inserción masiva.
-                const insertPromises = knowledgeFragmentsToCreate.map((kf) =>
-                    this.prisma.$executeRaw(
+                // Construir una única consulta SQL raw para la inserción masiva.
+                const values = knowledgeFragmentsToCreate.map(
+                    (kf) =>
+                        Prisma.sql`(gen_random_uuid(), ${kf.textSnippet}, ${Prisma.join(kf.embedding)}::vector, ${kf.associatedKPIs}::jsonb, ${kf.sourceRawDataId}::uuid, NOW())`,
+                );
+
+                if (values.length > 0) {
+                    await this.prisma.$executeRaw(
                         Prisma.sql`
                             INSERT INTO "tech_survey"."KnowledgeFragment" ("id", "textSnippet", "embedding", "associatedKPIs", "sourceRawDataId", "createdAt")
-                            VALUES (gen_random_uuid(), ${kf.textSnippet}, ${Prisma.join(kf.embedding)}, ${kf.associatedKPIs}::jsonb, ${kf.sourceRawDataIds.join()}, NOW());
+                            VALUES ${Prisma.join(values, ', ')};
                         `,
-                    ),
-                );
-                await Promise.all(insertPromises);
-
-                this.logger.log(`${knowledgeFragmentsToCreate.length} fragmentos de conocimiento creados.`);
+                    );
+                    this.logger.log(`${knowledgeFragmentsToCreate.length} fragmentos de conocimiento creados.`);
+                } else {
+                    this.logger.log('No knowledge fragments to create.');
+                }
+            } else {
+                this.logger.log('AI response contained no knowledge fragments.');
             }
 
             await this.prisma.rawData.updateMany({
