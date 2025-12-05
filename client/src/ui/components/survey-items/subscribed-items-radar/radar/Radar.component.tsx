@@ -12,7 +12,11 @@ import {
 import { RadarMenu } from './radar-menu/RadarMenu.component';
 import type { SurveyItem } from '../../../../../infrastructure';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Search, Upload } from 'lucide-react';
+import { Button } from '../../../../components/shared';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../components/shared';
+import { Input } from '../../../../components/shared';
+import { Label } from '../../../../components/shared';
 
 export const Radar: React.FC<{
     entries?: Blip[];
@@ -54,6 +58,14 @@ export const Radar: React.FC<{
         // Estado para detectar si es móvil
         const [isMobile, setIsMobile] = React.useState(false);
 
+        // Estado para el diálogo de búsqueda/importación
+        const [searchDialogOpen, setSearchDialogOpen] = React.useState(false);
+        const [searchTerm, setSearchTerm] = React.useState('');
+        const [excelFile, setExcelFile] = React.useState<File | null>(null);
+
+        // Estado para el hover del botón en desktop
+        const [isButtonHovered, setIsButtonHovered] = React.useState(false);
+
         // Detectar cambio de tamaño de pantalla
         React.useEffect(() => {
             const checkMobile = () => {
@@ -71,6 +83,25 @@ export const Radar: React.FC<{
         }, [entries, visibleQuadrants]);
 
         const blipPositions = React.useMemo(() => generateBlipPositions(filteredEntries), [filteredEntries]);
+
+        // Determinar si el botón aceptar está habilitado
+        const isAcceptEnabled = React.useMemo(() => {
+            return (searchTerm.trim() !== '' && !excelFile) || (excelFile && searchTerm.trim() === '');
+        }, [searchTerm, excelFile]);
+
+        // Determinar si el input de búsqueda está deshabilitado
+        const isSearchInputDisabled = React.useMemo(() => {
+            return excelFile !== null;
+        }, [excelFile]);
+
+        // Determinar si el input de archivo está deshabilitado
+        const isFileInputDisabled = React.useMemo(() => {
+            return searchTerm.trim() !== '';
+        }, [searchTerm]);
+
+        // Colores para el botón del SVG
+        const buttonFillColor = isButtonHovered ? '#1d4ed8' : '#2563eb'; // Azul oscuro en hover, azul normal por defecto
+        const buttonStrokeColor = isButtonHovered ? '#1e40af' : '#1d4ed8'; // Azul más oscuro en hover
 
         // Función para alternar la visibilidad de un cuadrante
         const toggleQuadrantVisibility = (quadrant: RadarQuadrant) => {
@@ -156,6 +187,48 @@ export const Radar: React.FC<{
         const handleUnselect = (item: SurveyItem) => {
             console.log('Deseleccionar:', item);
             setMenuOpen(false);
+        };
+
+        // Manejadores para el diálogo de búsqueda/importación
+        const handleOpenSearchDialog = () => {
+            setSearchDialogOpen(true);
+        };
+
+        const handleCloseSearchDialog = () => {
+            setSearchDialogOpen(false);
+            setSearchTerm('');
+            setExcelFile(null);
+        };
+
+        const handleSearchTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const value = e.target.value;
+            setSearchTerm(value);
+            // Si se escribe algo, limpiar el archivo Excel
+            if (value.trim() !== '') {
+                setExcelFile(null);
+            }
+        };
+
+        const handleExcelFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0] || null;
+            setExcelFile(file);
+            // Si se selecciona un archivo, limpiar el término de búsqueda
+            if (file) {
+                setSearchTerm('');
+            }
+        };
+
+        const handleAccept = () => {
+            if (searchTerm.trim() !== '') {
+                console.log('Buscando tecnología:', searchTerm);
+                // Aquí iría la lógica para buscar la tecnología
+            } else if (excelFile) {
+                console.log('Importando archivo Excel:', excelFile.name);
+                // Aquí iría la lógica para importar el Excel
+            }
+
+            // Cerrar el diálogo y resetear los estados
+            handleCloseSearchDialog();
         };
 
         // Cerrar menú cuando se hace clic fuera
@@ -262,6 +335,19 @@ export const Radar: React.FC<{
         if (isMobile) {
             return (
                 <div className="w-full min-h-screen flex flex-col items-center py-4 px-2 bg-gray-50">
+                    {/* Barra de botones móvil - BUSCAR/IMPORTAR ENTRE LISTAS PERSONALIZADAS Y CHANGELOG */}
+                    <div className="absolute w-fit top-20 left-auto justify-between space-x-2">
+
+                        {/* Botón de Buscar/Importar Tecnología - EN MEDIO */}
+                        <Button
+                            onClick={handleOpenSearchDialog}
+                            className="flex-1 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                            <Search size={18} />
+                            <span className="">Buscar Tecnología</span>
+                        </Button>
+                    </div>
+
                     {/* Contenedor de cuadrantes móviles */}
                     <div className="w-full max-w-md space-y-6">
                         {quadrantLabels.map((quadrant, index) => {
@@ -512,6 +598,100 @@ export const Radar: React.FC<{
                         />
                     )}
 
+                    {/* Diálogo de búsqueda/importación */}
+                    <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center space-x-2">
+                                    <Search size={20} />
+                                    <span>Buscar o Importar Tecnología</span>
+                                </DialogTitle>
+                            </DialogHeader>
+
+                            <div className="space-y-4 py-4">
+                                {/* Input de búsqueda por nombre */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="technology-search">
+                                        Buscar por nombre de tecnología
+                                    </Label>
+                                    <Input
+                                        id="technology-search"
+                                        placeholder="Escribe el nombre de la tecnología..."
+                                        value={searchTerm}
+                                        onChange={handleSearchTermChange}
+                                        disabled={isSearchInputDisabled}
+                                        className={isSearchInputDisabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}
+                                    />
+                                    {isSearchInputDisabled && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Este campo está deshabilitado porque hay un archivo Excel seleccionado
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Separador */}
+                                <div className="relative">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <span className="w-full border-t" />
+                                    </div>
+                                    <div className="relative flex justify-center text-xs uppercase">
+                                        <span className="bg-background px-2 text-muted-foreground">
+                                            O
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Input para importar Excel */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="excel-import">
+                                        Importar desde Excel
+                                    </Label>
+                                    <div className="flex items-center space-x-2">
+                                        <Input
+                                            id="excel-import"
+                                            type="file"
+                                            accept=".xlsx,.xls"
+                                            onChange={handleExcelFileChange}
+                                            className={`flex-1 ${isFileInputDisabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
+                                            disabled={isFileInputDisabled}
+                                        />
+                                        <Upload
+                                            size={16}
+                                            className={`${isFileInputDisabled ? "text-gray-400" : "text-muted-foreground"}`}
+                                        />
+                                    </div>
+                                    {excelFile && (
+                                        <p className="text-sm text-green-600">
+                                            Archivo seleccionado: {excelFile.name}
+                                        </p>
+                                    )}
+                                    {isFileInputDisabled && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Este campo está deshabilitado porque hay texto en la búsqueda
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <DialogFooter className="flex space-x-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={handleCloseSearchDialog}
+                                    className="flex-1"
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    onClick={handleAccept}
+                                    disabled={!isAcceptEnabled}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                                >
+                                    Aceptar
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
                     {/* Estilos CSS para la animación de pulso */}
                     <style>{`
                         @keyframes pulse {
@@ -546,6 +726,64 @@ export const Radar: React.FC<{
                     preserveAspectRatio="xMidYMid meet"
                     style={{ border: '1px solid #ccc', background: '#f9f9f9' }}
                 >
+                    {/* Botón de búsqueda/importación DENTRO DEL SVG */}
+                    <g
+                        onClick={handleOpenSearchDialog}
+                        onMouseEnter={() => setIsButtonHovered(true)}
+                        onMouseLeave={() => setIsButtonHovered(false)}
+                        style={{ cursor: 'pointer' }}
+                        className="transition-all duration-200 ease-in-out"
+                    >
+                        {/* Fondo del botón */}
+                        <rect
+                            x="-90"
+                            y="-440"
+                            width="180"
+                            height="36"
+                            rx="6"
+                            fill={buttonFillColor}
+                            stroke={buttonStrokeColor}
+                            strokeWidth="1"
+                            className="transition-all duration-200 ease-in-out"
+                        />
+
+                        {/* Texto del botón */}
+                        <text
+                            x="15"
+                            y="-416"
+                            fontSize="16"
+                            fill="white"
+                            textAnchor="middle"
+                            fontWeight="500"
+                            style={{ userSelect: 'none', pointerEvents: 'none' }}
+                            className="transition-all duration-200 ease-in-out"
+                        >
+                            Buscar Tecnología
+                        </text>
+
+                        {/* Ícono de búsqueda */}
+                        <g transform="translate(-70, -422)" style={{ pointerEvents: 'none' }}>
+                            <circle
+                                cx="0"
+                                cy="0"
+                                r="8"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="1.5"
+                                className="transition-all duration-200 ease-in-out"
+                            />
+                            <line
+                                x1="5.5"
+                                y1="5.5"
+                                x2="10"
+                                y2="10"
+                                stroke="white"
+                                strokeWidth="1.5"
+                                className="transition-all duration-200 ease-in-out"
+                            />
+                        </g>
+                    </g>
+
                     {/* Sombreado por anillo */}
                     {(Object.entries(ringBounds) as [RadarRing, [number, number]][]).map(([ring, [rMin, rMax]]) => {
                         const color = getRingColor(ring);
@@ -795,6 +1033,100 @@ export const Radar: React.FC<{
                         isSelected={false}
                     />
                 )}
+
+                {/* Diálogo de búsqueda/importación */}
+                <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center space-x-2">
+                                <Search size={20} />
+                                <span>Buscar o Importar Tecnología</span>
+                            </DialogTitle>
+                        </DialogHeader>
+
+                        <div className="space-y-4 py-4">
+                            {/* Input de búsqueda por nombre */}
+                            <div className="space-y-2">
+                                <Label htmlFor="technology-search">
+                                    Buscar por nombre de tecnología
+                                </Label>
+                                <Input
+                                    id="technology-search"
+                                    placeholder="Escribe el nombre de la tecnología..."
+                                    value={searchTerm}
+                                    onChange={handleSearchTermChange}
+                                    disabled={isSearchInputDisabled}
+                                    className={isSearchInputDisabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}
+                                />
+                                {isSearchInputDisabled && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Este campo está deshabilitado porque hay un archivo Excel seleccionado
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Separador */}
+                            <div className="relative">
+                                <div className="absolute inset-0 flex items-center">
+                                    <span className="w-full border-t" />
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-background px-2 text-muted-foreground">
+                                        O
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Input para importar Excel */}
+                            <div className="space-y-2">
+                                <Label htmlFor="excel-import">
+                                    Importar desde Excel
+                                </Label>
+                                <div className="flex items-center space-x-2">
+                                    <Input
+                                        id="excel-import"
+                                        type="file"
+                                        accept=".xlsx,.xls"
+                                        onChange={handleExcelFileChange}
+                                        className={`flex-1 ${isFileInputDisabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
+                                        disabled={isFileInputDisabled}
+                                    />
+                                    <Upload
+                                        size={16}
+                                        className={`${isFileInputDisabled ? "text-gray-400" : "text-muted-foreground"}`}
+                                    />
+                                </div>
+                                {excelFile && (
+                                    <p className="text-sm text-green-600">
+                                        Archivo seleccionado: {excelFile.name}
+                                    </p>
+                                )}
+                                {isFileInputDisabled && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Este campo está deshabilitado porque hay texto en la búsqueda
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <DialogFooter className="flex space-x-2">
+                            <Button
+                                variant="outline"
+                                onClick={handleCloseSearchDialog}
+                                className="flex-1"
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                onClick={handleAccept}
+                                disabled={!isAcceptEnabled}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                            >
+                                Aceptar
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         );
     };
