@@ -1,5 +1,5 @@
-import { Maximize, Trash2, Minus } from 'lucide-react';
-import type { SurveyItem } from '../../../../../../infrastructure';
+import { Maximize, Trash2, Minus, CheckCircle } from 'lucide-react'; // Agregar CheckCircle
+import type { SurveyItem, UUID } from '../../../../../../infrastructure';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -12,18 +12,19 @@ import {
 	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-} from '../../../../shared'; // Ajusta la ruta según tu estructura
+} from '../../../../shared';
 import React from 'react';
 
 interface RadarMenuProps {
 	item: SurveyItem;
 	position: { x: number; y: number };
 	onViewDetails: (item: SurveyItem) => void;
-	onUnsubscribe: (items: SurveyItem[]) => void;
+	onUnsubscribe: (item: UUID) => void;
 	onRemove: (items: SurveyItem[]) => void;
 	onSelect: (item: SurveyItem) => void;
 	onUnselect: (item: SurveyItem) => void;
 	isSelected: boolean;
+	selectedCount?: number; // NUEVO: Para mostrar el conteo de seleccionados
 }
 
 export const RadarMenu: React.FC<RadarMenuProps> = ({
@@ -34,7 +35,8 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 	onRemove,
 	onSelect,
 	onUnselect,
-	isSelected
+	isSelected,
+	selectedCount = 0 // NUEVO: Valor por defecto
 }) => {
 	const [isMobile, setIsMobile] = React.useState(false);
 
@@ -54,15 +56,33 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 		document.dispatchEvent(event);
 	};
 
+	// NUEVO: Determinar el texto para "Dejar de seguir"
+	const getUnsubscribeText = () => {
+		if (selectedCount > 0 && isSelected) {
+			return `Dejar de seguir (${selectedCount} seleccionados)`;
+		}
+		return 'Dejar de seguir (este)';
+	};
+
 	// Para móvil, usamos el Dialog de shadcn
 	if (isMobile) {
 		return (
 			<Dialog open={true} onOpenChange={handleClose}>
 				<DialogContent className="sm:max-w-md">
 					<DialogHeader>
-						<DialogTitle>Opciones del elemento</DialogTitle>
+						<DialogTitle className="flex items-center justify-between">
+							<span>Opciones del elemento</span>
+							{isSelected && (
+								<CheckCircle size={16} className="text-green-600" />
+							)}
+						</DialogTitle>
 						<DialogDescription>
-							Selecciona una acción para {item.title}
+							Selecciona una acción para <strong>{item.title}</strong>
+							{selectedCount > 0 && isSelected && (
+								<span className="block text-green-600 mt-1">
+									{selectedCount} elementos seleccionados
+								</span>
+							)}
 						</DialogDescription>
 					</DialogHeader>
 					<div className="space-y-1">
@@ -79,13 +99,14 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 
 						<button
 							onClick={() => {
-								onUnsubscribe([item]);
+								// NUEVO: Pasar el ID del item actual al manejador
+								onUnsubscribe(item.id);
 								handleClose();
 							}}
 							className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
 						>
 							<Minus className="mr-2 h-4 w-4" />
-							Dejar de seguir
+							{getUnsubscribeText()}
 						</button>
 
 						<button
@@ -93,9 +114,16 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 								isSelected ? onUnselect(item) : onSelect(item);
 								handleClose();
 							}}
-							className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+							className={`flex w-full items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground ${isSelected ? 'text-green-600' : ''}`}
 						>
-							{isSelected ? 'Deseleccionar' : 'Seleccionar'}
+							{isSelected ? (
+								<>
+									<CheckCircle className="mr-2 h-4 w-4" />
+									Deseleccionar
+								</>
+							) : (
+								'Seleccionar'
+							)}
 						</button>
 
 						<div className="my-1 border-t" />
@@ -120,24 +148,40 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 	return (
 		<DropdownMenu open={true} onOpenChange={() => { }}>
 			<DropdownMenuContent
-				className="w-56"
+				className="w-64"
 				style={{
 					position: 'fixed',
-					left: Math.min(position.x, window.innerWidth - 224),
+					left: Math.min(position.x, window.innerWidth - 256),
 					top: Math.min(position.y, window.innerHeight - 200)
 				}}
 				forceMount
 			>
+				{/* NUEVO: Mostrar información de selección */}
+				{selectedCount > 0 && isSelected && (
+					<div className="px-2 py-1.5 text-xs text-green-600 bg-green-50 border-b border-green-100">
+						<CheckCircle size={12} className="inline mr-1" />
+						{selectedCount} elementos seleccionados
+					</div>
+				)}
+
 				<DropdownMenuItem onClick={() => onViewDetails(item)}>
 					<Maximize className="mr-2 h-4 w-4" />
 					Ver detalles
 				</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => onUnsubscribe([item])}>
+				<DropdownMenuItem onClick={() => onUnsubscribe(item.id)}>
 					<Minus className="mr-2 h-4 w-4" />
-					Dejar de seguir
+					{getUnsubscribeText()}
 				</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => isSelected ? onUnselect(item) : onSelect(item)}>
-					{isSelected ? 'Deseleccionar' : 'Seleccionar'}
+				<DropdownMenuItem
+					onClick={() => isSelected ? onUnselect(item) : onSelect(item)}
+					className={isSelected ? 'text-green-600' : ''}
+				>
+					{isSelected ? (
+						<>
+							<CheckCircle className="mr-2 h-4 w-4" />
+							Deseleccionar
+						</>
+					) : 'Seleccionar'}
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onClick={() => onRemove([item])} className="text-destructive">
