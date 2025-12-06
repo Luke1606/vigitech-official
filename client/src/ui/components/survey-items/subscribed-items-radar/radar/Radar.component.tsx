@@ -12,7 +12,7 @@ import {
 import { RadarMenu } from './radar-menu/RadarMenu.component';
 import type { SurveyItem, UUID } from '../../../../../infrastructure';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Search, Upload, RefreshCw, Menu, X, CheckCircle, Circle } from 'lucide-react';
+import { Eye, EyeOff, Search, Upload, RefreshCw, Menu, X, CheckCircle, Circle, XCircle } from 'lucide-react'; // Agregar XCircle
 import { Button } from '../../../../components/shared';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../components/shared';
 import { Input } from '../../../../components/shared';
@@ -78,6 +78,7 @@ export const Radar: React.FC<{
         // Estados separados para el hover de cada botón en desktop
         const [isSearchButtonHovered, setIsSearchButtonHovered] = React.useState(false);
         const [isChangesButtonHovered, setIsChangesButtonHovered] = React.useState(false);
+        const [isDeselectAllButtonHovered, setIsDeselectAllButtonHovered] = React.useState(false); // NUEVO: Estado para hover del botón Deseleccionar Todos
 
         // Estado para el loading de cambios
         const [isLoadingChanges, setIsLoadingChanges] = React.useState(false);
@@ -125,6 +126,10 @@ export const Radar: React.FC<{
         // Colores para el botón de buscar cambios
         const changesButtonFillColor = isChangesButtonHovered ? '#059669' : (isLoadingChanges ? '#059669' : '#10b981');
         const changesButtonStrokeColor = isChangesButtonHovered ? '#047857' : (isLoadingChanges ? '#047857' : '#059669');
+
+        // NUEVO: Colores para el botón de Deseleccionar Todos
+        const deselectAllButtonFillColor = isDeselectAllButtonHovered ? '#dc2626' : '#ef4444';
+        const deselectAllButtonStrokeColor = isDeselectAllButtonHovered ? '#b91c1c' : '#dc2626';
 
         // Función para leer y validar el archivo Excel
         const readAndValidateExcel = (file: File): Promise<string[]> => {
@@ -204,6 +209,12 @@ export const Radar: React.FC<{
                 }
                 return newSet;
             });
+        };
+
+        // NUEVO: Función para deseleccionar todos los blips
+        const deselectAllBlips = () => {
+            setSelectedBlips(new Set());
+            setSelectedBlipId(null);
         };
 
         // NUEVO: Función para verificar si un blip está seleccionado
@@ -538,6 +549,20 @@ export const Radar: React.FC<{
                                         <RefreshCw size={18} className="mr-3" />
                                     )}
                                     <span className="text-base">{isLoadingChanges ? 'Buscando...' : 'Buscar Cambios'}</span>
+                                </DropdownMenuItem>
+                                {/* NUEVO: Opción para Deseleccionar Todos en móvil */}
+                                <DropdownMenuItem
+                                    onClick={deselectAllBlips}
+                                    disabled={selectedBlips.size === 0}
+                                    className="flex items-center cursor-pointer py-3"
+                                >
+                                    <XCircle size={18} className="mr-3" />
+                                    <span className="text-base">Deseleccionar Todos</span>
+                                    {selectedBlips.size > 0 && (
+                                        <span className="ml-auto bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded">
+                                            {selectedBlips.size}
+                                        </span>
+                                    )}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -1015,7 +1040,7 @@ export const Radar: React.FC<{
                             </g>
                         </g>
 
-                        {/* NUEVO: Botón de Buscar Cambios */}
+                        {/* Botón de Buscar Cambios */}
                         <g
                             onClick={handleSearchChanges}
                             onMouseEnter={() => setIsChangesButtonHovered(true)}
@@ -1086,6 +1111,63 @@ export const Radar: React.FC<{
                                 )}
                             </g>
                         </g>
+
+                        {selectedBlips.size > 0 && (
+                            <g
+                                onClick={deselectAllBlips}
+                                onMouseEnter={() => setIsDeselectAllButtonHovered(true)}
+                                onMouseLeave={() => setIsDeselectAllButtonHovered(false)}
+                                style={{ cursor: 'pointer' }}
+                                className="transition-all duration-200 ease-in-out"
+                            >
+                                {/* Fondo del botón (rojo) */}
+                                <rect
+                                    x="210"
+                                    y="-440"
+                                    width="210"
+                                    height="36"
+                                    rx="6"
+                                    fill={deselectAllButtonFillColor}
+                                    stroke={deselectAllButtonStrokeColor}
+                                    strokeWidth="1"
+                                    className="transition-all duration-200 ease-in-out"
+                                />
+
+                                {/* Texto del botón con contador */}
+                                <text
+                                    x="325"
+                                    y="-416"
+                                    fontSize="16"
+                                    fill="white"
+                                    textAnchor="middle"
+                                    fontWeight="500"
+                                    style={{ userSelect: 'none', pointerEvents: 'none' }}
+                                    className="transition-all duration-200 ease-in-out"
+                                >
+                                    Deseleccionar Todos ({selectedBlips.size})
+                                </text>
+
+                                {/* Ícono de X */}
+                                <g transform="translate(225, -422)" style={{ pointerEvents: 'none' }}>
+                                    <circle
+                                        cx="0"
+                                        cy="0"
+                                        r="8"
+                                        fill="none"
+                                        stroke="white"
+                                        strokeWidth="1.5"
+                                        className="transition-all duration-200 ease-in-out"
+                                    />
+                                    <path
+                                        d="M -4 -4 L 4 4 M -4 4 L 4 -4"
+                                        stroke="white"
+                                        strokeWidth="1.5"
+                                        fill="none"
+                                        className="transition-all duration-200 ease-in-out"
+                                    />
+                                </g>
+                            </g>
+                        )}
                     </g>
 
                     {/* Sombreado por anillo */}

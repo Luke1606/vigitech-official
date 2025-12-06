@@ -19,8 +19,8 @@ interface RadarMenuProps {
 	item: SurveyItem;
 	position: { x: number; y: number };
 	onViewDetails: (item: SurveyItem) => void;
-	onUnsubscribe: () => void; // MODIFICADO: Ya no recibe parámetro
-	onRemove: () => void; // MODIFICADO: Ya no recibe parámetro
+	onUnsubscribe: () => void;
+	onRemove: () => void;
 	onSelect: (item: SurveyItem) => void;
 	onUnselect: (item: SurveyItem) => void;
 	isSelected: boolean;
