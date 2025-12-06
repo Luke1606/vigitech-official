@@ -1,4 +1,4 @@
-import { Maximize, Trash2, Minus, CheckCircle } from 'lucide-react'; // Agregar CheckCircle
+import { Maximize, Trash2, Minus, CheckCircle } from 'lucide-react';
 import type { SurveyItem, UUID } from '../../../../../../infrastructure';
 import {
 	DropdownMenu,
@@ -19,12 +19,12 @@ interface RadarMenuProps {
 	item: SurveyItem;
 	position: { x: number; y: number };
 	onViewDetails: (item: SurveyItem) => void;
-	onUnsubscribe: (item: UUID) => void;
-	onRemove: (items: SurveyItem[]) => void;
+	onUnsubscribe: () => void; // MODIFICADO: Ya no recibe parámetro
+	onRemove: () => void; // MODIFICADO: Ya no recibe parámetro
 	onSelect: (item: SurveyItem) => void;
 	onUnselect: (item: SurveyItem) => void;
 	isSelected: boolean;
-	selectedCount?: number; // NUEVO: Para mostrar el conteo de seleccionados
+	selectedCount?: number;
 }
 
 export const RadarMenu: React.FC<RadarMenuProps> = ({
@@ -36,7 +36,7 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 	onSelect,
 	onUnselect,
 	isSelected,
-	selectedCount = 0 // NUEVO: Valor por defecto
+	selectedCount = 0
 }) => {
 	const [isMobile, setIsMobile] = React.useState(false);
 
@@ -56,12 +56,20 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 		document.dispatchEvent(event);
 	};
 
-	// NUEVO: Determinar el texto para "Dejar de seguir"
+	// Función para determinar el texto para "Dejar de seguir"
 	const getUnsubscribeText = () => {
 		if (selectedCount > 0 && isSelected) {
 			return `Dejar de seguir (${selectedCount} seleccionados)`;
 		}
 		return 'Dejar de seguir (este)';
+	};
+
+	// MODIFICADO: Función para determinar el texto para "Eliminar"
+	const getRemoveText = () => {
+		if (selectedCount > 0 && isSelected) {
+			return `Eliminar (${selectedCount} seleccionados)`;
+		}
+		return 'Eliminar';
 	};
 
 	// Para móvil, usamos el Dialog de shadcn
@@ -99,8 +107,8 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 
 						<button
 							onClick={() => {
-								// NUEVO: Pasar el ID del item actual al manejador
-								onUnsubscribe(item.id);
+								// MODIFICADO: Ya no se pasa el parámetro
+								onUnsubscribe();
 								handleClose();
 							}}
 							className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
@@ -130,13 +138,14 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 
 						<button
 							onClick={() => {
-								onRemove([item]);
+								// MODIFICADO: Ya no se pasa el parámetro
+								onRemove();
 								handleClose();
 							}}
 							className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm text-destructive outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
 						>
 							<Trash2 className="mr-2 h-4 w-4" />
-							Eliminar
+							{getRemoveText()} {/* MODIFICADO: Usar función para texto */}
 						</button>
 					</div>
 				</DialogContent>
@@ -156,7 +165,7 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 				}}
 				forceMount
 			>
-				{/* NUEVO: Mostrar información de selección */}
+				{/* Mostrar información de selección */}
 				{selectedCount > 0 && isSelected && (
 					<div className="px-2 py-1.5 text-xs text-green-600 bg-green-50 border-b border-green-100">
 						<CheckCircle size={12} className="inline mr-1" />
@@ -168,7 +177,7 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 					<Maximize className="mr-2 h-4 w-4" />
 					Ver detalles
 				</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => onUnsubscribe(item.id)}>
+				<DropdownMenuItem onClick={onUnsubscribe}> {/* MODIFICADO: Sin parámetro */}
 					<Minus className="mr-2 h-4 w-4" />
 					{getUnsubscribeText()}
 				</DropdownMenuItem>
@@ -184,9 +193,9 @@ export const RadarMenu: React.FC<RadarMenuProps> = ({
 					) : 'Seleccionar'}
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem onClick={() => onRemove([item])} className="text-destructive">
+				<DropdownMenuItem onClick={onRemove} className="text-destructive"> {/* MODIFICADO: Sin parámetro */}
 					<Trash2 className="mr-2 h-4 w-4" />
-					Eliminar
+					{getRemoveText()} {/* MODIFICADO: Usar función para texto */}
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

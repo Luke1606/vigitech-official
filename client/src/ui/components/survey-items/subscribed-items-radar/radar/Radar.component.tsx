@@ -12,14 +12,13 @@ import {
 import { RadarMenu } from './radar-menu/RadarMenu.component';
 import type { SurveyItem, UUID } from '../../../../../infrastructure';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Search, Upload, RefreshCw, Menu, X, CheckCircle, Circle } from 'lucide-react'; // Agregar CheckCircle y Circle
+import { Eye, EyeOff, Search, Upload, RefreshCw, Menu, X, CheckCircle, Circle } from 'lucide-react';
 import { Button } from '../../../../components/shared';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../components/shared';
 import { Input } from '../../../../components/shared';
 import { Label } from '../../../../components/shared';
 import { useSurveyItemsAPI } from '../../../../../infrastructure/hooks/use-survey-items/api/useSurveyItemsAPI.hook';
 import * as XLSX from 'xlsx';
-// Importar componentes de menú de shadcn
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -45,7 +44,6 @@ export const Radar: React.FC<{
 }) => {
         const query = useSurveyItemsAPI();
         const navigate = useNavigate();
-        const { addPendingUnsubscribes, addPendingRemoves } = useSurveyItems();
         const [hoveredBlipId, setHoveredBlipId] = React.useState<string | null>(null);
         const [menuOpen, setMenuOpen] = React.useState(false);
         const [selectedBlip, setSelectedBlip] = React.useState<Blip | null>(null);
@@ -121,12 +119,12 @@ export const Radar: React.FC<{
         }, [searchTerm]);
 
         // Colores para el botón de búsqueda de tecnología
-        const searchButtonFillColor = isSearchButtonHovered ? '#1d4ed8' : '#2563eb'; // Azul oscuro en hover, azul normal por defecto
-        const searchButtonStrokeColor = isSearchButtonHovered ? '#1e40af' : '#1d4ed8'; // Azul más oscuro en hover
+        const searchButtonFillColor = isSearchButtonHovered ? '#1d4ed8' : '#2563eb';
+        const searchButtonStrokeColor = isSearchButtonHovered ? '#1e40af' : '#1d4ed8';
 
         // Colores para el botón de buscar cambios
-        const changesButtonFillColor = isChangesButtonHovered ? '#059669' : (isLoadingChanges ? '#059669' : '#10b981'); // Verde oscuro en hover, verde normal por defecto
-        const changesButtonStrokeColor = isChangesButtonHovered ? '#047857' : (isLoadingChanges ? '#047857' : '#059669'); // Verde más oscuro en hover
+        const changesButtonFillColor = isChangesButtonHovered ? '#059669' : (isLoadingChanges ? '#059669' : '#10b981');
+        const changesButtonStrokeColor = isChangesButtonHovered ? '#047857' : (isLoadingChanges ? '#047857' : '#059669');
 
         // Función para leer y validar el archivo Excel
         const readAndValidateExcel = (file: File): Promise<string[]> => {
@@ -234,6 +232,22 @@ export const Radar: React.FC<{
             setMenuOpen(false);
         };
 
+        // MODIFICADO: Manejador para "Eliminar" que usa removeBatch
+        const handleRemoveSelected = () => {
+            const selectedIds = getSelectedBlipIds();
+            if (selectedIds.length > 0) {
+                console.log('Eliminando seleccionados:', selectedIds);
+                query.removeBatch(selectedIds); // Usar removeBatch
+                // Limpiar selección después de la acción
+                setSelectedBlips(new Set());
+            } else if (selectedBlip) {
+                // Si no hay seleccionados pero hay un blip en el menú, usar removeOne
+                console.log('Eliminando uno:', selectedBlip.id);
+                query.removeOne(selectedBlip.id);
+            }
+            setMenuOpen(false);
+        };
+
         // Manejador para cuando se hace clic en un blip
         const handleBlipClick = (blip: Blip, position: { x: number; y: number }) => {
             setSelectedBlip(blip);
@@ -293,22 +307,6 @@ export const Radar: React.FC<{
         // NUEVO: Manejador para seleccionar/deseleccionar desde el menú
         const handleSelectUnselect = (item: SurveyItem) => {
             toggleBlipSelection(item.id);
-            setMenuOpen(false);
-        };
-
-        // NUEVO: Manejador para eliminar seleccionados
-        const handleRemoveSelected = () => {
-            const selectedItems = filteredEntries.filter(blip => selectedBlips.has(blip.id));
-            if (selectedItems.length > 0) {
-                console.log('Eliminar seleccionados:', selectedItems);
-                addPendingRemoves(selectedItems);
-                // Limpiar selección después de la acción
-                setSelectedBlips(new Set());
-            } else if (selectedBlip) {
-                // Si no hay seleccionados pero hay un blip en el menú, eliminar solo ese
-                console.log('Eliminar uno:', selectedBlip);
-                addPendingRemoves([selectedBlip]);
-            }
             setMenuOpen(false);
         };
 
@@ -658,7 +656,7 @@ export const Radar: React.FC<{
                                                 {/* 5. Blips en el semicírculo móvil - RENDERIZAR AL FINAL PARA QUE ESTÉN ENCIMA */}
                                                 {quadrantBlips.map((blip) => {
                                                     const position = mobileBlipPositions[blip.id];
-                                                    const isSelected = isBlipSelected(blip.id); // NUEVO: Verificar si está seleccionado
+                                                    const isSelected = isBlipSelected(blip.id);
 
                                                     // Si no hay posición, no renderizar el blip
                                                     if (!position) {
@@ -681,7 +679,6 @@ export const Radar: React.FC<{
                                                                 setHoveredBlipId(null);
                                                             }}
                                                             onClick={(e) => {
-                                                                // USAR EL NUEVO MANEJADOR QUE ACTIVA LA ANIMACIÓN Y ABRE EL MENÚ
                                                                 handleMobileBlipClick(blip, position, e);
                                                             }}
                                                             style={{
@@ -735,8 +732,6 @@ export const Radar: React.FC<{
                                                                     className="pulseCircle"
                                                                 />
                                                             )}
-
-                                                            {/* ELIMINAR EL TEXTO DEL NOMBRE - SOLO MOSTRAR ANIMACIÓN DE PULSO */}
                                                         </g>
                                                     );
                                                 })}
@@ -749,7 +744,7 @@ export const Radar: React.FC<{
                                         <div className="mt-4 border-t border-gray-200 pt-4 blip-list-container">
                                             <div className="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto">
                                                 {quadrantBlips.map((blip) => {
-                                                    const isSelected = isBlipSelected(blip.id); // NUEVO: Verificar si está seleccionado
+                                                    const isSelected = isBlipSelected(blip.id);
                                                     const isMobileSelected = selectedBlipId === blip.id;
 
                                                     return (
@@ -758,14 +753,13 @@ export const Radar: React.FC<{
                                                             className={`flex items-center space-x-3 p-2 rounded cursor-pointer transition-all duration-300 border ${isMobileSelected
                                                                 ? 'bg-blue-50 border-blue-200 shadow-sm'
                                                                 : isSelected
-                                                                    ? 'bg-green-50 border-green-200 shadow-sm' // NUEVO: Color verde para seleccionados
+                                                                    ? 'bg-green-50 border-green-200 shadow-sm'
                                                                     : 'border-transparent hover:border-gray-200 hover:bg-gray-50'
                                                                 }`}
                                                             onMouseEnter={() => setHoveredBlipId(blip.id)}
                                                             onMouseLeave={() => setHoveredBlipId(null)}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                // Manejar selección/deselección del blip
                                                                 handleMobileBlipSelect(blip);
                                                             }}
                                                         >
@@ -786,7 +780,7 @@ export const Radar: React.FC<{
                                                                 )}
                                                             </div>
                                                             <span className={`text-sm flex-1 transition-all duration-300 ${isMobileSelected ? 'font-bold text-blue-900' :
-                                                                isSelected ? 'font-bold text-green-900' : // NUEVO: Texto verde para seleccionados
+                                                                isSelected ? 'font-bold text-green-900' :
                                                                     hoveredBlipId === blip.id ? 'font-bold text-gray-900' : 'text-gray-700'
                                                                 }`}>
                                                                 {blip.title}
@@ -814,12 +808,12 @@ export const Radar: React.FC<{
                             item={selectedBlip as unknown as SurveyItem}
                             position={menuPosition}
                             onViewDetails={handleViewDetails}
-                            onUnsubscribe={handleUnsubscribeSelected} // NUEVO: Usar el nuevo manejador
-                            onRemove={handleRemoveSelected} // NUEVO: Usar el nuevo manejador
-                            onSelect={handleSelectUnselect} // NUEVO: Usar el nuevo manejador
-                            onUnselect={handleSelectUnselect} // NUEVO: Mismo manejador para ambas acciones
-                            isSelected={isBlipSelected(selectedBlip.id)} // NUEVO: Pasar estado de selección
-                            selectedCount={selectedBlips.size} // NUEVO: Pasar conteo de seleccionados
+                            onUnsubscribe={handleUnsubscribeSelected}
+                            onRemove={handleRemoveSelected}
+                            onSelect={handleSelectUnselect}
+                            onUnselect={handleSelectUnselect}
+                            isSelected={isBlipSelected(selectedBlip.id)}
+                            selectedCount={selectedBlips.size}
                         />
                     )}
 
@@ -1244,7 +1238,7 @@ export const Radar: React.FC<{
                                     [column1, column2].map((column, colIndex) =>
                                         column.map((b, j) => {
                                             const isActive = hoveredBlipId === b.id;
-                                            const isSelected = isBlipSelected(b.id); // NUEVO: Verificar si está seleccionado
+                                            const isSelected = isBlipSelected(b.id);
                                             const offsetX = colIndex === 0 ? 0 : 180;
                                             const baseX = quadrant.align === 'end' ? quadrant.x - 60 + offsetX : quadrant.x + 6 + offsetX;
                                             const textX = quadrant.align === 'end' ? quadrant.x - 48 + offsetX : quadrant.x + 18 + offsetX;
@@ -1269,14 +1263,14 @@ export const Radar: React.FC<{
                                                         cy={y}
                                                         r={7}
                                                         fill={getRingColor(b.radarRing)}
-                                                        stroke={isSelected ? '#10b981' : (isActive ? '#000' : '#333')} // NUEVO: Color verde para seleccionados
-                                                        strokeWidth={isSelected ? 3 : (isActive ? 2 : 1)} // NUEVO: Borde más grueso para seleccionados
+                                                        stroke={isSelected ? '#10b981' : (isActive ? '#000' : '#333')}
+                                                        strokeWidth={isSelected ? 3 : (isActive ? 2 : 1)}
                                                     />
                                                     <text
                                                         x={textX}
                                                         y={y}
                                                         fontSize={18}
-                                                        fill={isSelected ? '#059669' : (isActive ? '#000' : '#444')} // NUEVO: Color verde para seleccionados
+                                                        fill={isSelected ? '#059669' : (isActive ? '#000' : '#444')}
                                                         fontWeight={isSelected ? 'bold' : (isActive ? 'bold' : 'normal')}
                                                         textAnchor="start"
                                                         alignmentBaseline="middle"
@@ -1299,7 +1293,7 @@ export const Radar: React.FC<{
                     {filteredEntries.map((blip) => {
                         const { x, y } = blipPositions[blip.id];
                         const isActive = hoveredBlipId === blip.id;
-                        const isSelected = isBlipSelected(blip.id); // NUEVO: Verificar si está seleccionado
+                        const isSelected = isBlipSelected(blip.id);
 
                         const transform = `translate(${x}, ${y})`;
 
@@ -1340,8 +1334,8 @@ export const Radar: React.FC<{
                                     cy={0}
                                     r={isActive ? 10 : 8}
                                     fill={getRingColor(blip.radarRing)}
-                                    stroke={isSelected ? '#10b981' : (isActive ? '#000' : '#333')} // NUEVO: Color verde para seleccionados
-                                    strokeWidth={isSelected ? 4 : (isActive ? 3 : 1)} // NUEVO: Borde más grueso para seleccionados
+                                    stroke={isSelected ? '#10b981' : (isActive ? '#000' : '#333')}
+                                    strokeWidth={isSelected ? 4 : (isActive ? 3 : 1)}
                                     style={{
                                         transition: 'r 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease',
                                         transformOrigin: 'center center'
@@ -1391,12 +1385,12 @@ export const Radar: React.FC<{
                         item={selectedBlip as unknown as SurveyItem}
                         position={menuPosition}
                         onViewDetails={handleViewDetails}
-                        onUnsubscribe={handleUnsubscribeSelected} // NUEVO: Usar el nuevo manejador
-                        onRemove={handleRemoveSelected} // NUEVO: Usar el nuevo manejador
-                        onSelect={handleSelectUnselect} // NUEVO: Usar el nuevo manejador
-                        onUnselect={handleSelectUnselect} // NUEVO: Mismo manejador para ambas acciones
-                        isSelected={isBlipSelected(selectedBlip.id)} // NUEVO: Pasar estado de selección
-                        selectedCount={selectedBlips.size} // NUEVO: Pasar conteo de seleccionados
+                        onUnsubscribe={handleUnsubscribeSelected}
+                        onRemove={handleRemoveSelected}
+                        onSelect={handleSelectUnselect}
+                        onUnselect={handleSelectUnselect}
+                        isSelected={isBlipSelected(selectedBlip.id)}
+                        selectedCount={selectedBlips.size}
                     />
                 )}
 
