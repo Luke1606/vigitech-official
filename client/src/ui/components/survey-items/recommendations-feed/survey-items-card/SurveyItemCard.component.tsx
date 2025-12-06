@@ -17,8 +17,8 @@ export const SurveyItemCard: React.FC<{
     selected: boolean
     onSelect: CallableFunction
     onUnselect: CallableFunction
-    onSubscribe: CallableFunction
-    onRemove: CallableFunction
+    onSubscribeOne: CallableFunction  // Cambiado de onSubscribe
+    onRemoveOne: CallableFunction     // Cambiado de onRemove
     onViewDetails: CallableFunction
     isLoading: {
         subscribeOne: boolean
@@ -30,8 +30,8 @@ export const SurveyItemCard: React.FC<{
     selected,
     onSelect,
     onUnselect,
-    onSubscribe,
-    onRemove,
+    onSubscribeOne,  // Cambiado
+    onRemoveOne,     // Cambiado
     onViewDetails,
     isLoading
 }) => {
@@ -46,7 +46,6 @@ export const SurveyItemCard: React.FC<{
                 }}>
                 <CardHeader>
                     <CardTitle className="font-bold">{item.title}</CardTitle>
-
                     <CardDescription>{item.summary}</CardDescription>
                 </CardHeader>
 
@@ -60,7 +59,7 @@ export const SurveyItemCard: React.FC<{
 
                     <Button
                         className="bg-blue-600 hover:bg-blue-800"
-                        onClick={() => onSubscribe()}
+                        onClick={() => onSubscribeOne(id)}  // Pasa el id
                         disabled={isLoading.subscribeOne}>
                         <Plus className="w-4 h-4" /> Suscribirse
                     </Button>
@@ -68,7 +67,7 @@ export const SurveyItemCard: React.FC<{
                     <Button
                         variant="destructive"
                         className="hover:bg-red-800"
-                        onClick={() => onRemove()}
+                        onClick={() => onRemoveOne(id)}  // Pasa el id
                         disabled={isLoading.removeOne}>
                         <Trash2 className="w-4 h-4" /> Remover
                     </Button>

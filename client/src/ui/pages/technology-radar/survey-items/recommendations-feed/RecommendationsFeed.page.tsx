@@ -3,22 +3,16 @@ import { Button, SurveyItemCard } from '../../../../components';
 import {
     type SurveyItem,
     PathOption,
-    useSurveyItems
 } from '../../../../../infrastructure';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSurveyItemsAPI } from '../../../../../infrastructure/hooks/use-survey-items/api/useSurveyItemsAPI.hook';
 import { Loader2, ChevronLeft, ChevronRight, RotateCw } from 'lucide-react';
 import radarMock from '../../../../../assets/data/radarMock'
 
 export const RecommendationsFeed: React.FC = () => {
-    const {
-        isLoading,
-        addPendingRemoves,
-        addPendingSubscribes,
-    } = useSurveyItems();
+    const query = useSurveyItemsAPI()
+    const { isPending, isError, refetch, data: apiData } = query.recommended
 
-    //const query = useSurveyItemsAPI()
-    //const { isPending, isError, refetch } = query.recommended
     const [selectedItems, setSelectedItems] = useState<SurveyItem[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [itemsPerPage, setItemsPerPage] = useState<number>(9);
@@ -36,13 +30,8 @@ export const RecommendationsFeed: React.FC = () => {
             }
         };
 
-        // Establecer el valor inicial
         handleResize();
-
-        // Escuchar cambios de tamaño
         window.addEventListener('resize', handleResize);
-
-        // Cleanup
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
@@ -68,7 +57,11 @@ export const RecommendationsFeed: React.FC = () => {
         );
     };
 
+    // Siempre usar radarMock, pero intentar obtener datos de la API primero
     let recommended = radarMock;
+    if (apiData && apiData.length > 0) {
+        recommended = apiData;
+    }
 
     // Calcular elementos para la página actual
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -79,29 +72,18 @@ export const RecommendationsFeed: React.FC = () => {
     // Función para generar los números de página a mostrar
     const getVisiblePages = () => {
         if (totalPages <= 5) {
-            // Si hay 5 páginas o menos, mostrar todas
             return Array.from({ length: totalPages }, (_, i) => i + 1);
         }
 
         const visiblePages = new Set<number>();
-
-        // Siempre mostrar primera página
         visiblePages.add(1);
-
-        // Siempre mostrar última página
         visiblePages.add(totalPages);
-
-        // Mostrar página actual
         visiblePages.add(currentPage);
 
-        // Mostrar páginas alrededor de la actual (una antes y una después)
         if (currentPage > 1) visiblePages.add(currentPage - 1);
         if (currentPage < totalPages) visiblePages.add(currentPage + 1);
 
-        // Convertir a array y ordenar
         const pagesArray = Array.from(visiblePages).sort((a, b) => a - b);
-
-        // Agregar puntos suspensivos donde haya gaps
         const result: (number | string)[] = [];
 
         for (let i = 0; i < pagesArray.length; i++) {
@@ -114,12 +96,12 @@ export const RecommendationsFeed: React.FC = () => {
         return result;
     };
 
-    // Función para verificar si un item está seleccionado (comparando por ID)
+    // Función para verificar si un item está seleccionado
     const isItemSelected = (item: SurveyItem) => {
         return selectedItems.some(selected => selected.id === item.id);
     };
 
-    // Función para verificar si TODOS los items están seleccionados (no solo los de la página actual)
+    // Función para verificar si TODOS los items están seleccionados
     const areAllItemsSelected = () => {
         return recommended.every(item => isItemSelected(item));
     };
@@ -127,10 +109,6 @@ export const RecommendationsFeed: React.FC = () => {
     useEffect(() => {
         return () => setSelectedItems([])
     }, [])
-
-    useEffect(() => {
-        console.log(selectedItems)
-    }, [selectedItems])
 
     const [
         isMultipleSelection,
@@ -156,44 +134,59 @@ export const RecommendationsFeed: React.FC = () => {
         setCurrentPage(pageNumber);
     };
 
-    // if (isPending)
-    //     return (
-    //         <div className="flex items-center justify-center mt-12 p-2">
-    //             <p className="text-md text-muted-foreground flex gap-x-5">Cargando recomendaciones
-    //                 <Loader2 className='animate-spin' />
-    //             </p>
-    //         </div>
-    //     );
+    // Solo mostrar loader si está cargando y no hay datos del mock aún
+    if (isPending && !radarMock.length) {
+        return (
+            <div className="flex items-center justify-center mt-12 p-2">
+                <p className="text-md text-muted-foreground flex gap-x-5">
+                    Cargando recomendaciones
+                    <Loader2 className='animate-spin' />
+                </p>
+            </div>
+        );
+    }
 
-    // if (isError)
-    //     return (
-    //         <div className="flex items-center justify-center gap-x-5 mt-12">
-    //             <p className="text-md text-destructive font-semibold">Error al cargar las recomendaciones. Inténtelo de nuevo</p>
-    //             <Button
-    //                 className='bg-blue-600 hover:bg-blue-800 transition-colors duration-300'
-    //                 onClick={() => refetch()}
-    //             >
-    //                 <RotateCw />
-    //             </Button>
-    //         </div>
-    //     );
-
+    // Si no hay recomendaciones del mock ni de la API
     if (!recommended || recommended.length === 0) {
         return (
             <div className="text-center py-12 px-4">
                 <h3 className="text-lg font-medium text-muted-foreground">
-                    No hay recomendaciones aún. Espere un momento a que se renueven.
+                    No hay recomendaciones disponibles.
                 </h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                    Mientras tanto, puedes estar atento a los cambios o gestionar tus suscripciones.
-                    <span
-                        className="text-primary underline ml-1 cursor-pointer"
-                        onClick={() =>
-                            navigate(PathOption.TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR)
-                        }>
-                        aquí
-                    </span>.
-                </p>
+                <div className="flex flex-col items-center justify-center gap-4 mt-6">
+                    <div className="flex items-center gap-x-5">
+                        <p className="text-md text-destructive font-semibold">
+                            Error al cargar las recomendaciones
+                        </p>
+                        <Button
+                            className='bg-blue-600 hover:bg-blue-800 transition-colors duration-300 flex items-center gap-2'
+                            onClick={() => refetch()}
+                            disabled={isPending}
+                        >
+                            {isPending ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Reintentando...
+                                </>
+                            ) : (
+                                <>
+                                    <RotateCw className="w-4 h-4" />
+                                    Reintentar
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                        Mientras tanto, puedes estar atento a los cambios o gestionar tus suscripciones.
+                        <span
+                            className="text-primary underline ml-1 cursor-pointer"
+                            onClick={() =>
+                                navigate(PathOption.TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR)
+                            }>
+                            aquí
+                        </span>.
+                    </p>
+                </div>
             </div>
         );
     }
@@ -202,7 +195,65 @@ export const RecommendationsFeed: React.FC = () => {
 
     return (
         <div className="space-y-4 px-4 sm:px-6 lg:px-10 mt-20 sm:mt-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-center sm:text-left">Recomendaciones</h2>
+            {/* Mostrar estado de error de la API si existe, pero seguir mostrando contenido */}
+            {(isError || (!isPending && (!apiData || apiData.length === 0))) && (
+                <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4 gap-3">
+                    <div className="flex-1">
+                        <p className="text-sm text-yellow-800">
+                            {isError
+                                ? "No se pudieron cargar las recomendaciones de la API. Mostrando datos de ejemplo."
+                                : "La API no devolvió recomendaciones. Mostrando datos de ejemplo."}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className='border-yellow-300 text-yellow-800 hover:bg-yellow-100 flex items-center gap-2'
+                            onClick={() => refetch()}
+                            disabled={isPending}
+                        >
+                            {isPending ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Reintentando...
+                                </>
+                            ) : (
+                                <>
+                                    <RotateCw className="w-4 h-4" />
+                                    Reintentar
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-xl sm:text-2xl font-bold">Recomendaciones</h2>
+
+                {/* Botón para recargar recomendaciones */}
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetch()}
+                    disabled={isPending}
+                    className="flex items-center gap-2"
+                >
+                    {isPending ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Actualizando...
+                        </>
+                    ) : (
+                        <>
+                            <RotateCw className="w-4 h-4" />
+                            Actualizar recomendaciones
+                        </>
+                    )}
+                </Button>
+            </div>
 
             {/* Botones de acción - Responsive */}
             <div className="flex flex-col sm:flex-row flex-wrap items-center gap-3 sm:gap-4 mb-6 sm:mb-10">
@@ -223,32 +274,48 @@ export const RecommendationsFeed: React.FC = () => {
                         : 'Seleccionar todos'}
                 </Button>
 
-                {/* Subscribe */}
+                {/* Subscribe Batch */}
                 <Button
                     type="button"
                     variant="secondary"
                     onClick={() => {
-                        addPendingSubscribes(selectedItems);
+                        const selectedIds = selectedItems.map(item => item.id);
+                        query.subscribeBatch(selectedIds);
                         if (isMultipleSelection) setMultipleSelection(true);
                         removeFromSelectedItems(selectedItems);
                     }}
-                    disabled={selectedItems.length === 0}
+                    disabled={selectedItems.length === 0 || query.isLoading.subscribeBatch}
                     className="w-full sm:w-auto text-sm sm:text-base">
-                    Suscribirse ({selectedItems.length})
+                    {query.isLoading.subscribeBatch ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            Suscribiendo...
+                        </>
+                    ) : (
+                        `Suscribirse (${selectedItems.length})`
+                    )}
                 </Button>
 
-                {/* Remove */}
+                {/* Remove Batch */}
                 <Button
                     type="button"
                     variant="destructive"
                     className='hover:bg-red-800 w-full sm:w-auto text-sm sm:text-base'
                     onClick={() => {
-                        addPendingRemoves(selectedItems);
+                        const selectedIds = selectedItems.map(item => item.id);
+                        query.removeBatch(selectedIds);
                         if (isMultipleSelection) setMultipleSelection(true);
                         removeFromSelectedItems(selectedItems);
                     }}
-                    disabled={selectedItems.length === 0}>
-                    Remover ({selectedItems.length})
+                    disabled={selectedItems.length === 0 || query.isLoading.removeBatch}>
+                    {query.isLoading.removeBatch ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            Removiendo...
+                        </>
+                    ) : (
+                        `Remover (${selectedItems.length})`
+                    )}
                 </Button>
             </div>
 
@@ -267,12 +334,15 @@ export const RecommendationsFeed: React.FC = () => {
                         onUnselect={() => {
                             removeFromSelectedItems([item]);
                         }}
-                        onSubscribe={() => addPendingSubscribes([item])}
-                        onRemove={() => addPendingRemoves([item])}
+                        onSubscribeOne={() => query.subscribeOne(item.id)}
+                        onRemoveOne={() => query.removeOne(item.id)}
                         onViewDetails={() =>
                             navigate(`${PathOption.TECHNOLOGY_RADAR_ITEM_DETAILS}/${item.id}`)
                         }
-                        isLoading={isLoading}
+                        isLoading={{
+                            subscribeOne: query.isLoading.subscribeOne,
+                            removeOne: query.isLoading.removeOne,
+                        }}
                     />
                 ))}
             </div>
@@ -300,7 +370,7 @@ export const RecommendationsFeed: React.FC = () => {
                                 <span className="hidden sm:inline">Anterior</span>
                             </Button>
 
-                            {/* Números de página - Mostrar primera, actual, última y páginas adyacentes */}
+                            {/* Números de página */}
                             <div className="flex items-center space-x-1">
                                 {visiblePages.map((page, index) => (
                                     typeof page === 'number' ? (
