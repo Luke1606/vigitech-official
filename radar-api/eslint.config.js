@@ -20,7 +20,6 @@ export default defineConfig(
                 ...globals.jest,
             },
             parserOptions: {
-                project: './tsconfig.json',
                 projectService: true,
                 tsconfigRootDir: import.meta.dirname,
             },

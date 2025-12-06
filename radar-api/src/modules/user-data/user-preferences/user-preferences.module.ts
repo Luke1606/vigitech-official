@@ -11,5 +11,6 @@ import { UserPreferencesController } from './user-preferences.controller';
 @Module({
     controllers: [UserPreferencesController],
     providers: [UserPreferencesService],
+    exports: [UserPreferencesService],
 })
 export class UserPreferencesModule {}

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { KnowledgeFragment } from '@prisma/client';
 import { DataFetchService } from '../data-fetch/data-fetch.service';
 import { AiAgentsService } from '../../ai-agents/ai-agents.service';
-import { ItemsGatewayService } from '../items-gateway/items-gateway.service';
+import { ItemsGatewayService } from '../gateway/gateway.service';
 import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-item.dto';
 
 @Injectable()

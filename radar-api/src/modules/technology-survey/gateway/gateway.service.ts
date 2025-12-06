@@ -9,6 +9,8 @@ import {
 } from '../shared/types/create-item-classification.type';
 import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-item.dto';
 import { ItemWithClassification } from '../shared/types/classified-item.type';
+import { InsightsWithCitations } from './types/insights-with-citations.type';
+import { ClassificationChange } from '../shared/types/classification-change.type';
 
 @Injectable()
 export class ItemsGatewayService {
@@ -312,6 +314,9 @@ export class ItemsGatewayService {
     private async _saveNewItem(classificationInfo: CreateNewItemClassification, insertedById?: UUID): Promise<void> {
         const { unclassifiedItem, itemField, insightsValues, classification } = classificationInfo;
 
+        // 0. Extracción de los IDs de fragmentos citados
+        const { citedFragmentIds } = insightsValues as unknown as InsightsWithCitations;
+
         return this.prisma.$transaction(async (tx) => {
             // 1. Crear item
             const item = await tx.item.create({
@@ -332,13 +337,29 @@ export class ItemsGatewayService {
                 },
             });
 
-            // 3. Actualizar puntero
+            // 3. CREAR LOS ITEMCITEDFRAGMENT (Trazabilidad)
+            if (citedFragmentIds && citedFragmentIds.length > 0) {
+                const citationCreations = citedFragmentIds.map((fragmentId) =>
+                    tx.itemCitedFragment.create({
+                        data: {
+                            itemId: item.id,
+                            fragmentId: fragmentId,
+                        },
+                    }),
+                );
+                await Promise.all(citationCreations);
+            }
+
+            // 4. Actualizar puntero
             const finalItem = await tx.item.update({
                 where: { id: item.id },
-                data: { latestClassificationId: itemClassification.id },
+                data: {
+                    latestClassificationId: itemClassification.id,
+                    // La relación citedFragments del Item se actualiza implícitamente aquí
+                },
             });
 
-            // 4. Autosuscribir si es insertado por el usuario
+            // 5. Autosuscribir si es insertado por el usuario
             if (insertedById) {
                 await tx.userSubscribedItem.upsert({
                     where: { userId_itemId: { userId: insertedById, itemId: finalItem.id } },
@@ -369,28 +390,69 @@ export class ItemsGatewayService {
      * Este método encapsula la obtención, clasificación y persistencia.
      * @param userId ID del usuario.
      */
-    async reclassifySubscribedItems(userId: UUID): Promise<void> {
+    async reclassifySubscribedItems(userId: UUID): Promise<ClassificationChange[]> {
         this.logger.log(`Starting reclassification flow for subscribed items of user: ${userId}`);
+        const classificationChanges: ClassificationChange[] = [];
 
-        const itemsToReclassify = await this.findAllSubscribed(userId);
+        const itemsToReclassify = (await this.findAllSubscribed(userId)) as unknown as ItemWithClassification[];
 
         if (itemsToReclassify.length === 0) {
             this.logger.log(`User ${userId} has no items to reclassify.`);
-            return;
+            return [];
         }
 
         this.logger.log(`Processing ${itemsToReclassify.length} items for reclassification.`);
 
-        // 2. Clasificar el lote de ítems (usando el servicio que invoca el LLM)
+        // 1. Clasificar el lote de ítems (usando el servicio que invoca el LLM)
         const newClassifications: CreateExistentItemClassification[] =
-            await this.itemsClassificationService.classifyExistentBatch(
-                itemsToReclassify as unknown as ItemWithClassification[],
-            );
+            await this.itemsClassificationService.classifyExistentBatch(itemsToReclassify);
 
-        // 3. Persistir las nuevas clasificaciones y actualizar punteros (Batch)
-        await this._saveReclassificationBatch(newClassifications);
+        // 2. Persistir las nuevas clasificaciones y rastrear las diferencias dentro de una transacción atómica
+        await this.prisma.$transaction(async (tx) => {
+            // Recorremos las nuevas clasificaciones generadas por la IA
+            for (const newClassificationData of newClassifications) {
+                const itemId = newClassificationData.item.id as UUID;
+                const newClassificationValue = newClassificationData.classification;
 
-        this.logger.log(`Reclassification completed for user: ${userId}`);
+                // a. Buscar el ítem original para obtener la clasificación anterior
+                const originalItem = itemsToReclassify.find((item) => item.id === itemId);
+
+                // b. Determinar el valor de la clasificación anterior para comparación
+                const oldClassificationValue = (originalItem as ItemWithClassification)?.latestClassification
+                    ?.classification;
+
+                // c. Verificar si hubo un cambio (el nuevo valor es diferente del antiguo)
+                if (oldClassificationValue !== newClassificationValue) {
+                    // Registrar el cambio para el retorno (Task 2)
+                    classificationChanges.push({
+                        itemId: itemId,
+                        newClassification: newClassificationValue,
+                    });
+                }
+
+                // d. Persistir la nueva ItemClassification
+                const itemClassification = await tx.itemClassification.create({
+                    data: {
+                        itemId: itemId,
+                        insightsValues: newClassificationData.insightsValues,
+                        classification: newClassificationValue,
+                    },
+                });
+
+                // e. Actualizar el puntero 'latestClassificationId' en el Item
+                await tx.item.update({
+                    where: { id: itemId },
+                    data: { latestClassificationId: itemClassification.id },
+                });
+            }
+        });
+
+        this.logger.log(
+            `Reclassification completed for user: ${userId}. Found ${classificationChanges.length} changes.`,
+        );
+
+        // 3. Devolver la lista de elementos cambiados
+        return classificationChanges;
     }
 
     /**
@@ -413,6 +475,8 @@ export class ItemsGatewayService {
     private async _saveReclassification(classificationInfo: CreateExistentItemClassification): Promise<void> {
         const { item, insightsValues, classification } = classificationInfo;
         const itemId = item.id;
+        // 0. Extracción de los IDs de fragmentos citados
+        const { citedFragmentIds } = insightsValues as unknown as InsightsWithCitations;
 
         return this.prisma.$transaction(async (tx) => {
             // 1. Crear nueva clasificación (Historial)
@@ -424,7 +488,25 @@ export class ItemsGatewayService {
                 },
             });
 
-            // 2. Actualizar el puntero rápido (latestClassificationId)
+            // 2. ELIMINAR LAS CITAS ANTIGUAS
+            await tx.itemCitedFragment.deleteMany({
+                where: { itemId },
+            });
+
+            // 3. CREAR LOS ITEMCITEDFRAGMENT NUEVOS (Trazabilidad)
+            if (citedFragmentIds && citedFragmentIds.length > 0) {
+                const citationCreations = citedFragmentIds.map((fragmentId) =>
+                    tx.itemCitedFragment.create({
+                        data: {
+                            itemId: itemId,
+                            fragmentId: fragmentId,
+                        },
+                    }),
+                );
+                await Promise.all(citationCreations);
+            }
+
+            // 4. Actualizar el puntero rápido (latestClassificationId)
             await tx.item.update({
                 where: { id: itemId },
                 data: { latestClassificationId: itemClassification.id, updatedAt: new Date() },

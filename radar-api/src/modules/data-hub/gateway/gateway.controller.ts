@@ -4,11 +4,11 @@
  * @class DataGatewayController
  */
 import { Controller, Get, Query, Logger } from '@nestjs/common';
-import { DataGatewayService } from './data-gateway.service';
+import { DataGatewayService } from './gateway.service';
 import { SearchQueryDto } from './dto/search-query.dto';
 import { KnowledgeFragment } from '@prisma/client';
 
-@Controller('data-gateway')
+@Controller('data-hub')
 export class DataGatewayController {
     private readonly logger = new Logger(DataGatewayController.name);
 

@@ -23,7 +23,7 @@ export class LLMClient {
         private readonly httpService: HttpService,
         private readonly configService: ConfigService,
     ) {
-        this.apiKey = this.configService.get<string>('LLM_API_KEY') || '';
+        this.apiKey = this.configService.get<string>('LLM_API_KEY') as string;
 
         if (!this.apiKey) throw new Error('LLM API key not found.');
 

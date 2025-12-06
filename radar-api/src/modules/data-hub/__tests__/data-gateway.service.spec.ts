@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DataGatewayService } from '../data-gateway/data-gateway.service';
+import { DataGatewayService } from '../data-gateway/gateway.service';
 import { PrismaService } from '@/common/services/prisma.service';
 import { AiAgentsService } from '../../ai-agents/ai-agents.service';
 import { SearchQueryDto } from '../data-gateway/dto/search-query.dto';

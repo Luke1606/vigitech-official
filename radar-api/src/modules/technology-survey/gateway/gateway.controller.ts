@@ -2,10 +2,10 @@ import type { UUID } from 'crypto';
 import { Get, Body, Patch, Param, Logger, Delete, Controller, ParseUUIDPipe, Req, Post } from '@nestjs/common';
 import { UserSubscribedItem, Item } from '@prisma/client';
 import type { AuthenticatedRequest } from '@/shared/types/authenticated-request.type';
-import { ItemsGatewayService } from './items-gateway.service';
+import { ItemsGatewayService } from './gateway.service';
 import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-item.dto';
 
-@Controller('survey-items')
+@Controller('tech-survey/survey-items')
 export class ItemsGatewayController {
     private readonly logger: Logger = new Logger('SurveyItemsController');
 

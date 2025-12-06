@@ -1,4 +1,3 @@
-// data-hub/data-gateway/data-gateway.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { KnowledgeFragment, Prisma, RawDataSource, RawDataType } from '@prisma/client';
 import { PrismaService } from '@/common/services/prisma.service';
