@@ -4,7 +4,7 @@ echo    CONFIGURACION INICIAL DE DESARROLLO
 echo ===============================================
 echo.
 
-echo [1/3] Instalando dependencias...
+echo [1/4] Instalando dependencias...
 call npm install
 if errorlevel 1 (
     echo ERROR: Fallo en npm install
@@ -12,7 +12,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [2/3] Generando cliente de Prisma...
+echo [2/4] Generando cliente de Prisma...
 call npm run db:generate
 if errorlevel 1 (
     echo ERROR: Fallo al generar cliente Prisma
@@ -20,8 +20,11 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [3/3] Iniciando base de datos...
+echo [3/4] Iniciando base de datos...
 call npm run db:up
+
+echo [4/4] Poblando base de conocimiento...
+call npm run db:seed1
 
 echo ===============================================
 echo    CONFIGURACION COMPLETADA!

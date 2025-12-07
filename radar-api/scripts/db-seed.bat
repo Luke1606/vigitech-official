@@ -5,7 +5,7 @@ echo ===============================================
 echo.
 echo Selecciona la etapa de siembra a ejecutar:
 echo.
-echo [1] Siembra Etapa 1 (Datos Iniciales)
+echo [1] Siembra Etapa 1 (Datos Iniciales, si ejecutó 'CONFIGURACION INICIAL DE DESARROLLO', comience por la etapa 2)
 echo [2] Siembra Etapa 2 (Datos Medios)
 echo [3] Siembra Etapa 3 (Datos Completos)
 echo.
