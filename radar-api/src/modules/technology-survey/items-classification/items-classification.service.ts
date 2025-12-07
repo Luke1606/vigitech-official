@@ -35,15 +35,14 @@ export class ItemsClassificationService {
             .join('\n\n');
 
         const prompt: string = `
-            Eres un Analista de Radar de Tecnología especializado. Tu tarea es CLASIFICAR la tecnología y ASIGNAR un CAMPO de tecnología basándote estrictamente en la evidencia proporcionada en el contexto RAG.
+            Eres un Analista de Radar de Elementos Tecnológicos especializado. Tu tarea es CLASIFICAR el elemento y ASIGNAR un CAMPO de tecnología basándote estrictamente en la evidencia proporcionada en el contexto RAG.
 
             --- REGLAS DEL RADAR ---
             ANILLOS (Clasificación): ADOPT, TEST, SUSTAIN, HOLD.
             CAMPOS (Field): BUSSINESS_INTEL, SCIENTIFIC_STAGE, SUPPORT_PLATTFORMS_AND_TECHNOLOGIES, LANGUAGES_AND_FRAMEWORKS.
 
-            --- TECNOLOGÍA A CLASIFICAR ---
+            --- Elemento A CLASIFICAR ---
             Título: ${item.title}
-            Resumen: ${item.summary}
             
             --- CONTEXTO RAG (EVIDENCIA) ---
             ${contextText}
@@ -59,7 +58,7 @@ export class ItemsClassificationService {
                     reasoningMetrics: { [key: string]: number | string }; // Métricas o razonamiento estructurado.
                     citedFragmentIds: string[]; // IDs de fragmentos usados como evidencia directa.
                 };
-                unclassifiedItem: { title: string; summary: string }; // Devuelve el DTO original.
+                unclassifiedItem: { title: string; summary: string }; // Devuelve el DTO pero con un summary breve e introductorio al elemento.
             }
         `;
 
@@ -105,6 +104,7 @@ export class ItemsClassificationService {
 
             --- TECNOLOGÍA Y ESTADO ACTUAL ---
             Título: ${item.title}
+            Descripción: ${item.summary}
             Campo Actual: ${item.itemField}
             Anillo Actual: ${currentClassification || 'TEST'}
 

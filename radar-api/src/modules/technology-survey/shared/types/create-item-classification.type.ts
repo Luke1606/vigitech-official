@@ -23,6 +23,11 @@ export type CreateNewItemClassification = CreateItemClassificationBase & {
     unclassifiedItem: CreateUnclassifiedItemDto;
 
     /**
+     * Descripción generada por IA del item sin clasificar
+     */
+    itemSummary: string;
+
+    /**
      * Campo relacionado del nuevo item
      */
     itemField: Field;

@@ -56,13 +56,13 @@ export class DataFetchService {
     /**
      * Obtiene contexto relevante para la clasificación inicial de un Item.
      * Utiliza BÚSQUEDA SEMÁNTICA PURA para el contexto histórico completo.
-     * @param item El DTO del Item a clasificar (title y summary).
+     * @param item El DTO del Item a clasificar (title).
      * @returns Promesa con un array de KnowledgeFragment relevante.
      */
     async fetchItemDataForClassification(item: CreateUnclassifiedItemDto): Promise<KnowledgeFragment[]> {
         this.logger.log(`Performing high-precision semantic search for initial item classification: ${item.title}`);
 
-        const semanticQuery = `Clasificación de la tecnología ${item.title}. Cubrir: madurez, casos de uso, riesgos y evolución. Resumen clave: ${item.summary}.`;
+        const semanticQuery = `Clasificación de la tecnología ${item.title}. Cubrir: madurez, casos de uso, riesgos y evolución.`;
 
         const query: SearchQuery = {
             query: semanticQuery,
