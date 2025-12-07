@@ -1,19 +1,21 @@
 import type { UUID } from 'crypto';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
-import { 
-	findOneQueryOptions, 
+import {
+	findOneQueryOptions,
 	getRecommendedQueryOptions,
 	getSubscribedQueryOptions
 } from './query-options';
 
-import { 
-	useSubscribeOneMutationOptions, 
+import {
+	useSubscribeOneMutationOptions,
 	useUnsubscribeOneMutationOptions,
-	useRemoveOneMutationOptions, 
+	useRemoveOneMutationOptions,
 	useSubscribeBatchMutationOptions,
 	useUnsubscribeBatchMutationOptions,
-	useRemoveBatchMutationOptions
+	useRemoveBatchMutationOptions,
+	useCreateSurveyItemMutationOptions,
+	useCreateBatchSurveyItemsMutationOptions
 } from './mutation-options';
 
 export const useSurveyItemsAPI = () => {
@@ -49,7 +51,17 @@ export const useSurveyItemsAPI = () => {
 		useUnsubscribeBatchMutationOptions()
 	);
 
-	const useRemoveBatchMutation = useMutation(useRemoveBatchMutationOptions());
+	const useCreateSurveyItemMutation = useMutation(
+		useCreateSurveyItemMutationOptions()
+	);
+
+	const useCreateBatchSurveyItemsMutation = useMutation(
+		useCreateBatchSurveyItemsMutationOptions()
+	);
+
+	const useRemoveBatchMutation = useMutation(
+		useRemoveBatchMutationOptions()
+	);
 
 	return {
 		recommended: useGetRecommendedQuery,
@@ -61,6 +73,8 @@ export const useSurveyItemsAPI = () => {
 		subscribeBatch: useSubscribeBatchMutation.mutate,
 		unsubscribeBatch: useUnsubscribeBatchMutation.mutate,
 		removeBatch: useRemoveBatchMutation.mutate,
+		create: useCreateSurveyItemMutation.mutate,
+		createBatch: useCreateBatchSurveyItemsMutation.mutate,
 		isLoading: {
 			subscribeOne: useSubscribeOneMutation.isPending,
 			unsubscribeOne: useUnsubscribeOneMutation.isPending,
@@ -68,6 +82,8 @@ export const useSurveyItemsAPI = () => {
 			subscribeBatch: useSubscribeBatchMutation.isPending,
 			unsubscribeBatch: useUnsubscribeBatchMutation.isPending,
 			removeBatch: useRemoveBatchMutation.isPending,
+			create: useCreateSurveyItemMutation.isPending,
+			createBatch: useCreateBatchSurveyItemsMutation.isPending,
 		},
 		hasError: {
 			subscribeOne: useSubscribeOneMutation.isError,
@@ -76,6 +92,8 @@ export const useSurveyItemsAPI = () => {
 			subscribeBatch: useSubscribeBatchMutation.isError,
 			unsubscribeBatch: useUnsubscribeBatchMutation.isError,
 			removeBatch: useRemoveBatchMutation.isError,
+			create: useCreateSurveyItemMutation.isError,
+			createBatch: useCreateBatchSurveyItemsMutation.isError,
 		},
 	};
 };

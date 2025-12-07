@@ -4,8 +4,9 @@ import { surveyItemsKey, subscribedKey } from '../constants';
 
 export const findSubscribedQueryOptions = () => queryOptions({
     queryKey: [
-        surveyItemsKey, 
+        surveyItemsKey,
         subscribedKey
     ],
     queryFn: () => surveyItemsRepository.findAllSubscribed(),
+    refetchOnWindowFocus: false,
 });

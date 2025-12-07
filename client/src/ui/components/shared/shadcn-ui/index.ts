@@ -9,6 +9,13 @@ export { Switch } from './switch'
 export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 
 export {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from './tabs';
+
+export {
   Alert,
   AlertTitle,
   AlertDescription

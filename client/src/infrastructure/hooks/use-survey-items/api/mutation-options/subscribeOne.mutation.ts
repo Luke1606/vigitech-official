@@ -2,37 +2,38 @@ import type { UUID } from "crypto";
 import { mutationOptions, useQueryClient } from "@tanstack/react-query";
 import { surveyItemsRepository, type SurveyItem } from "../../../..";
 import { surveyItemsKey, recommendedKey, subscribedKey } from "../constants";
+import { toast } from "react-toastify";
 
 export const useSubscribeOneMutationOptions = () => {
     const queryClient = useQueryClient();
-    
+
     return mutationOptions({
         mutationFn: (
             itemId: UUID
         ) => surveyItemsRepository.subscribeOne(itemId),
-        
+
         onMutate: async (
             itemId: UUID
         ) => {
-            await queryClient.cancelQueries({ 
+            await queryClient.cancelQueries({
                 queryKey: [
-                    surveyItemsKey, 
+                    surveyItemsKey,
                     recommendedKey
-                ] 
+                ]
             });
 
-            await queryClient.cancelQueries({ 
+            await queryClient.cancelQueries({
                 queryKey: [
-                    surveyItemsKey, 
+                    surveyItemsKey,
                     subscribedKey
-                ] 
+                ]
             });
 
             const previousRecommendations: SurveyItem[] | undefined = queryClient
                 .getQueryData<SurveyItem[]>(
                     [surveyItemsKey, recommendedKey]
                 );
-            
+
             const previousSubscribed: SurveyItem[] | undefined = queryClient
                 .getQueryData<SurveyItem[]>(
                     [surveyItemsKey, subscribedKey]
@@ -40,7 +41,7 @@ export const useSubscribeOneMutationOptions = () => {
 
             queryClient.setQueryData<SurveyItem[]>(
                 [surveyItemsKey, recommendedKey],
-                (old) => 
+                (old) =>
                     old?.filter(
                         (item: SurveyItem) => item.id !== itemId
                     ) || []
@@ -53,7 +54,7 @@ export const useSubscribeOneMutationOptions = () => {
             if (itemToAdd) {
                 queryClient.setQueryData<SurveyItem[]>(
                     [surveyItemsKey, subscribedKey],
-                    (old) => 
+                    (old) =>
                         old ? [...old, itemToAdd] : [itemToAdd]
                 );
             }
@@ -62,8 +63,8 @@ export const useSubscribeOneMutationOptions = () => {
         },
 
         onError: (
-            _err: Error, 
-            _itemId: UUID, 
+            _err: Error,
+            _itemId: UUID,
             context: {
                 previousRecommendations: SurveyItem[] | undefined;
                 previousSubscribed: SurveyItem[] | undefined;
@@ -71,31 +72,49 @@ export const useSubscribeOneMutationOptions = () => {
         ) => {
             if (context?.previousRecommendations) {
                 queryClient.setQueryData(
-                    [surveyItemsKey, recommendedKey], 
+                    [surveyItemsKey, recommendedKey],
                     context.previousRecommendations
                 );
             }
             if (context?.previousSubscribed) {
                 queryClient.setQueryData(
-                    [surveyItemsKey, subscribedKey], 
+                    [surveyItemsKey, subscribedKey],
                     context.previousSubscribed
                 );
             }
+            toast.error("Error al suscribirse al elemento seleccionado. Compruebe su conexión o inténtelo de nuevo.")
+        },
+
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: [
+                    surveyItemsKey,
+                    recommendedKey
+                ]
+            });
+
+            queryClient.invalidateQueries({
+                queryKey: [
+                    surveyItemsKey,
+                    subscribedKey
+                ]
+            });
+            toast.success("Se suscribió con éxito al elemento.")
         },
 
         onSettled: () => {
-            queryClient.invalidateQueries({ 
+            queryClient.invalidateQueries({
                 queryKey: [
-                    surveyItemsKey, 
+                    surveyItemsKey,
                     recommendedKey
-                ] 
+                ]
             });
 
-            queryClient.invalidateQueries({ 
+            queryClient.invalidateQueries({
                 queryKey: [
-                    surveyItemsKey, 
+                    surveyItemsKey,
                     subscribedKey
-                ] 
+                ]
             });
         },
     })

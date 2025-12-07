@@ -35,7 +35,7 @@ export const useCreateListMutationOptions = () => {
             if (context?.previousLists) {
                 queryClient.setQueryData([userItemListsKey], context.previousLists);
             }
-            //toast.error("Error al crear la lista. Compruebe su conexión o inténtelo de nuevo.")
+            toast.error("Error al crear la lista. Compruebe su conexión o inténtelo de nuevo.")
             console.log(_error)
         },
 

@@ -42,15 +42,15 @@ export const ItemListsSideBar: React.FC<{
     toggleVisible
 }) => {
         const {
-            lists,
-            createList,
-            updateList,
-            removeList,
+            //     lists,
+            //     createList,
+            //     updateList,
+            //     removeList,
             appendAllItems,
             removeAllItems,
         } = useUserItemLists();
         const query = useUserItemListsAPI();
-        //const { data: lists } = query.findAll
+        const { data: lists } = query.findAll
 
         const [newListName, setNewListName] = useState('');
         const [open, setOpen] = useState(false);
@@ -176,10 +176,9 @@ export const ItemListsSideBar: React.FC<{
                                                 name='crearLista'
                                                 onClick={() => {
                                                     if (newListName.trim()) {
-                                                        // query.createList(
-                                                        //     newListName.trim(),
-                                                        // );
-                                                        createList(newListName)
+                                                        query.createList(
+                                                            newListName.trim(),
+                                                        );
                                                         setNewListName('');
                                                         setOpen(false);
                                                     }
@@ -271,10 +270,9 @@ export const ItemListsSideBar: React.FC<{
                                 name='crearLista'
                                 onClick={() => {
                                     if (newListName.trim()) {
-                                        // query.createList(
-                                        //     newListName.trim(),
-                                        // );
-                                        createList(newListName)
+                                        query.createList(
+                                            newListName.trim(),
+                                        );
                                         setNewListName('');
                                         setOpen(false);
                                     }
@@ -306,8 +304,7 @@ export const ItemListsSideBar: React.FC<{
                             name='renombrarLista'
                             onClick={() => {
                                 if (newListName.trim()) {
-                                    //query.updateList({ listId: renameTarget, listNewName: newListName.trim() });
-                                    updateList(renameTarget, newListName)
+                                    query.updateList({ listId: renameTarget, listNewName: newListName.trim() });
                                     setRenameTarget(null);
                                     setNewListName('');
                                 }
@@ -345,8 +342,7 @@ export const ItemListsSideBar: React.FC<{
                             name='eliminarLista'
                             variant="destructive"
                             onClick={() => {
-                                //query.deleteList(deleteTarget);
-                                removeList(deleteTarget)
+                                query.deleteList(deleteTarget);
                                 setDeleteTarget(null);
                             }}
                         >

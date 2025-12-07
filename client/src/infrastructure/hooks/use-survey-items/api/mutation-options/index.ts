@@ -4,3 +4,5 @@ export { useRemoveOneMutationOptions } from './removeOne.mutation';
 export { useSubscribeBatchMutationOptions } from './subscribeBatch.mutation';
 export { useUnsubscribeBatchMutationOptions } from './unsubscribeBatch.mutation';
 export { useRemoveBatchMutationOptions } from './removeBatch.mutation';
+export { useCreateSurveyItemMutationOptions } from './createSurveyItem.mutation'
+export { useCreateBatchSurveyItemsMutationOptions } from './createBatchSurveyItems.mutation'

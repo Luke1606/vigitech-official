@@ -35,7 +35,7 @@ export const useUserItemListsAPI = () => {
     );
 
     const useUpdateListMutation = useMutation(
-        useUpdateListMutationOptions() // Asegúrate de tener esta mutation
+        useUpdateListMutationOptions() 
     );
 
     const useAppendAllItemMutation = useMutation(
@@ -57,10 +57,9 @@ export const useUserItemListsAPI = () => {
     return {
         findOne: useFindOneListQuery,
         findAll: useFindAllListsQuery,
-        // Usar mutateAsync en lugar de mutate para obtener Promises
         createList: useCreateListMutation.mutateAsync,
         deleteList: useDeleteListItemMutation.mutateAsync,
-        updateList: useUpdateListMutation.mutateAsync, // Agregar esta línea
+        updateList: useUpdateListMutation.mutateAsync,
         appendOneItem: useAppendOneItemMutation.mutateAsync,
         appendAllItem: useAppendAllItemMutation.mutateAsync,
         removeOneItem: useRemoveOneItemMutation.mutateAsync,

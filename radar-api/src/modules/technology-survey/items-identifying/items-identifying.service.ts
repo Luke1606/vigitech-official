@@ -55,7 +55,6 @@ export class ItemsIdentifyingService {
 
             type CreateUnclassifiedItemDto = {
                 title: string; // Nombre de la tecnología.
-                summary: string; // Resumen conciso de la tendencia o tecnología.
             }
         `;
 
