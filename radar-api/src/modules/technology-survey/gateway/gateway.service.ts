@@ -312,7 +312,7 @@ export class ItemsGatewayService {
      * @returns Promesa vacía que se ejecuta dentro de una transacción.
      */
     private async _saveNewItem(classificationInfo: CreateNewItemClassification, insertedById?: UUID): Promise<void> {
-        const { unclassifiedItem, itemField, insightsValues, classification } = classificationInfo;
+        const { unclassifiedItem, itemField, insightsValues, classification, itemSummary } = classificationInfo;
 
         // 0. Extracción de los IDs de fragmentos citados
         const { citedFragmentIds } = insightsValues as unknown as InsightsWithCitations;
@@ -322,7 +322,7 @@ export class ItemsGatewayService {
             const item = await tx.item.create({
                 data: {
                     title: unclassifiedItem.title,
-                    summary: unclassifiedItem.summary,
+                    summary: itemSummary,
                     itemField,
                     insertedById,
                 },
