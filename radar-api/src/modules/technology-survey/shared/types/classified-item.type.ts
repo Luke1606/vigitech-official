@@ -17,5 +17,6 @@ export type CreateItemType = BaseItem & {
  * Define el tipo de dato para un ítem creado en el radar tecnológico.
  */
 export type ItemWithClassification = BaseItem & {
+    id: UUID;
     latestClassification: ItemClassification;
 };

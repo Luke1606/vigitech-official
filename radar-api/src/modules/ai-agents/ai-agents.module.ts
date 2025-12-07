@@ -7,12 +7,14 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { AiAgentsService } from './ai-agents.service';
-import { GeminiFlashAiClient } from './clients/multi-purpose-client/gemini-flash.client.service';
-import { OpenAiTextEmbeddingAiClient } from './clients/embedding-client/open-ai-text-embedding.client.service';
+import { AiAgentsController } from './ai-agents.controller';
+import { LLMClient } from './clients/llm-client/llm.client.service';
+import { EmbeddingAiClient } from './clients/embedding-client/embedding.client.service';
 
 @Module({
     imports: [HttpModule],
-    providers: [AiAgentsService, GeminiFlashAiClient, OpenAiTextEmbeddingAiClient],
+    controllers: [AiAgentsController],
+    providers: [AiAgentsService, LLMClient, EmbeddingAiClient],
     exports: [AiAgentsService],
 })
 export class AiAgentsModule {}

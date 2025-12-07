@@ -1,0 +1,152 @@
+[
+  {
+    "id": "qf-s2-gen-06",
+    "textSnippet": "Los primeros adoptantes de soluciones *edge computing* reportan una complejidad de caché extrema y problemas de despliegue en múltiples proveedores de CDN, llevando a un *vendor lock-in* inesperado. Se recomienda precaución en arquitecturas multi-cloud.",
+    "associatedKPIs": { "multi_cloud_deploy_failure_rate": 0.30, "caching_complexity_score": 0.85, "vendor_lock_in_risk": 0.70 }
+  },
+  {
+    "id": "qf-s2-gen-07",
+    "textSnippet": "Los sistemas de gestión de identidades basados en *passkeys* están madurando rápidamente, prometiendo eliminar las contraseñas para 2026. La adopción a nivel de framework se acelera.",
+    "associatedKPIs": { "passkey_adoption_q2": 0.40, "security_incident_reduction": 0.25, "api_maturity_level": 4 }
+  },
+  {
+    "id": "qf-s2-gen-08",
+    "textSnippet": "Se observa una tendencia a simplificar el *tooling* de desarrollo, volviendo a soluciones monolíticas o 'monorepos' bien estructurados para reducir la fricción de la integración continua (CI/CD).",
+    "associatedKPIs": { "ci_cd_time_reduction": 0.18, "monorepo_adoption_q2": 0.12, "microservice_overhead_cost": 0.90 }
+  },
+  {
+    "id": "qf-s2-gen-09",
+    "textSnippet": "La IA Generativa se integra cada vez más en la capa de datos. Los modelos están aprendiendo a interactuar directamente con bases de datos vectoriales y a generar consultas complejas, lo que requiere nuevos estándares de seguridad de datos.",
+    "associatedKPIs": { "rag_data_layer_adoption": 0.22, "vector_db_market_share": 0.35, "data_security_risk_index": 1.5 }
+  },
+  {
+    "id": "qf-s2-gen-10",
+    "textSnippet": "Un informe académico señala que el uso de *smart contracts* en entornos no financieros presenta riesgos de auditoría y altos costos de transacción, limitando su uso a nichos de trazabilidad específicos.",
+    "associatedKPIs": { "non_financial_blockchain_roi": 0.2, "transaction_cost_usd": 0.85, "audit_complexity_score": 0.78 }
+  },
+  {
+    "id": "qf-s2-gen-11",
+    "textSnippet": "La estandarización en **Kubernetes** para la orquestación de contenedores ha simplificado el despliegue de microservicios, pero ha introducido una complejidad inesperada en la gestión de permisos (RBAC).",
+    "associatedKPIs": { "kubernetes_rbac_complexity": 0.80, "deployment_time_reduction_min": 15 }
+  },
+  {
+    "id": "qf-s2-gen-12",
+    "textSnippet": "Los **frameworks *full-stack* que usan Rust o Go** están ofreciendo tiempos de construcción y rendimiento de ejecución muy superiores a Node.js en tareas de I/O intensivas.",
+    "associatedKPIs": { "rust_go_framework_adoption": 0.10, "io_intensive_performance_gain": 0.40 }
+  },
+  {
+    "id": "qf-s2-gen-13",
+    "textSnippet": "El **aumento de los ataques de *supply chain*** en paquetes de *software* de código abierto está forzando a las organizaciones a invertir en *tooling* de verificación de procedencia y firma digital.",
+    "associatedKPIs": { "supply_chain_attack_increase": 0.30, "code_signing_adoption": 0.65 }
+  },
+  {
+    "id": "qf-s2-gen-14",
+    "textSnippet": "Los **sistemas de archivos distribuidos y *object storage*** están evolucionando para ofrecer funcionalidades transaccionales, compitiendo con las bases de datos NoSQL para ciertos casos de uso de Big Data.",
+    "associatedKPIs": { "object_storage_transaction_support": 0.15, "big_data_storage_cost_reduction": 0.20 }
+  },
+  {
+    "id": "qf-s2-gen-15",
+    "textSnippet": "El concepto de **\"shift-left\" en la seguridad** (mover la detección de vulnerabilidades a las etapas más tempranas del desarrollo) está en tendencia, aunque los desarrolladores ven una fricción inicial.",
+    "associatedKPIs": { "security_scan_early_adoption_rate": 0.55, "developer_friction_index": 0.70 }
+  },
+  {
+    "id": "qf-s2-gen-16",
+    "textSnippet": "La **persistencia de datos de sesión** sigue siendo un cuello de botella al escalar horizontalmente APIs *stateless*, lo que lleva al uso de *caches* distribuidas de alta disponibilidad.",
+    "associatedKPIs": { "session_persistence_latency_ms": 5, "distributed_cache_usage": 0.90 }
+  },
+  {
+    "id": "qf-s2-gen-17",
+    "textSnippet": "Se está desarrollando un nuevo estándar para la **trazabilidad de datos sensibles** en microservicios, obligatorio para cumplir con GDPR y CCPA, pero que genera una sobrecarga en el código.",
+    "associatedKPIs": { "sensitive_data_tracing_overhead": 0.10, "gdpr_compliance_score": 0.85 }
+  },
+  {
+    "id": "qf-s2-gen-18",
+    "textSnippet": "La **adopción de *feature flags*** se ha generalizado para desacoplar el despliegue del lanzamiento, mejorando la seguridad del *rollout* de nuevas características.",
+    "associatedKPIs": { "feature_flag_adoption": 0.95, "rollback_time_seconds": 30 }
+  },
+  {
+    "id": "qf-s2-gen-19",
+    "textSnippet": "El **cálculo *event-driven*** basado en *streams* (como Apache Kafka) es cada vez más usado para sistemas críticos, pero la depuración de errores lógicos es muy compleja.",
+    "associatedKPIs": { "stream_processing_critical_systems": 0.70, "debugging_complexity_index": 0.92 }
+  },
+  {
+    "id": "qf-s2-gen-20",
+    "textSnippet": "La **privacidad por diseño** se está implementando mediante técnicas de anonimización y seudonimización a nivel de la capa de datos, más allá de la capa de presentación.",
+    "associatedKPIs": { "data_anon_layer_adoption": 0.45, "privacy_by_design_score": 0.78 }
+  },
+  {
+    "id": "qf-s2-gen-21",
+    "textSnippet": "La **simplificación de la infraestructura *as code*** está llevando al uso de herramientas que compilan lenguajes de programación comunes (como Python o TypeScript) en plantillas de IaC.",
+    "associatedKPIs": { "iac_language_compilation_rate": 0.35, "devops_skill_gap_reduction": 0.25 }
+  },
+  {
+    "id": "qf-s2-gen-22",
+    "textSnippet": "El **modelo de *threat modeling*** está evolucionando para incluir riesgos específicos de la IA, como los ataques de envenenamiento de datos en *pipelines* de entrenamiento.",
+    "associatedKPIs": { "ai_threat_modeling_adoption": 0.18, "data_poisoning_risk_index": 0.60 }
+  },
+  {
+    "id": "qf-s2-gen-23",
+    "textSnippet": "Los **frameworks de *Machine Learning Operations* (MLOps)** están consolidándose, pero la integración con los sistemas de CI/CD tradicionales sigue siendo un punto de dolor.",
+    "associatedKPIs": { "mlops_framework_adoption": 0.40, "ml_ci_cd_integration_difficulty": 0.85 }
+  },
+  {
+    "id": "qf-s2-gen-24",
+    "textSnippet": "El uso de **etiquetas de seguridad (Security Labels)** a nivel de datos en bases de datos relacionales está reemplazando las ACLs complejas para la autorización a nivel de fila.",
+    "associatedKPIs": { "security_label_adoption_sql": 0.20, "rbac_simplification_score": 0.68 }
+  },
+  {
+    "id": "qf-s2-gen-25",
+    "textSnippet": "Se observa un crecimiento en la **reutilización de código entre el frontend y el backend** a través de patrones de programación isomórfica para mejorar la coherencia y reducir el trabajo.",
+    "associatedKPIs": { "isomorphic_code_reuse_rate": 0.30, "code_coherence_index": 0.80 }
+  },
+  {
+    "id": "qf-s2-gen-26",
+    "textSnippet": "La **gestión de secretos y credenciales** en entornos de Kubernetes sigue siendo un desafío, con una migración lenta a soluciones de bóveda centralizada.",
+    "associatedKPIs": { "secret_management_maturity_score": 0.60, "direct_secret_usage_rate": 0.40 }
+  },
+  {
+    "id": "qf-s2-gen-27",
+    "textSnippet": "La **computación con datos cifrados** (como el *secure multiparty computation*) es vista como el futuro de la privacidad, pero su adopción está limitada por la sobrecarga computacional.",
+    "associatedKPIs": { "secure_mpc_adoption_rate": 0.02, "computational_overhead_factor": 10 }
+  },
+  {
+    "id": "qf-s2-gen-28",
+    "textSnippet": "Las **bases de datos orientadas a grafos** están ganando relevancia para casos de uso de fraude y análisis de redes, ya que ofrecen un rendimiento superior a las uniones SQL complejas.",
+    "associatedKPIs": { "graph_db_fraud_detection_roi": 1.5, "sql_join_complexity_score": 0.90 }
+  },
+  {
+    "id": "qf-s2-gen-29",
+    "textSnippet": "La **dependencia de *firmware*** y controladores propietarios en la nube híbrida está creando puntos de falla críticos y dificultando la portabilidad de las cargas de trabajo.",
+    "associatedKPIs": { "proprietary_firmware_risk_index": 0.75, "hybrid_cloud_portability_score": 0.55 }
+  },
+  {
+    "id": "qf-s2-gen-30",
+    "textSnippet": "La **migración de sistemas monolíticos** a microservicios ha disminuido, y el enfoque se centra ahora en la descomposición de componentes internos (*Service-Based Architecture*).",
+    "associatedKPIs": { "monolith_to_microservice_rate": 0.10, "service_based_architecture_adoption": 0.35 }
+  },
+  {
+    "id": "qf-s2-gen-31",
+    "textSnippet": "El **despliegue de modelos de IA** en dispositivos *edge* (TinyML) está impulsando la necesidad de optimización de modelos con restricciones de memoria y energía.",
+    "associatedKPIs": { "tinyml_adoption_rate": 0.12, "model_size_reduction_factor": 4 }
+  },
+  {
+    "id": "qf-s2-gen-32",
+    "textSnippet": "La **ciberseguridad en APIs** se está moviendo más allá de los WAFs tradicionales para enfocarse en la detección de anomalías de comportamiento específicas de la API (API Security Gateways).",
+    "associatedKPIs": { "api_security_gateway_adoption": 0.28, "api_behavioral_anomaly_rate": 0.05 }
+  },
+  {
+    "id": "qf-s2-gen-33",
+    "textSnippet": "El **uso de *event sourcing*** para la auditoría y la reconstrucción de estados en sistemas financieros está en aumento, pero requiere una curva de aprendizaje especializada.",
+    "associatedKPIs": { "event_sourcing_financial_adoption": 0.33, "developer_training_hours": 80 }
+  },
+  {
+    "id": "qf-s2-gen-34",
+    "textSnippet": "Las **arquitecturas de *micro-frontend*** modulares y compuestas se están adoptando para grandes aplicaciones empresariales, priorizando la independencia de los equipos.",
+    "associatedKPIs": { "enterprise_microfrontend_adoption": 0.15, "team_autonomy_score": 0.85 }
+  },
+  {
+    "id": "qf-s2-gen-35",
+    "textSnippet": "El **desafío de la calidad de los datos** en los *data lakes* no estructurados está llevando a la aparición de herramientas de *data quality* automatizadas basadas en IA.",
+    "associatedKPIs": { "data_quality_issue_rate": 0.18, "ai_data_quality_tooling_adoption": 0.15 }
+  }
+]

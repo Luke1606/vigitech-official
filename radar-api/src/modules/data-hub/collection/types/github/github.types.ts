@@ -1,6 +1,6 @@
 /**
  * @file Defines the types for the raw data collected from the GitHub API.
- * @description This file contains the type definitions for the raw GitHub data 
+ * @description This file contains the type definitions for the raw GitHub data
  * (Repository, Issue, PR, Code, Topic), ensuring type safety and clarity.
  */
 
@@ -84,7 +84,7 @@ type SharedIssuePrProperties = {
     pull_request?: {
         url: string;
         html_url: string;
-    }; 
+    };
 };
 
 /**

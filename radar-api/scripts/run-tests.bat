@@ -37,7 +37,7 @@ if %TEST_RESULT% equ 0 (
     echo ===============================================
 ) else (
     echo ===============================================
-    echo    TESTS FALLIDOS! Código de error: %TEST_RESULT%
+    echo    TESTS FALLIDOS! Codigo de error: %TEST_RESULT%
     echo ===============================================
 )
 

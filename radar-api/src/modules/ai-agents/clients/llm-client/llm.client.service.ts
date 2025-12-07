@@ -1,7 +1,7 @@
 /**
  * Cliente de IA para la generación de texto utilizando la API de Gemini Flash.
  * Gestiona la comunicación con el servicio de generación de contenido de Gemini.
- * @class GeminiFlashAiClient
+ * @class LLMClient
  */
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -10,8 +10,8 @@ import { RawData } from '@prisma/client';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
-export class GeminiFlashAiClient {
-    private readonly logger: Logger = new Logger(GeminiFlashAiClient.name);
+export class LLMClient {
+    private readonly logger: Logger = new Logger(LLMClient.name);
     private readonly baseURL: string;
     private readonly apiKey: string;
 
@@ -23,9 +23,9 @@ export class GeminiFlashAiClient {
         private readonly httpService: HttpService,
         private readonly configService: ConfigService,
     ) {
-        this.apiKey = this.configService.get<string>('GEMINI_API_KEY') || '';
+        this.apiKey = this.configService.get<string>('LLM_API_KEY') as string;
 
-        if (!this.apiKey) throw new Error('Gemini API key not found.');
+        if (!this.apiKey) throw new Error('LLM API key not found.');
 
         this.baseURL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.apiKey}`;
 
@@ -40,7 +40,7 @@ export class GeminiFlashAiClient {
      * @throws {Error} Si ocurre un error durante la generación de texto.
      */
     async generateResponse(prompt: string, context?: RawData[] | object): Promise<object> {
-        this.logger.log('Generando texto utilizando el cliente Gemini Flash');
+        this.logger.log('Generando texto utilizando el cliente LLM');
 
         const content = [
             {
@@ -52,7 +52,7 @@ export class GeminiFlashAiClient {
             const response = await firstValueFrom(this.httpService.post(this.baseURL, { contents: content }));
             return response.data;
         } catch (error) {
-            this.logger.error('Error generando texto con Gemini Flash client', error);
+            this.logger.error('Error generando texto con LLM client', error);
             throw error;
         }
     }

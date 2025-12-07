@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { KnowledgeFragment, Frequency } from '@prisma/client';
-import { DataGatewayService } from '../../data-hub/data-gateway/data-gateway.service';
+import { DataGatewayService } from '../../data-hub/gateway/gateway.service';
 import { SearchQuery } from './types/search-query.type';
 import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-item.dto';
 import { ItemWithClassification } from '../shared/types/classified-item.type';

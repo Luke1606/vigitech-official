@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ItemsGatewayService } from './items-gateway.service';
-import { ItemsGatewayController } from './items-gateway.controller';
+import { ItemsGatewayService } from './gateway.service';
+import { ItemsGatewayController } from './gateway.controller';
 import { ItemsClassificationModule } from '../items-classification/items-classification.module';
 
 @Module({

@@ -5,8 +5,8 @@
  * @module DataGatewayModule
  */
 import { Module } from '@nestjs/common';
-import { DataGatewayController } from './data-gateway.controller';
-import { DataGatewayService } from './data-gateway.service';
+import { DataGatewayController } from './gateway.controller';
+import { DataGatewayService } from './gateway.service';
 import { AiAgentsModule } from '../../ai-agents/ai-agents.module';
 
 @Module({

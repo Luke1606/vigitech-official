@@ -4,16 +4,16 @@
  * @class AiAgentsService
  */
 import { Injectable, Logger } from '@nestjs/common';
-import { GeminiFlashAiClient } from './clients/multi-purpose-client/gemini-flash.client.service';
-import { OpenAiTextEmbeddingAiClient } from './clients/embedding-client/open-ai-text-embedding.client.service';
+import { LLMClient } from './clients/llm-client/llm.client.service';
+import { EmbeddingAiClient } from './clients/embedding-client/embedding.client.service';
 
 @Injectable()
 export class AiAgentsService {
     private readonly logger = new Logger(AiAgentsService.name);
 
     constructor(
-        private readonly multiPurposeClient: GeminiFlashAiClient,
-        private readonly textEmbeddingClient: OpenAiTextEmbeddingAiClient,
+        private readonly multiPurposeClient: LLMClient,
+        private readonly textEmbeddingClient: EmbeddingAiClient,
     ) {
         this.logger.log('Initialized');
     }

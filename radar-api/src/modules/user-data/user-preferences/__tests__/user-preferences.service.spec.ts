@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaService } from '@/common/services/prisma.service';
 import { UserPreferencesService } from '../user-preferences.service';
-import { PrismaService } from '../../../../common/services/prisma.service';
 import { mockPrismaClient } from '../../__mocks__/shared.mock';
 
 describe('UserPreferencesService', () => {

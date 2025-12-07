@@ -5,8 +5,4 @@ export class CreateUnclassifiedItemDto {
     @ApiProperty({ description: 'Título del ítem' })
     @IsString()
     title!: string;
-
-    @ApiProperty({ description: 'Descripción o resumen del ítem' })
-    @IsString()
-    summary!: string;
 }
