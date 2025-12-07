@@ -6,25 +6,23 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { GoogleGenerativeAI, Content, Part, GenerativeModel } from '@google/generative-ai';
 
 @Injectable()
 export class EmbeddingAiClient {
     private readonly logger: Logger = new Logger(EmbeddingAiClient.name);
-    private readonly baseUrl: string;
-    private readonly apiKey: string;
-    private readonly embeddingModel: string;
+    private readonly embeddingModel: GenerativeModel;
 
     constructor(
         private readonly httpService: HttpService,
         private readonly configService: ConfigService,
     ) {
-        this.apiKey = this.configService.get<string>('EMBEDDING_API_KEY') as string;
-        this.embeddingModel = this.configService.get<string>('EMBEDDING_MODEL') as string;
+        const apiKey: string = this.configService.get<string>('EMBEDDING_API_KEY') as string;
+        const model: string = this.configService.get<string>('EMBEDDING_MODEL') as string;
 
-        if (!this.apiKey || !this.embeddingModel) throw new Error('Embedding API key or embedding model not found.');
+        if (!apiKey || !model) throw new Error('Embedding API key or embedding model not found.');
 
-        this.baseUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.embeddingModel}:batchEmbedContents`;
+        this.embeddingModel = new GoogleGenerativeAI(apiKey).getGenerativeModel({ model });
 
         this.logger.log('Initialized');
     }
@@ -36,34 +34,32 @@ export class EmbeddingAiClient {
      * @throws {Error} Si ocurre un error durante la generación de embeddings.
      */
     async generateEmbeddings(text: string[]): Promise<number[][]> {
-        this.logger.log(`Generando ${text.length} embeddings con ${this.embeddingModel}`);
+        this.logger.log(`Generando ${text.length} embeddings.`);
 
-        const requests = text.map((t) => ({
-            content: {
-                parts: [{ text: t }],
-            },
-        }));
+        // Mapeamos cada string de texto a la estructura Content esperada
+        const requestsWithContent: { content: Content }[] = text.map((textElement) => {
+            // 1. Crear el objeto Part
+            const part: Part = { text: textElement };
+
+            // 2. Crear el objeto Content (requiere role y parts)
+            const content: Content = {
+                role: 'user', // El rol es genérico, pero requerido por la interfaz
+                parts: [part],
+            };
+
+            // 3. Crear el objeto EmbedContentRequest (requiere la propiedad 'content')
+            return { content };
+        });
 
         try {
-            const response = await firstValueFrom(
-                this.httpService.post(
-                    `${this.baseUrl}?key=${this.apiKey}`,
-                    {
-                        requests,
-                    },
-                    {
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    },
-                ),
-            );
+            const result = await this.embeddingModel.batchEmbedContents({
+                requests: requestsWithContent,
+            });
 
-            // Mapear la respuesta para extraer solo los arrays de embedding
-            return response.data.embeddings.map((item: any) => item.values);
+            return result.embeddings.map((e: { values: number[] }) => e.values);
         } catch (error) {
-            this.logger.error('Error generando embeddings', error);
-            throw error;
+            console.error('ERROR al generar embeddings con el SDK de Gemini.', error);
+            throw new Error('Falló la generación de embeddings. Revisa tu clave y modelo.');
         }
     }
 }
