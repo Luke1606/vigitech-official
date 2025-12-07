@@ -74,6 +74,18 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
         return await this.axios.http
             .delete('batch', { data: { itemIds } });
     };
+
+    async create(
+        title: string,
+    ): Promise<void> {
+        return await this.axios.http.post('create', title)
+    }
+
+    async createBatch(
+        titles: string[],
+    ): Promise<void> {
+        return await this.axios.http.post('create/batch', titles)
+    }
 }
 
 export const surveyItemsRepository = new SurveyItemsRepository();

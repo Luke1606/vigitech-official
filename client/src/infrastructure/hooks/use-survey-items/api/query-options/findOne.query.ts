@@ -5,9 +5,10 @@ import { surveyItemsKey } from "../constants";
 
 export const findOneQueryOptions = (itemId: UUID) => queryOptions({
     queryKey: [
-        surveyItemsKey, 
+        surveyItemsKey,
         itemId
     ],
     queryFn: () => surveyItemsRepository.findOne(itemId),
     enabled: !!itemId,
+    refetchOnWindowFocus: false,
 })

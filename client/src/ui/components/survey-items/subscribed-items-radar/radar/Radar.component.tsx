@@ -6,17 +6,24 @@ import {
     RadarRing,
     generateBlipPositions,
     ringBounds,
-    quadrantLabels,
-    useSurveyItems
+    quadrantLabels
 } from '../../../../../infrastructure';
 import { RadarMenu } from './radar-menu/RadarMenu.component';
-import type { SurveyItem } from '../../../../../infrastructure';
+import type { SurveyItem, UUID } from '../../../../../infrastructure';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Search, Upload } from 'lucide-react';
+import { Eye, EyeOff, Search, Upload, RefreshCw, Menu, X, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '../../../../components/shared';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../components/shared';
 import { Input } from '../../../../components/shared';
 import { Label } from '../../../../components/shared';
+import { useSurveyItemsAPI } from '../../../../../infrastructure/hooks/use-survey-items/api/useSurveyItemsAPI.hook';
+import * as XLSX from 'xlsx';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "../../../../components/shared";
 
 export const Radar: React.FC<{
     entries?: Blip[];
@@ -34,8 +41,8 @@ export const Radar: React.FC<{
     onBlipClick,
     onBlipHover
 }) => {
+        const query = useSurveyItemsAPI();
         const navigate = useNavigate();
-        const { addPendingUnsubscribes, addPendingRemoves } = useSurveyItems();
         const [hoveredBlipId, setHoveredBlipId] = React.useState<string | null>(null);
         const [menuOpen, setMenuOpen] = React.useState(false);
         const [selectedBlip, setSelectedBlip] = React.useState<Blip | null>(null);
@@ -43,6 +50,9 @@ export const Radar: React.FC<{
 
         // Estado para controlar qué blip está seleccionado en la lista móvil
         const [selectedBlipId, setSelectedBlipId] = React.useState<string | null>(null);
+
+        // Estado para mantener los blips seleccionados
+        const [selectedBlips, setSelectedBlips] = React.useState<Set<UUID>>(new Set());
 
         // Estado para controlar la visibilidad de los cuadrantes
         const [visibleQuadrants, setVisibleQuadrants] = React.useState<Record<RadarQuadrant, boolean>>(() => {
@@ -62,9 +72,18 @@ export const Radar: React.FC<{
         const [searchDialogOpen, setSearchDialogOpen] = React.useState(false);
         const [searchTerm, setSearchTerm] = React.useState('');
         const [excelFile, setExcelFile] = React.useState<File | null>(null);
+        const [excelError, setExcelError] = React.useState<string | null>(null);
 
-        // Estado para el hover del botón en desktop
-        const [isButtonHovered, setIsButtonHovered] = React.useState(false);
+        // Estados separados para el hover de cada botón en desktop
+        const [isSearchButtonHovered, setIsSearchButtonHovered] = React.useState(false);
+        const [isChangesButtonHovered, setIsChangesButtonHovered] = React.useState(false);
+        const [isDeselectAllButtonHovered, setIsDeselectAllButtonHovered] = React.useState(false); // Estado para hover del botón Deseleccionar Todos
+
+        // Estado para el loading de cambios
+        const [isLoadingChanges, setIsLoadingChanges] = React.useState(false);
+
+        // Estado para el menú móvil
+        const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
         // Detectar cambio de tamaño de pantalla
         React.useEffect(() => {
@@ -86,8 +105,8 @@ export const Radar: React.FC<{
 
         // Determinar si el botón aceptar está habilitado
         const isAcceptEnabled = React.useMemo(() => {
-            return (searchTerm.trim() !== '' && !excelFile) || (excelFile && searchTerm.trim() === '');
-        }, [searchTerm, excelFile]);
+            return (searchTerm.trim() !== '' && !excelFile) || (excelFile && searchTerm.trim() === '' && !excelError);
+        }, [searchTerm, excelFile, excelError]);
 
         // Determinar si el input de búsqueda está deshabilitado
         const isSearchInputDisabled = React.useMemo(() => {
@@ -99,9 +118,76 @@ export const Radar: React.FC<{
             return searchTerm.trim() !== '';
         }, [searchTerm]);
 
-        // Colores para el botón del SVG
-        const buttonFillColor = isButtonHovered ? '#1d4ed8' : '#2563eb'; // Azul oscuro en hover, azul normal por defecto
-        const buttonStrokeColor = isButtonHovered ? '#1e40af' : '#1d4ed8'; // Azul más oscuro en hover
+        // Colores para el botón de búsqueda de tecnología
+        const searchButtonFillColor = isSearchButtonHovered ? '#1d4ed8' : '#2563eb';
+        const searchButtonStrokeColor = isSearchButtonHovered ? '#1e40af' : '#1d4ed8';
+
+        // Colores para el botón de buscar cambios
+        const changesButtonFillColor = isChangesButtonHovered ? '#059669' : (isLoadingChanges ? '#059669' : '#10b981');
+        const changesButtonStrokeColor = isChangesButtonHovered ? '#047857' : (isLoadingChanges ? '#047857' : '#059669');
+
+        // Colores para el botón de Deseleccionar Todos
+        const deselectAllButtonFillColor = isDeselectAllButtonHovered ? '#dc2626' : '#ef4444';
+        const deselectAllButtonStrokeColor = isDeselectAllButtonHovered ? '#b91c1c' : '#dc2626';
+
+        // Función para leer y validar el archivo Excel
+        const readAndValidateExcel = (file: File): Promise<string[]> => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                        const workbook = XLSX.read(data, { type: 'array' });
+
+                        // Obtener la primera hoja
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+
+                        // Convertir a JSON
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                        if (jsonData.length === 0) {
+                            reject(new Error('El archivo Excel está vacío'));
+                            return;
+                        }
+
+                        // Obtener los headers (primera fila)
+                        const headers = jsonData[0] as string[];
+
+                        // Validar que solo haya una columna llamada "Titulo"
+                        if (headers.length !== 1 || headers[0] !== 'Titulo') {
+                            reject(new Error('El archivo Excel debe tener exactamente una columna con el nombre "Titulo"'));
+                            return;
+                        }
+
+                        // Extraer los valores de la columna Titulo (excluyendo el header)
+                        const titles: string[] = [];
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i] as any[];
+                            if (row && row[0] && typeof row[0] === 'string' && row[0].trim() !== '') {
+                                titles.push(row[0].trim());
+                            }
+                        }
+
+                        if (titles.length === 0) {
+                            reject(new Error('No se encontraron valores válidos en la columna "Titulo"'));
+                            return;
+                        }
+
+                        resolve(titles);
+                    } catch (error) {
+                        reject(new Error('Error al leer el archivo Excel: ' + (error as Error).message));
+                    }
+                };
+
+                reader.onerror = () => {
+                    reject(new Error('Error al leer el archivo'));
+                };
+
+                reader.readAsArrayBuffer(file);
+            });
+        };
 
         // Función para alternar la visibilidad de un cuadrante
         const toggleQuadrantVisibility = (quadrant: RadarQuadrant) => {
@@ -109,6 +195,67 @@ export const Radar: React.FC<{
                 ...prev,
                 [quadrant]: !prev[quadrant]
             }));
+        };
+
+        // Función para seleccionar/deseleccionar un blip
+        const toggleBlipSelection = (blipId: UUID) => {
+            setSelectedBlips(prev => {
+                const newSet = new Set(prev);
+                if (newSet.has(blipId)) {
+                    newSet.delete(blipId);
+                } else {
+                    newSet.add(blipId);
+                }
+                return newSet;
+            });
+        };
+
+        // Función para deseleccionar todos los blips
+        const deselectAllBlips = () => {
+            setSelectedBlips(new Set());
+            setSelectedBlipId(null);
+        };
+
+        // Función para verificar si un blip está seleccionado
+        const isBlipSelected = (blipId: UUID): boolean => {
+            return selectedBlips.has(blipId);
+        };
+
+        // Función para obtener todos los IDs seleccionados
+        const getSelectedBlipIds = (): UUID[] => {
+            return Array.from(selectedBlips);
+        };
+
+        // Manejador para "Dejar de seguir" que usa unsubscribeBatch
+        const handleUnsubscribeSelected = () => {
+            const selectedIds = getSelectedBlipIds();
+            if (selectedIds.length > 0) {
+                console.log('Dejando de seguir seleccionados:', selectedIds);
+                query.unsubscribeBatch(selectedIds);
+                // Limpiar selección después de la acción
+                setSelectedBlips(new Set());
+            } else if (selectedBlip) {
+                // Si no hay seleccionados pero hay un blip en el menú, usar unsubscribeOne
+                console.log('Dejando de seguir uno:', selectedBlip.id);
+                query.unsubscribeOne(selectedBlip.id);
+            }
+            setMenuOpen(false);
+        };
+
+        //  Manejador para "Eliminar" que usa removeBatch
+        const handleRemoveSelected = () => {
+            const selectedIds = getSelectedBlipIds();
+            if (selectedIds.length > 0) {
+                console.log('Eliminando seleccionados:', selectedIds);
+                query.removeBatch(selectedIds); // Usar removeBatch
+                // Limpiar selección después de la acción
+                setSelectedBlips(new Set());
+            } else if (selectedBlip) {
+                // Si no hay seleccionados pero hay un blip en el menú, usar removeOne
+                console.log('Eliminando uno:', selectedBlip.id);
+                query.removeOne(selectedBlip.id);
+            }
+            setMenuOpen(false);
         };
 
         // Manejador para cuando se hace clic en un blip
@@ -167,30 +314,15 @@ export const Radar: React.FC<{
             setMenuOpen(false);
         };
 
-        const handleUnsubscribe = (items: SurveyItem[]) => {
-            console.log('Dejar de seguir:', items);
-            addPendingUnsubscribes(items);
-            setMenuOpen(false);
-        };
-
-        const handleRemove = (items: SurveyItem[]) => {
-            console.log('Eliminar:', items);
-            addPendingRemoves(items);
-            setMenuOpen(false);
-        };
-
-        const handleSelect = (item: SurveyItem) => {
-            console.log('Seleccionar:', item);
-            setMenuOpen(false);
-        };
-
-        const handleUnselect = (item: SurveyItem) => {
-            console.log('Deseleccionar:', item);
+        // Manejador para seleccionar/deseleccionar desde el menú
+        const handleSelectUnselect = (item: SurveyItem) => {
+            toggleBlipSelection(item.id);
             setMenuOpen(false);
         };
 
         // Manejadores para el diálogo de búsqueda/importación
         const handleOpenSearchDialog = () => {
+            setMobileMenuOpen(false); // Cerrar el menú móvil
             setSearchDialogOpen(true);
         };
 
@@ -198,6 +330,7 @@ export const Radar: React.FC<{
             setSearchDialogOpen(false);
             setSearchTerm('');
             setExcelFile(null);
+            setExcelError(null);
         };
 
         const handleSearchTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,34 +339,79 @@ export const Radar: React.FC<{
             // Si se escribe algo, limpiar el archivo Excel
             if (value.trim() !== '') {
                 setExcelFile(null);
+                setExcelError(null);
             }
         };
 
-        const handleExcelFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const handleExcelFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
             const file = e.target.files?.[0] || null;
             setExcelFile(file);
-            // Si se selecciona un archivo, limpiar el término de búsqueda
+            setExcelError(null); // Limpiar errores anteriores
+
             if (file) {
+                // Limpiar el término de búsqueda
                 setSearchTerm('');
+
+                try {
+                    // Leer y validar el Excel
+                    await readAndValidateExcel(file);
+                    // Si la validación es exitosa, no hacemos nada más aquí
+                    // Los títulos se leerán nuevamente en handleAccept
+                } catch (error) {
+                    const errorMessage = (error as Error).message;
+                    setExcelError(errorMessage);
+                    setExcelFile(null); // Limpiar el archivo si hay error
+
+                    // Limpiar el input file
+                    if (e.target) {
+                        e.target.value = '';
+                    }
+                }
             }
         };
 
-        const handleAccept = () => {
+        // Función para buscar cambios (ejecuta query.subscribed)
+        const handleSearchChanges = async () => {
+            console.log('Buscando cambios...');
+            setMobileMenuOpen(false); // Cerrar el menú móvil
+            setIsLoadingChanges(true);
+            try {
+                await query.subscribed;
+            } catch (error) {
+                console.error('Error buscando cambios:', error);
+            } finally {
+                setIsLoadingChanges(false);
+            }
+        };
+
+        const handleAccept = async () => {
             if (searchTerm.trim() !== '') {
                 console.log('Buscando tecnología:', searchTerm);
-                // Aquí iría la lógica para buscar la tecnología
+                query.create(searchTerm);
+                handleCloseSearchDialog();
             } else if (excelFile) {
-                console.log('Importando archivo Excel:', excelFile.name);
-                // Aquí iría la lógica para importar el Excel
-            }
+                try {
+                    console.log('Importando archivo Excel:', excelFile.name);
 
-            // Cerrar el diálogo y resetear los estados
-            handleCloseSearchDialog();
+                    // Leer el archivo para obtener los títulos
+                    const titles = await readAndValidateExcel(excelFile);
+                    console.log('Títulos a importar:', titles);
+
+                    // Llamar a createBatch con los títulos extraídos
+                    query.createBatch(titles);
+
+                    handleCloseSearchDialog();
+                } catch (error) {
+                    const errorMessage = (error as Error).message;
+                    setExcelError(errorMessage);
+                    // No cerrar el diálogo si hay error
+                }
+            }
         };
 
         // Cerrar menú cuando se hace clic fuera
         React.useEffect(() => {
-            const handleClickOutside = (event: MouseEvent) => {
+            const handleClickOutside = () => {
                 setMenuOpen(false);
             };
 
@@ -268,7 +446,7 @@ export const Radar: React.FC<{
         }, [isMobile]);
 
         // Función para generar posiciones de blips en semicírculo móvil
-        const generateMobileBlipPositions = (blips: Blip[], quadrant: RadarQuadrant) => {
+        const generateMobileBlipPositions = (blips: Blip[]) => {
             const positions: Record<string, { x: number; y: number }> = {};
             const centerX = 200;
             const baseY = 180;
@@ -335,22 +513,63 @@ export const Radar: React.FC<{
         if (isMobile) {
             return (
                 <div className="w-full min-h-screen flex flex-col items-center py-4 px-2 bg-gray-50">
-                    {/* Barra de botones móvil - BUSCAR/IMPORTAR ENTRE LISTAS PERSONALIZADAS Y CHANGELOG */}
-                    <div className="absolute w-fit top-20 left-auto justify-between space-x-2">
-
-                        {/* Botón de Buscar/Importar Tecnología - EN MEDIO */}
-                        <Button
-                            onClick={handleOpenSearchDialog}
-                            className="flex-1 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                            <Search size={18} />
-                            <span className="">Buscar Tecnología</span>
-                        </Button>
+                    {/* Contenedor del menú móvil - CENTRADO HORIZONTALMENTE EN LA PARTE SUPERIOR */}
+                    <div className="absolute top-18">
+                        <DropdownMenu open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="rounded-full w-12 h-12 bg-white shadow-md border-gray-200 hover:bg-gray-50 transition-all duration-200"
+                                >
+                                    {mobileMenuOpen ? (
+                                        <X size={24} className="text-gray-700" />
+                                    ) : (
+                                        <Menu size={24} className="text-gray-700" />
+                                    )}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="center" className="w-56 mt-2">
+                                <DropdownMenuItem
+                                    onClick={handleOpenSearchDialog}
+                                    className="flex items-center cursor-pointer py-3"
+                                >
+                                    <Search size={18} className="mr-3" />
+                                    <span className="text-base">Buscar Tecnología</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={handleSearchChanges}
+                                    disabled={isLoadingChanges}
+                                    className="flex items-center cursor-pointer py-3"
+                                >
+                                    {isLoadingChanges ? (
+                                        <RefreshCw size={18} className="mr-3 animate-spin" />
+                                    ) : (
+                                        <RefreshCw size={18} className="mr-3" />
+                                    )}
+                                    <span className="text-base">{isLoadingChanges ? 'Buscando...' : 'Buscar Cambios'}</span>
+                                </DropdownMenuItem>
+                                {/* Opción para Deseleccionar Todos en móvil */}
+                                <DropdownMenuItem
+                                    onClick={deselectAllBlips}
+                                    disabled={selectedBlips.size === 0}
+                                    className="flex items-center cursor-pointer py-3"
+                                >
+                                    <XCircle size={18} className="mr-3" />
+                                    <span className="text-base">Deseleccionar Todos</span>
+                                    {selectedBlips.size > 0 && (
+                                        <span className="ml-auto bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded">
+                                            {selectedBlips.size}
+                                        </span>
+                                    )}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
 
                     {/* Contenedor de cuadrantes móviles */}
                     <div className="w-full max-w-md space-y-6">
-                        {quadrantLabels.map((quadrant, index) => {
+                        {quadrantLabels.map((quadrant) => {
                             if (!entries) return null;
 
                             // Filtrar blips por cuadrante y visibilidad
@@ -360,7 +579,7 @@ export const Radar: React.FC<{
 
                             // Generar posiciones específicas para móvil SOLO si hay blips
                             const mobileBlipPositions = quadrantBlips.length > 0
-                                ? generateMobileBlipPositions(quadrantBlips, quadrant.label)
+                                ? generateMobileBlipPositions(quadrantBlips)
                                 : {};
 
                             return (
@@ -461,6 +680,7 @@ export const Radar: React.FC<{
                                                 {/* 5. Blips en el semicírculo móvil - RENDERIZAR AL FINAL PARA QUE ESTÉN ENCIMA */}
                                                 {quadrantBlips.map((blip) => {
                                                     const position = mobileBlipPositions[blip.id];
+                                                    const isSelected = isBlipSelected(blip.id);
 
                                                     // Si no hay posición, no renderizar el blip
                                                     if (!position) {
@@ -469,7 +689,7 @@ export const Radar: React.FC<{
                                                     }
 
                                                     const isActive = hoveredBlipId === blip.id;
-                                                    const isSelected = selectedBlipId === blip.id;
+                                                    const isMobileSelected = selectedBlipId === blip.id;
 
                                                     return (
                                                         <g
@@ -483,7 +703,6 @@ export const Radar: React.FC<{
                                                                 setHoveredBlipId(null);
                                                             }}
                                                             onClick={(e) => {
-                                                                // USAR EL NUEVO MANEJADOR QUE ACTIVA LA ANIMACIÓN Y ABRE EL MENÚ
                                                                 handleMobileBlipClick(blip, position, e);
                                                             }}
                                                             style={{
@@ -498,14 +717,27 @@ export const Radar: React.FC<{
                                                                 fill="transparent"
                                                             />
 
+                                                            {/* Indicador de selección (círculo exterior) */}
+                                                            {isSelected && (
+                                                                <circle
+                                                                    cx={0}
+                                                                    cy={0}
+                                                                    r={16}
+                                                                    fill="none"
+                                                                    stroke="#10b981"
+                                                                    strokeWidth={3}
+                                                                    opacity={0.8}
+                                                                />
+                                                            )}
+
                                                             {/* Círculo principal con transición suave */}
                                                             <circle
                                                                 cx={0}
                                                                 cy={0}
-                                                                r={isSelected ? 10 : 6}
+                                                                r={isMobileSelected ? 10 : 6}
                                                                 fill={getRingColor(blip.radarRing)}
-                                                                stroke={isSelected ? '#000' : (isActive ? '#000' : '#333')}
-                                                                strokeWidth={isSelected ? 3 : (isActive ? 2 : 1)}
+                                                                stroke={isMobileSelected ? '#000' : (isActive ? '#000' : '#333')}
+                                                                strokeWidth={isMobileSelected ? 3 : (isActive ? 2 : 1)}
                                                                 style={{
                                                                     transition: 'r 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease',
                                                                     transformOrigin: 'center center'
@@ -513,7 +745,7 @@ export const Radar: React.FC<{
                                                             />
 
                                                             {/* Efecto de pulso FIJADO en la posición del blip */}
-                                                            {isSelected && (
+                                                            {isMobileSelected && (
                                                                 <circle
                                                                     cx={0}
                                                                     cy={0}
@@ -524,8 +756,6 @@ export const Radar: React.FC<{
                                                                     className="pulseCircle"
                                                                 />
                                                             )}
-
-                                                            {/* ELIMINAR EL TEXTO DEL NOMBRE - SOLO MOSTRAR ANIMACIÓN DE PULSO */}
                                                         </g>
                                                     );
                                                 })}
@@ -538,32 +768,44 @@ export const Radar: React.FC<{
                                         <div className="mt-4 border-t border-gray-200 pt-4 blip-list-container">
                                             <div className="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto">
                                                 {quadrantBlips.map((blip) => {
-                                                    const isSelected = selectedBlipId === blip.id;
+                                                    const isSelected = isBlipSelected(blip.id);
+                                                    const isMobileSelected = selectedBlipId === blip.id;
 
                                                     return (
                                                         <div
                                                             key={blip.id}
-                                                            className={`flex items-center space-x-3 p-2 rounded cursor-pointer transition-all duration-300 border ${isSelected
+                                                            className={`flex items-center space-x-3 p-2 rounded cursor-pointer transition-all duration-300 border ${isMobileSelected
                                                                 ? 'bg-blue-50 border-blue-200 shadow-sm'
-                                                                : 'border-transparent hover:border-gray-200 hover:bg-gray-50'
+                                                                : isSelected
+                                                                    ? 'bg-green-50 border-green-200 shadow-sm'
+                                                                    : 'border-transparent hover:border-gray-200 hover:bg-gray-50'
                                                                 }`}
                                                             onMouseEnter={() => setHoveredBlipId(blip.id)}
                                                             onMouseLeave={() => setHoveredBlipId(null)}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                // Manejar selección/deselección del blip
                                                                 handleMobileBlipSelect(blip);
                                                             }}
                                                         >
-                                                            <div
-                                                                className="w-4 h-4 rounded-full flex-shrink-0 border border-white shadow-sm transition-all duration-300"
-                                                                style={{
-                                                                    backgroundColor: getRingColor(blip.radarRing),
-                                                                    transform: isSelected ? 'scale(1.2)' : 'scale(1)'
-                                                                }}
-                                                            />
-                                                            <span className={`text-sm flex-1 transition-all duration-300 ${isSelected ? 'font-bold text-blue-900' :
-                                                                hoveredBlipId === blip.id ? 'font-bold text-gray-900' : 'text-gray-700'
+                                                            {/* Icono de selección */}
+                                                            <div className="relative">
+                                                                <div
+                                                                    className="w-4 h-4 rounded-full shrink-0 border border-white shadow-sm transition-all duration-300"
+                                                                    style={{
+                                                                        backgroundColor: getRingColor(blip.radarRing),
+                                                                        transform: isMobileSelected ? 'scale(1.2)' : 'scale(1)'
+                                                                    }}
+                                                                />
+                                                                {isSelected && (
+                                                                    <CheckCircle
+                                                                        size={12}
+                                                                        className="absolute -top-1 -right-1 text-green-600 bg-white rounded-full"
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                            <span className={`text-sm flex-1 transition-all duration-300 ${isMobileSelected ? 'font-bold text-blue-900' :
+                                                                isSelected ? 'font-bold text-green-900' :
+                                                                    hoveredBlipId === blip.id ? 'font-bold text-gray-900' : 'text-gray-700'
                                                                 }`}>
                                                                 {blip.title}
                                                             </span>
@@ -590,11 +832,12 @@ export const Radar: React.FC<{
                             item={selectedBlip as unknown as SurveyItem}
                             position={menuPosition}
                             onViewDetails={handleViewDetails}
-                            onUnsubscribe={handleUnsubscribe}
-                            onRemove={handleRemove}
-                            onSelect={handleSelect}
-                            onUnselect={handleUnselect}
-                            isSelected={false}
+                            onUnsubscribe={handleUnsubscribeSelected}
+                            onRemove={handleRemoveSelected}
+                            onSelect={handleSelectUnselect}
+                            onUnselect={handleSelectUnselect}
+                            isSelected={isBlipSelected(selectedBlip.id)}
+                            selectedCount={selectedBlips.size}
                         />
                     )}
 
@@ -660,11 +903,21 @@ export const Radar: React.FC<{
                                             className={`${isFileInputDisabled ? "text-gray-400" : "text-muted-foreground"}`}
                                         />
                                     </div>
+
+                                    {/* Mostrar información del archivo */}
                                     {excelFile && (
                                         <p className="text-sm text-green-600">
                                             Archivo seleccionado: {excelFile.name}
                                         </p>
                                     )}
+
+                                    {/* Mostrar error de validación */}
+                                    {excelError && (
+                                        <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                                            {excelError}
+                                        </p>
+                                    )}
+
                                     {isFileInputDisabled && (
                                         <p className="text-xs text-gray-500 mt-1">
                                             Este campo está deshabilitado porque hay texto en la búsqueda
@@ -726,62 +979,194 @@ export const Radar: React.FC<{
                     preserveAspectRatio="xMidYMid meet"
                     style={{ border: '1px solid #ccc', background: '#f9f9f9' }}
                 >
-                    {/* Botón de búsqueda/importación DENTRO DEL SVG */}
-                    <g
-                        onClick={handleOpenSearchDialog}
-                        onMouseEnter={() => setIsButtonHovered(true)}
-                        onMouseLeave={() => setIsButtonHovered(false)}
-                        style={{ cursor: 'pointer' }}
-                        className="transition-all duration-200 ease-in-out"
-                    >
-                        {/* Fondo del botón */}
-                        <rect
-                            x="-90"
-                            y="-440"
-                            width="180"
-                            height="36"
-                            rx="6"
-                            fill={buttonFillColor}
-                            stroke={buttonStrokeColor}
-                            strokeWidth="1"
-                            className="transition-all duration-200 ease-in-out"
-                        />
-
-                        {/* Texto del botón */}
-                        <text
-                            x="15"
-                            y="-416"
-                            fontSize="16"
-                            fill="white"
-                            textAnchor="middle"
-                            fontWeight="500"
-                            style={{ userSelect: 'none', pointerEvents: 'none' }}
+                    {/* Grupo de botones DENTRO DEL SVG */}
+                    <g className="transition-all duration-200 ease-in-out">
+                        {/* Botón de Buscar Tecnología */}
+                        <g
+                            onClick={handleOpenSearchDialog}
+                            onMouseEnter={() => setIsSearchButtonHovered(true)}
+                            onMouseLeave={() => setIsSearchButtonHovered(false)}
+                            style={{ cursor: 'pointer' }}
                             className="transition-all duration-200 ease-in-out"
                         >
-                            Buscar Tecnología
-                        </text>
+                            {/* Fondo del botón */}
+                            <rect
+                                x="-190"
+                                y="-440"
+                                width="180"
+                                height="36"
+                                rx="6"
+                                fill={searchButtonFillColor}
+                                stroke={searchButtonStrokeColor}
+                                strokeWidth="1"
+                                className="transition-all duration-200 ease-in-out"
+                            />
 
-                        {/* Ícono de búsqueda */}
-                        <g transform="translate(-70, -422)" style={{ pointerEvents: 'none' }}>
-                            <circle
-                                cx="0"
-                                cy="0"
-                                r="8"
-                                fill="none"
-                                stroke="white"
-                                strokeWidth="1.5"
+                            {/* Texto del botón */}
+                            <text
+                                x="-90"
+                                y="-416"
+                                fontSize="16"
+                                fill="white"
+                                textAnchor="middle"
+                                fontWeight="500"
+                                style={{ userSelect: 'none', pointerEvents: 'none' }}
                                 className="transition-all duration-200 ease-in-out"
-                            />
-                            <line
-                                x1="5.5"
-                                y1="5.5"
-                                x2="10"
-                                y2="10"
-                                stroke="white"
-                                strokeWidth="1.5"
-                                className="transition-all duration-200 ease-in-out"
-                            />
+                            >
+                                Buscar Tecnología
+                            </text>
+
+                            {/* Ícono de búsqueda */}
+                            <g transform="translate(-170, -422)" style={{ pointerEvents: 'none' }}>
+                                <circle
+                                    cx="0"
+                                    cy="0"
+                                    r="8"
+                                    fill="none"
+                                    stroke="white"
+                                    strokeWidth="1.5"
+                                    className="transition-all duration-200 ease-in-out"
+                                />
+                                <line
+                                    x1="5.5"
+                                    y1="5.5"
+                                    x2="10"
+                                    y2="10"
+                                    stroke="white"
+                                    strokeWidth="1.5"
+                                    className="transition-all duration-200 ease-in-out"
+                                />
+                            </g>
                         </g>
+
+                        {/* Botón de Buscar Cambios */}
+                        <g
+                            onClick={handleSearchChanges}
+                            onMouseEnter={() => setIsChangesButtonHovered(true)}
+                            onMouseLeave={() => setIsChangesButtonHovered(false)}
+                            style={{ cursor: 'pointer' }}
+                            className="transition-all duration-200 ease-in-out"
+                        >
+                            {/* Fondo del botón (verde) */}
+                            <rect
+                                x="10"
+                                y="-440"
+                                width="180"
+                                height="36"
+                                rx="6"
+                                fill={changesButtonFillColor}
+                                stroke={changesButtonStrokeColor}
+                                strokeWidth="1"
+                                className="transition-all duration-200 ease-in-out"
+                            />
+
+                            {/* Texto del botón */}
+                            <text
+                                x="115"
+                                y="-416"
+                                fontSize="16"
+                                fill="white"
+                                textAnchor="middle"
+                                fontWeight="500"
+                                style={{ userSelect: 'none', pointerEvents: 'none' }}
+                                className="transition-all duration-200 ease-in-out"
+                            >
+                                {isLoadingChanges ? 'Buscando...' : 'Buscar Cambios'}
+                            </text>
+
+                            {/* Ícono de refresh */}
+                            <g transform="translate(35, -422)" style={{ pointerEvents: 'none' }}>
+                                {isLoadingChanges ? (
+                                    // Ícono de loading (spinner)
+                                    <circle
+                                        cx="0"
+                                        cy="0"
+                                        r="8"
+                                        fill="none"
+                                        stroke="white"
+                                        strokeWidth="1.5"
+                                        className="animate-spin"
+                                    />
+                                ) : (
+                                    // Ícono de refresh normal
+                                    <circle
+                                        cx="0"
+                                        cy="0"
+                                        r="8"
+                                        fill="none"
+                                        stroke="white"
+                                        strokeWidth="1.5"
+                                        className="transition-all duration-200 ease-in-out"
+                                    />
+                                )}
+                                {!isLoadingChanges && (
+                                    <path
+                                        d="M 4 -4 L 0 -8 L -4 -4 M 0 -8 L 0 6 M 4 4 L 0 8 L -4 4"
+                                        stroke="white"
+                                        strokeWidth="1.5"
+                                        fill="none"
+                                        className="transition-all duration-200 ease-in-out"
+                                    />
+                                )}
+                            </g>
+                        </g>
+
+                        {selectedBlips.size > 0 && (
+                            <g
+                                onClick={deselectAllBlips}
+                                onMouseEnter={() => setIsDeselectAllButtonHovered(true)}
+                                onMouseLeave={() => setIsDeselectAllButtonHovered(false)}
+                                style={{ cursor: 'pointer' }}
+                                className="transition-all duration-200 ease-in-out"
+                            >
+                                {/* Fondo del botón (rojo) */}
+                                <rect
+                                    x="210"
+                                    y="-440"
+                                    width="210"
+                                    height="36"
+                                    rx="6"
+                                    fill={deselectAllButtonFillColor}
+                                    stroke={deselectAllButtonStrokeColor}
+                                    strokeWidth="1"
+                                    className="transition-all duration-200 ease-in-out"
+                                />
+
+                                {/* Texto del botón con contador */}
+                                <text
+                                    x="325"
+                                    y="-416"
+                                    fontSize="16"
+                                    fill="white"
+                                    textAnchor="middle"
+                                    fontWeight="500"
+                                    style={{ userSelect: 'none', pointerEvents: 'none' }}
+                                    className="transition-all duration-200 ease-in-out"
+                                >
+                                    Deseleccionar Todos ({selectedBlips.size})
+                                </text>
+
+                                {/* Ícono de X */}
+                                <g transform="translate(225, -422)" style={{ pointerEvents: 'none' }}>
+                                    <circle
+                                        cx="0"
+                                        cy="0"
+                                        r="8"
+                                        fill="none"
+                                        stroke="white"
+                                        strokeWidth="1.5"
+                                        className="transition-all duration-200 ease-in-out"
+                                    />
+                                    <path
+                                        d="M -4 -4 L 4 4 M -4 4 L 4 -4"
+                                        stroke="white"
+                                        strokeWidth="1.5"
+                                        fill="none"
+                                        className="transition-all duration-200 ease-in-out"
+                                    />
+                                </g>
+                            </g>
+                        )}
                     </g>
 
                     {/* Sombreado por anillo */}
@@ -934,6 +1319,7 @@ export const Radar: React.FC<{
                                     [column1, column2].map((column, colIndex) =>
                                         column.map((b, j) => {
                                             const isActive = hoveredBlipId === b.id;
+                                            const isSelected = isBlipSelected(b.id);
                                             const offsetX = colIndex === 0 ? 0 : 180;
                                             const baseX = quadrant.align === 'end' ? quadrant.x - 60 + offsetX : quadrant.x + 6 + offsetX;
                                             const textX = quadrant.align === 'end' ? quadrant.x - 48 + offsetX : quadrant.x + 18 + offsetX;
@@ -941,13 +1327,32 @@ export const Radar: React.FC<{
 
                                             return (
                                                 <g key={`${b.id}-label`}>
-                                                    <circle cx={baseX} cy={y} r={7} fill={getRingColor(b.radarRing)} />
+                                                    {/* Indicador de selección */}
+                                                    {isSelected && (
+                                                        <circle
+                                                            cx={baseX}
+                                                            cy={y}
+                                                            r={10}
+                                                            fill="none"
+                                                            stroke="#10b981"
+                                                            strokeWidth={2}
+                                                            opacity={0.8}
+                                                        />
+                                                    )}
+                                                    <circle
+                                                        cx={baseX}
+                                                        cy={y}
+                                                        r={7}
+                                                        fill={getRingColor(b.radarRing)}
+                                                        stroke={isSelected ? '#10b981' : (isActive ? '#000' : '#333')}
+                                                        strokeWidth={isSelected ? 3 : (isActive ? 2 : 1)}
+                                                    />
                                                     <text
                                                         x={textX}
                                                         y={y}
                                                         fontSize={18}
-                                                        fill={isActive ? '#000' : '#444'}
-                                                        fontWeight={isActive ? 'bold' : 'normal'}
+                                                        fill={isSelected ? '#059669' : (isActive ? '#000' : '#444')}
+                                                        fontWeight={isSelected ? 'bold' : (isActive ? 'bold' : 'normal')}
                                                         textAnchor="start"
                                                         alignmentBaseline="middle"
                                                         onMouseEnter={() => setHoveredBlipId(b.id)}
@@ -969,6 +1374,7 @@ export const Radar: React.FC<{
                     {filteredEntries.map((blip) => {
                         const { x, y } = blipPositions[blip.id];
                         const isActive = hoveredBlipId === blip.id;
+                        const isSelected = isBlipSelected(blip.id);
 
                         const transform = `translate(${x}, ${y})`;
 
@@ -989,14 +1395,28 @@ export const Radar: React.FC<{
                                 }}
                                 style={{ cursor: 'pointer' }}
                             >
+                                {/* Indicador de selección (círculo exterior verde) */}
+                                {isSelected && (
+                                    <circle
+                                        cx={0}
+                                        cy={0}
+                                        r={20}
+                                        fill="none"
+                                        stroke="#10b981"
+                                        strokeWidth={4}
+                                        opacity={0.8}
+                                        className="transition-all duration-300 ease-in-out"
+                                    />
+                                )}
+
                                 {/* Círculo principal con transición suave */}
                                 <circle
                                     cx={0}
                                     cy={0}
                                     r={isActive ? 10 : 8}
                                     fill={getRingColor(blip.radarRing)}
-                                    stroke={isActive ? '#000' : '#333'}
-                                    strokeWidth={isActive ? 3 : 1}
+                                    stroke={isSelected ? '#10b981' : (isActive ? '#000' : '#333')}
+                                    strokeWidth={isSelected ? 4 : (isActive ? 3 : 1)}
                                     style={{
                                         transition: 'r 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease',
                                         transformOrigin: 'center center'
@@ -1015,6 +1435,26 @@ export const Radar: React.FC<{
                                         className="pulseCircle"
                                     />
                                 )}
+
+                                {/* Icono de check para blips seleccionados */}
+                                {isSelected && (
+                                    <g transform="translate(-6, -6)">
+                                        <circle
+                                            cx={6}
+                                            cy={6}
+                                            r={8}
+                                            fill="#10b981"
+                                        />
+                                        <path
+                                            d="M 3 6 L 5 8 L 9 4"
+                                            fill="none"
+                                            stroke="white"
+                                            strokeWidth={2}
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </g>
+                                )}
                             </g>
                         );
                     })}
@@ -1026,11 +1466,12 @@ export const Radar: React.FC<{
                         item={selectedBlip as unknown as SurveyItem}
                         position={menuPosition}
                         onViewDetails={handleViewDetails}
-                        onUnsubscribe={handleUnsubscribe}
-                        onRemove={handleRemove}
-                        onSelect={handleSelect}
-                        onUnselect={handleUnselect}
-                        isSelected={false}
+                        onUnsubscribe={handleUnsubscribeSelected}
+                        onRemove={handleRemoveSelected}
+                        onSelect={handleSelectUnselect}
+                        onUnselect={handleSelectUnselect}
+                        isSelected={isBlipSelected(selectedBlip.id)}
+                        selectedCount={selectedBlips.size}
                     />
                 )}
 
@@ -1096,11 +1537,21 @@ export const Radar: React.FC<{
                                         className={`${isFileInputDisabled ? "text-gray-400" : "text-muted-foreground"}`}
                                     />
                                 </div>
+
+                                {/* Mostrar información del archivo */}
                                 {excelFile && (
                                     <p className="text-sm text-green-600">
                                         Archivo seleccionado: {excelFile.name}
                                     </p>
                                 )}
+
+                                {/* Mostrar error de validación */}
+                                {excelError && (
+                                    <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                                        {excelError}
+                                    </p>
+                                )}
+
                                 {isFileInputDisabled && (
                                     <p className="text-xs text-gray-500 mt-1">
                                         Este campo está deshabilitado porque hay texto en la búsqueda

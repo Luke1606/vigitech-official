@@ -2,6 +2,7 @@ import type { UUID } from "crypto";
 import { mutationOptions, useQueryClient } from "@tanstack/react-query";
 import { surveyItemsRepository, type SurveyItem } from "../../../..";
 import { surveyItemsKey, subscribedKey } from "../constants";
+import { toast } from "react-toastify";
 
 export const useUnsubscribeBatchMutationOptions = () => {
     const queryClient = useQueryClient();
@@ -50,6 +51,17 @@ export const useUnsubscribeBatchMutationOptions = () => {
 					context.previousSubscribed
 				);
 			}
+			toast.error("Error al desuscribirse a los elementos seleccionados. Compruebe su conexión o inténtelo de nuevo.")
+		},
+
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: [
+					surveyItemsKey,
+					subscribedKey
+				]
+			});
+			toast.success("Se desuscribió con éxito a los elementos.")
 		},
 
 		onSettled: () => {
