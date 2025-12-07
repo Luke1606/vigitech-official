@@ -19,7 +19,7 @@ const DEFAULT_RENEW_FREQUENCY = Frequency.DAILY;
 export class DataFetchService {
     private readonly logger = new Logger(DataFetchService.name);
 
-    constructor(private readonly dataGatewayService: DataGatewayService) {}
+    constructor(private readonly dataGatewayService: DataGatewayService) { }
 
     // ----------------------------------------------------
     // 1. ANÁLISIS DE TENDENCIAS (BÚSQUEDA HÍBRIDA)
