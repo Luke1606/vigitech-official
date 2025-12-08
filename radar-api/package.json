@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "@clerk/backend": "^2.19.0",
+    "@google/generative-ai": "^0.24.1",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.1.7",
     "@nestjs/config": "^4.0.2",

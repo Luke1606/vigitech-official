@@ -8,7 +8,7 @@ import { UserPreferencesService } from './user-preferences.service';
  * Controlador para la gestión de las preferencias de usuario.
  * Proporciona endpoints para crear, obtener y actualizar las preferencias de un usuario.
  */
-@Controller('preferences')
+@Controller('user-data/preferences')
 export class UserPreferencesController {
     private readonly logger: Logger;
 

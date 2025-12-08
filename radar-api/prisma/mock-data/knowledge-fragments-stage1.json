@@ -1,152 +1,122 @@
 [
   {
-    "id": "qf-s1-gen-01",
     "textSnippet": "La actividad en los repositorios de bajo nivel y lenguajes compilados ha aumentado un 45% en los últimos 6 meses, indicando un cambio hacia arquitecturas 'closer to the metal' para optimizaciones críticas. El rendimiento es la nueva característica de mercado.",
     "associatedKPIs": { "low_level_repo_growth": 0.45, "compiled_language_share": 0.15, "performance_sentiment": 0.90 }
   },
   {
-    "id": "qf-s1-gen-02",
-    "textSnippet": "El costo de la infraestructura 'serverless' se ha estancado, y el tiempo de *cold start* sigue siendo un cuello de botella. Los desarrolladores están buscando alternativas ligeras para la computación distribuida.",
+    "textSnippet": "El costo de la infraestructura 'serverless' se ha estancado, y el tiempo de cold start sigue siendo un cuello de botella. Los desarrolladores están buscando alternativas ligeras para la computación distribuida.",
     "associatedKPIs": { "serverless_cost_qoq": 0.05, "cold_start_avg_ms": 350, "alternative_search_interest": 0.20 }
   },
   {
-    "id": "qf-s1-gen-03",
-    "textSnippet": "Un *boom* en el desarrollo de frameworks que prometen 'Zero JavaScript' o 'hidratación mínima' está ganando tracción. El focus está en la experiencia del usuario y en el rendimiento del primer byte.",
+    "textSnippet": "Un boom en el desarrollo de frameworks que prometen 'Zero JavaScript' o 'hidratación mínima' está ganando tracción. El focus está en la experiencia del usuario y en el rendimiento del primer byte.",
     "associatedKPIs": { "zero_js_repo_count": 25, "time_to_interactive_avg": 2.1, "community_activity_index": 0.75 }
   },
   {
-    "id": "qf-s1-gen-04",
     "textSnippet": "Hay una creciente brecha de talento en ingenieros que entienden de sistemas distribuidos y consistencia eventual. Esto frena la adopción de bases de datos NoSQL avanzadas en proyectos medianos.",
     "associatedKPIs": { "talent_demand_supply_ratio": 1.5, "nosql_adoption_q1": 0.10, "training_interest_growth": 0.55 }
   },
   {
-    "id": "qf-s1-gen-05",
-    "textSnippet": "Las plataformas de *observability* están consolidando sus ofertas, incorporando capacidades de tracing sin la necesidad de agentes pesados. Esto impulsa la confianza en microservicios complejos.",
+    "textSnippet": "Las plataformas de observability están consolidando sus ofertas, incorporando capacidades de tracing sin la necesidad de agentes pesados. Esto impulsa la confianza en microservicios complejos.",
     "associatedKPIs": { "agentless_adoption_rate": 0.35, "tracing_latency_ms": 15, "monitoring_cost_index": 1.1 }
   },
   {
-    "id": "qf-s1-gen-06",
-    "textSnippet": "La adopción de **WebAssembly (WASM)** en el lado del servidor está creciendo, ofreciendo mejor aislamiento y reutilización de código que los contenedores tradicionales en ciertos casos de uso.",
+    "textSnippet": "La adopción de WebAssembly (WASM) en el lado del servidor está creciendo, ofreciendo mejor aislamiento y reutilización de código que los contenedores tradicionales en ciertos casos de uso.",
     "associatedKPIs": { "wasm_server_adoption_rate": 0.15, "isolation_score": 0.95 }
   },
   {
-    "id": "qf-s1-gen-07",
-    "textSnippet": "El uso de **Bundlers y Transpilers** complejos está bajo escrutinio, con equipos que migran a herramientas de desarrollo nativas o escritas en lenguajes más rápidos como Go o Rust.",
+    "textSnippet": "El uso de Bundlers y Transpilers complejos está bajo escrutinio, con equipos que migran a herramientas de desarrollo nativas o escritas en lenguajes más rápidos como Go o Rust.",
     "associatedKPIs": { "build_time_reduction_ms": 500, "rust_tooling_adoption": 0.20 }
   },
   {
-    "id": "qf-s1-gen-08",
-    "textSnippet": "Los nuevos **estándares de imagen de contenedor** sin *root* están mejorando la seguridad por defecto en las tuberías de CI/CD, pero requieren una re-ingeniería de los Dockerfiles existentes.",
+    "textSnippet": "Los nuevos estándares de imagen de contenedor sin root están mejorando la seguridad por defecto en las tuberías de CI/CD, pero requieren una re-ingeniería de los Dockerfiles existentes.",
     "associatedKPIs": { "rootless_container_adoption": 0.40, "security_posture_index": 0.85 }
   },
   {
-    "id": "qf-s1-gen-09",
-    "textSnippet": "El patrón de **Backend for Frontend (BFF)** se ha vuelto demasiado granular en microservicios, aumentando la sobrecarga de latencia de red interna. Se busca una consolidación de API Gateways.",
+    "textSnippet": "El patrón de Backend for Frontend (BFF) se ha vuelto demasiado granular en microservicios, aumentando la sobrecarga de latencia de red interna. Se busca una consolidación de API Gateways.",
     "associatedKPIs": { "bff_latency_increase_ms": 10, "gateway_consolidation_rate": 0.10 }
   },
   {
-    "id": "qf-s1-gen-10",
-    "textSnippet": "El auge de la **computación cuántica** ha generado una necesidad inmediata de ingenieros con experiencia en algoritmos *Qubit-based*, aunque la aplicación comercial sigue siendo de nicho.",
+    "textSnippet": "El auge de la computación cuántica ha generado una necesidad inmediata de ingenieros con experiencia en algoritmos Qubit-based, aunque la aplicación comercial sigue siendo de nicho.",
     "associatedKPIs": { "quantum_talent_gap": 3.0, "commercial_quantum_roi": 0.05 }
   },
   {
-    "id": "qf-s1-gen-11",
-    "textSnippet": "Hay una fatiga con las **APIs basadas en GraphQL** debido a la complejidad de caché y el *tooling* menos maduro que REST. Muchos vuelven a REST o adoptan tRPC.",
+    "textSnippet": "Hay una fatiga con las APIs basadas en GraphQL debido a la complejidad de caché y el tooling menos maduro que REST. Muchos vuelven a REST o adoptan tRPC.",
     "associatedKPIs": { "graphql_caching_hit_rate": 0.60, "trpc_adoption_q3": 0.08 }
   },
   {
-    "id": "qf-s1-gen-12",
-    "textSnippet": "El **desarrollo móvil nativo** está volviendo a ganar terreno sobre los *frameworks* híbridos, impulsado por las optimizaciones de rendimiento específicas de la plataforma.",
+    "textSnippet": "El desarrollo móvil nativo está volviendo a ganar terreno sobre los frameworks híbridos, impulsado por las optimizaciones de rendimiento específicas de la plataforma.",
     "associatedKPIs": { "native_dev_market_share": 0.60, "hybrid_performance_score": 0.75 }
   },
   {
-    "id": "qf-s1-gen-13",
-    "textSnippet": "La **integración de la nube** se está simplificando con el uso de *service mesh* y *sidecars*, facilitando la observabilidad y la seguridad sin modificar el código de la aplicación.",
+    "textSnippet": "La integración de la nube se está simplificando con el uso de service mesh y sidecars, facilitando la observabilidad y la seguridad sin modificar el código de la aplicación.",
     "associatedKPIs": { "service_mesh_adoption": 0.25, "code_change_reduction": 0.80 }
   },
   {
-    "id": "qf-s1-gen-14",
-    "textSnippet": "El concepto de **\"Data Mesh\"** ha introducido desafíos de gobernanza y duplicación de datos, requiriendo un *tooling* de catálogo de datos más riguroso.",
+    "textSnippet": "El concepto de \"Data Mesh\" ha introducido desafíos de gobernanza y duplicación de datos, requiriendo un tooling de catálogo de datos más riguroso.",
     "associatedKPIs": { "data_governance_complexity": 0.88, "data_duplication_rate": 0.12 }
   },
   {
-    "id": "qf-s1-gen-15",
-    "textSnippet": "El **patrón SAGA** para la consistencia transaccional distribuida es difícil de implementar correctamente, lo que lleva a las empresas a favorecer soluciones que puedan usar transacciones de dos fases.",
+    "textSnippet": "El patrón SAGA para la consistencia transaccional distribuida es difícil de implementar correctamente, lo que lleva a las empresas a favorecer soluciones que puedan usar transacciones de dos fases.",
     "associatedKPIs": { "saga_implementation_failure_rate": 0.30, "two_phase_commit_interest": 0.40 }
   },
   {
-    "id": "qf-s1-gen-16",
-    "textSnippet": "El **tiempo de respuesta percibido (PRT)** se ha convertido en una métrica crítica de negocio, llevando a inversiones en optimización de la red de entrega de contenido (CDN).",
+    "textSnippet": "El tiempo de respuesta percibido (PRT) se ha convertido en una métrica crítica de negocio, llevando a inversiones en optimización de la red de entrega de contenido (CDN).",
     "associatedKPIs": { "p95_cdn_latency_ms": 50, "cdn_investment_growth": 0.20 }
   },
   {
-    "id": "qf-s1-gen-17",
-    "textSnippet": "El **desarrollo *low-code/no-code*** está encontrando límites en la integración con sistemas heredados y en la gestión de dependencias externas.",
+    "textSnippet": "El desarrollo low-code/no-code está encontrando límites en la integración con sistemas heredados y en la gestión de dependencias externas.",
     "associatedKPIs": { "low_code_legacy_integration_fail": 0.45, "dependency_management_score": 0.65 }
   },
   {
-    "id": "qf-s1-gen-18",
-    "textSnippet": "La **telemetría** detallada en el frontend es esencial, pero genera un *overhead* de red significativo que puede afectar el rendimiento del primer byte (FPB).",
+    "textSnippet": "La telemetría detallada en el frontend es esencial, pero genera un overhead de red significativo que puede afectar el rendimiento del primer byte (FPB).",
     "associatedKPIs": { "frontend_telemetry_overhead_kb": 50, "fpb_impact_score": 0.70 }
   },
   {
-    "id": "qf-s1-gen-19",
-    "textSnippet": "El uso de **cifrado *homomórfico*** está comenzando a surgir como una solución viable para el cálculo sobre datos sensibles sin descifrarlos, principalmente en la industria financiera.",
+    "textSnippet": "El uso de cifrado homomórfico está comenzando a surgir como una solución viable para el cálculo sobre datos sensibles sin descifrarlos, principalmente en la industria financiera.",
     "associatedKPIs": { "homomorphic_crypto_adoption_fin": 0.05, "data_privacy_compliance_score": 0.98 }
   },
   {
-    "id": "qf-s1-gen-20",
-    "textSnippet": "La **infraestructura inmutable** gestionada por herramientas declarativas (como Terraform y Pulumi) está alcanzando una madurez que reduce los errores de configuración en producción.",
+    "textSnippet": "La infraestructura inmutable gestionada por herramientas declarativas (como Terraform y Pulumi) está alcanzando una madurez que reduce los errores de configuración en producción.",
     "associatedKPIs": { "config_drift_reduction": 0.75, "iac_tooling_maturity": 0.90 }
   },
   {
-    "id": "qf-s1-gen-21",
-    "textSnippet": "El **lanzamiento de la nueva versión de un motor de bases de datos NoSQL** popular introdujo un cambio de API que ralentizó la adopción por parte de los equipos empresariales.",
+    "textSnippet": "El lanzamiento de la nueva versión de un motor de bases de datos NoSQL popular introdujo un cambio de API que ralentizó la adopción por parte de los equipos empresariales.",
     "associatedKPIs": { "nosql_new_version_adoption_lag": 0.60, "api_change_complexity_score": 0.80 }
   },
   {
-    "id": "qf-s1-gen-22",
-    "textSnippet": "La **interoperabilidad** entre sistemas de mensajería asíncrona (como Kafka y RabbitMQ) se ha convertido en un desafío al escalar arquitecturas multi-cloud.",
+    "textSnippet": "La interoperabilidad entre sistemas de mensajería asíncrona (como Kafka y RabbitMQ) se ha convertido en un desafío al escalar arquitecturas multi-cloud.",
     "associatedKPIs": { "messaging_interop_issues": 0.35, "multi_cloud_messaging_cost": 0.45 }
   },
   {
-    "id": "qf-s1-gen-23",
-    "textSnippet": "El **aumento en las regulaciones de soberanía de datos** está forzando a las empresas a repensar dónde se almacenan y procesan los datos personales, lo que aumenta la complejidad del despliegue geográfico.",
+    "textSnippet": "El aumento en las regulaciones de soberanía de datos está forzando a las empresas a repensar dónde se almacenan y procesan los datos personales, lo que aumenta la complejidad del despliegue geográfico.",
     "associatedKPIs": { "data_sovereignty_compliance_cost": 0.25, "geographic_deployment_complexity": 0.95 }
   },
   {
-    "id": "qf-s1-gen-24",
-    "textSnippet": "El interés en **lenguajes de programación con tipos dependientes** (como Idris o Agda) está creciendo en la academia y en proyectos de alta fiabilidad por su capacidad para verificar la corrección del código en tiempo de compilación.",
+    "textSnippet": "El interés en lenguajes de programación con tipos dependientes (como Idris o Agda) está creciendo en la academia y en proyectos de alta fiabilidad por su capacidad para verificar la corrección del código en tiempo de compilación.",
     "associatedKPIs": { "dependent_types_academic_interest": 0.65, "code_verification_success_rate": 0.99 }
   },
   {
-    "id": "qf-s1-gen-25",
-    "textSnippet": "Se está observando una tendencia a **migrar las funciones críticas de *serverless* a *long-running containers*** debido a los altos costos acumulados y la variabilidad de la latencia.",
+    "textSnippet": "Se está observando una tendencia a migrar las funciones críticas de serverless a long-running containers debido a los altos costos acumulados y la variabilidad de la latencia.",
     "associatedKPIs": { "serverless_to_container_migration_rate": 0.10, "serverless_cost_overrun": 0.30 }
   },
   {
-    "id": "qf-s1-gen-26",
-    "textSnippet": "La **dependencia de grandes repositorios de código abierto** con problemas de mantenimiento o licencias dudosas plantea un riesgo de seguridad y legal significativo.",
+    "textSnippet": "La dependencia de grandes repositorios de código abierto con problemas de mantenimiento o licencias dudosas plantea un riesgo de seguridad y legal significativo.",
     "associatedKPIs": { "open_source_risk_index": 0.82, "dependency_audits_per_quarter": 4 }
   },
   {
-    "id": "qf-s1-gen-27",
-    "textSnippet": "El **patrón de diseño *CQRS* (Command Query Responsibility Segregation)**, aunque poderoso, introduce una sobrecarga de complejidad en el *tooling* de despliegue y observabilidad.",
+    "textSnippet": "El patrón de diseño CQRS (Command Query Responsibility Segregation), aunque poderoso, introduce una sobrecarga de complejidad en el tooling de despliegue y observabilidad.",
     "associatedKPIs": { "cqrs_adoption_complexity": 0.70, "data_read_latency_reduction": 0.20 }
   },
   {
-    "id": "qf-s1-gen-28",
-    "textSnippet": "El **uso excesivo de *Micro-Frontends*** está llevando a una fragmentación de la experiencia del usuario y un aumento del tamaño total del bundle que se descarga.",
+    "textSnippet": "El uso excesivo de Micro-Frontends está llevando a una fragmentación de la experiencia del usuario y un aumento del tamaño total del bundle que se descarga.",
     "associatedKPIs": { "micro_frontend_bundle_size_increase": 0.25, "ux_fragmentation_score": 0.60 }
   },
   {
-    "id": "qf-s1-gen-29",
-    "textSnippet": "La **escasez de ingenieros de plataforma (Platform Engineering)** que puedan construir y mantener las herramientas internas está frenando la velocidad de entrega de los equipos de producto.",
+    "textSnippet": "La escasez de ingenieros de plataforma (Platform Engineering) que puedan construir y mantener las herramientas internas está frenando la velocidad de entrega de los equipos de producto.",
     "associatedKPIs": { "platform_engineer_demand_supply_ratio": 2.0, "time_to_provision_infra_days": 7 }
   },
   {
-    "id": "qf-s1-gen-30",
-    "textSnippet": "La **resistencia al cambio cultural** es el principal factor que frena la adopción de metodologías como *DevSecOps* en grandes organizaciones, a pesar de las herramientas disponibles.",
+    "textSnippet": "La resistencia al cambio cultural es el principal factor que frena la adopción de metodologías como DevSecOps en grandes organizaciones, a pesar de las herramientas disponibles.",
     "associatedKPIs": { "devsecops_cultural_block_rate": 0.70, "security_scan_frequency_daily": 1 }
   }
 ]

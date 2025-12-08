@@ -12,7 +12,7 @@ import { UpdateUserItemListDto } from './dto/update-user-item-list.dto';
  * Proporciona endpoints para operaciones CRUD en las listas de elementos
  * y para añadir/eliminar elementos de estas listas.
  */
-@Controller('item-lists')
+@Controller('user-data/item-lists')
 export class UserItemListsController {
     private readonly logger: Logger;
 

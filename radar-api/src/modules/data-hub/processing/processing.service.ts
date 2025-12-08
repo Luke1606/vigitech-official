@@ -79,37 +79,37 @@ export class ProcessingService {
                     }),
                 );
 
-                // Construir una única consulta SQL raw para la inserción masiva.
-                const values = knowledgeFragmentsToCreate.map(
-                    (kf) =>
-                        Prisma.sql`(gen_random_uuid(), ${kf.textSnippet}, ${Prisma.join(kf.embedding)}::vector, ${kf.associatedKPIs}::jsonb, ${kf.sourceRawDataId}::uuid, NOW())`,
+                const values = knowledgeFragmentsToCreate.map((fragment) => {
+                    const vectorValues = fragment.embedding.join(', ');
+
+                    const vectorExpression = Prisma.raw(`'[${vectorValues}]'::vector`);
+
+                    return Prisma.sql`(gen_random_uuid(), ${fragment.textSnippet}, ${vectorExpression}, ${fragment.associatedKPIs}::jsonb, ${fragment.sourceRawDataId})`;
+                });
+
+                await this.prisma.$executeRaw(
+                    Prisma.sql`
+                        INSERT INTO "KnowledgeFragment" ("id", "textSnippet", "embedding", "associatedKPIs", "sourceRawDataId")
+                        VALUES ${Prisma.join(values, ', ')};
+                    `,
                 );
-
-                if (values.length > 0) {
-                    await this.prisma.$executeRaw(
-                        Prisma.sql`
-                            INSERT INTO "tech_survey"."KnowledgeFragment" ("id", "textSnippet", "embedding", "associatedKPIs", "sourceRawDataId", "createdAt")
-                            VALUES ${Prisma.join(values, ', ')};
-                        `,
-                    );
-                    this.logger.log(`${knowledgeFragmentsToCreate.length} fragmentos de conocimiento creados.`);
-                } else {
-                    this.logger.log('No knowledge fragments to create.');
-                }
+                this.logger.log(`${knowledgeFragmentsToCreate.length} fragmentos de conocimiento creados.`);
             } else {
-                this.logger.log('AI response contained no knowledge fragments.');
+                this.logger.log('No knowledge fragments to create.');
             }
-
-            await this.prisma.rawData.updateMany({
-                where: {
-                    id: {
-                        in: rawDataBatch.map((data: RawData) => data.id),
-                    },
-                },
-                data: { processedAt: new Date() },
-            });
-
-            this.logger.log(`Lote de datos crudos de ${rawDataBatch.length} elementos procesado con éxito.`);
+        } else {
+            this.logger.log('AI response contained no knowledge fragments.');
         }
+
+        await this.prisma.rawData.updateMany({
+            where: {
+                id: {
+                    in: rawDataBatch.map((data: RawData) => data.id),
+                },
+            },
+            data: { processedAt: new Date() },
+        });
+
+        this.logger.log(`Lote de datos crudos de ${rawDataBatch.length} elementos procesado con éxito.`);
     }
 }
