@@ -172,7 +172,7 @@ async function main() {
 
     await prisma.$executeRaw(
         Prisma.sql`
-            INSERT INTO "tech_survey"."KnowledgeFragment" ("id", "textSnippet", "embedding", "associatedKPIs", "sourceRawDataId")
+            INSERT INTO "KnowledgeFragment" ("id", "textSnippet", "embedding", "associatedKPIs", "sourceRawDataId")
             VALUES ${Prisma.join(values, ', ')};
         `,
     );

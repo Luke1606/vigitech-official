@@ -6,12 +6,7 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  schemas   = ["public", "user_data", "tech_survey"]
 }
-
-// ----------------------------------------------------
-// SCHEMA: user_data
-// ----------------------------------------------------
 
 model User {
   id               String                 @id @default(uuid())
@@ -26,8 +21,6 @@ model User {
   hiddenItems      UserHiddenItem[]
   lists            UserItemList[]
   reports          Report[]
-
-  @@schema("user_data")
 }
 
 enum NotificationChannel {
@@ -35,23 +28,17 @@ enum NotificationChannel {
   EMAIL
   PUSH
   SMS
-
-  @@schema("user_data")
 }
 
 enum Theme {
   DARK
   LIGHT
   SYSTEM
-
-  @@schema("user_data")
 }
 
 enum Language {
   EN
   ES
-
-  @@schema("user_data")
 }
 
 enum Frequency {
@@ -63,8 +50,6 @@ enum Frequency {
   EVERY_TWO_DAYS
   EVERY_FOUR_DAYS
   WEEKLY
-
-  @@schema("user_data")
 }
 
 model UserPreferences {
@@ -80,8 +65,6 @@ model UserPreferences {
 
   userId                          String              @unique
   user                            User?               @relation(fields: [userId], references: [id])
-
-  @@schema("user_data")
 }
 
 model UserSubscribedItem {
@@ -94,7 +77,6 @@ model UserSubscribedItem {
   createdAt DateTime   @default(now())
 
   @@unique([userId, itemId])
-  @@schema("user_data")
 }
 
 model UserHiddenItem {
@@ -107,7 +89,6 @@ model UserHiddenItem {
   createdAt DateTime   @default(now())
 
   @@unique([userId, itemId])
-  @@schema("user_data")
 }
 
 model UserItemList {
@@ -121,8 +102,6 @@ model UserItemList {
   ownerId                      String
   owner                        User                @relation(fields: [ownerId], references: [id])
   items                        Item[]              @relation("ListItems")
-
-  @@schema("user_data")
 }
 
 model Report {
@@ -138,21 +117,13 @@ model Report {
   updatedAt       DateTime  @updatedAt
 
   items           Item[]    @relation("ReportItems")
-
-  @@schema("user_data")
 }
-
-// ----------------------------------------------------
-// SCHEMA: tech_survey
-// ----------------------------------------------------
 
 enum Field {
   BUSSINESS_INTEL
   SCIENTIFIC_STAGE
   SUPPORT_PLATTFORMS_AND_TECHNOLOGIES
   LANGUAGES_AND_FRAMEWORKS
-
-  @@schema("tech_survey")
 }
 
 enum Classification {
@@ -160,8 +131,6 @@ enum Classification {
   TEST
   SUSTAIN
   HOLD
-
-  @@schema("tech_survey")
 }
 
 enum RawDataSource {
@@ -192,8 +161,6 @@ enum RawDataSource {
   SEMANTIC_SCHOLAR
   STACK_EXCHANGE
   STACK_OVERFLOW_SURVEY
-
-  @@schema("tech_survey")
 }
 
 enum RawDataType {
@@ -203,15 +170,8 @@ enum RawDataType {
   REPORT_OR_PRODUCT
   COMMUNITY_POST
   DATASET
-
-  @@schema("tech_survey")
 }
 
-// ----------------------------------------------------
-// TIH CORE: RawData y KnowledgeFragment (El Hub de Conocimiento)
-// ----------------------------------------------------
-
-// Almacena el dato crudo (JSONB)
 model RawData {
   id                 String              @id @default(uuid())
   source             RawDataSource
@@ -222,8 +182,6 @@ model RawData {
   
   // Relación con los fragmentos de conocimiento generados
   knowledgeFragments KnowledgeFragment[] 
-
-  @@schema("tech_survey")
 }
 
 // La unidad atómica de conocimiento vectorizado para RAG
@@ -245,13 +203,7 @@ model KnowledgeFragment {
   citedBy                 ItemCitedFragment[]
 
   createdAt               DateTime            @default(now())
-
-  @@schema("tech_survey")
 }
-
-// ----------------------------------------------------
-// RADAR CORE: Item, Historial y Citas
-// ----------------------------------------------------
 
 // El objeto de estudio del Radar
 model Item {
@@ -281,8 +233,6 @@ model Item {
   insertedById            String?
   subscribedBy            UserSubscribedItem[]
   hiddenBy                UserHiddenItem[]
-
-  @@schema("tech_survey")
 }
 
 // Representa una ejecución de clasificación (el Historial)
@@ -300,8 +250,6 @@ model ItemClassification {
 
   // Relación inversa para el puntero rápido de 'latestClassification'
   itemAsLatest            Item?                 @relation("LatestClassification")
-
-  @@schema("tech_survey")
 }
 
 // Tabla intermedia para citar qué KnowledgeFragment se usó para la última clasificación de un Item
@@ -317,5 +265,4 @@ model ItemCitedFragment {
   fragment                KnowledgeFragment   @relation(fields: [fragmentId], references: [id])
 
   @@unique([itemId, fragmentId])
-  @@schema("tech_survey")
 }

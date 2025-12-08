@@ -90,9 +90,9 @@ export class DataGatewayService {
                         SELECT
                             kf.id, kf."textSnippet", kf.embedding, kf."associatedKPIs", kf."sourceRawDataId", kf."createdAt"
                         FROM
-                            "tech_survey"."KnowledgeFragment" AS kf
+                            "KnowledgeFragment" AS kf
                         JOIN
-                            "tech_survey"."RawData" AS rd ON kf."sourceRawDataId" = rd.id
+                            "RawData" AS rd ON kf."sourceRawDataId" = rd.id
                         ${finalWhereClause}
                         ORDER BY
                             kf.embedding <-> ${Prisma.join(queryEmbedding)}::vector
