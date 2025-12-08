@@ -1,10 +1,10 @@
 import type { UUID } from 'crypto';
 import { Injectable, Logger } from '@nestjs/common';
+import { Item } from '@prisma/client';
 import { SurveyOrchestratorUserPreferences } from '@/shared/types/survey-orquestrator-user-preferences.type';
 import { UserPreferencesService } from '../../user-data/user-preferences/user-preferences.service';
 import { ItemsGatewayService } from '../gateway/gateway.service';
 import { ItemsIdentifyingService } from '../items-identifying/items-identifying.service';
-import { Item } from '@prisma/client';
 import { ClassificationChange } from '../shared/types/classification-change.type';
 
 @Injectable()
