@@ -64,7 +64,7 @@ export class UserItemListRepository implements UserItemListInterface {
         itemIds: UUID[]
     ): Promise<UserItemList> {
         return await this.axios.http
-            .patch(`${listId}`, { listId, itemIds });
+            .patch(`batch/${listId}`, itemIds);
     };
 
     async removeOneItem(
@@ -80,7 +80,7 @@ export class UserItemListRepository implements UserItemListInterface {
         itemIds: UUID[]
     ): Promise<UserItemList> {
         return await this.axios.http
-            .patch(`${listId}`, { listId, itemIds });
+            .patch(`batch/${listId}`, itemIds);
     };
 }
 

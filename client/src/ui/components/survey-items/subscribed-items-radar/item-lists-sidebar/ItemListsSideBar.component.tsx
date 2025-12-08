@@ -42,16 +42,15 @@ export const ItemListsSideBar: React.FC<{
     toggleVisible
 }) => {
         const {
-            //     lists,
-            //     createList,
+            //lists,
+            //createList,
             //     updateList,
             //     removeList,
-            appendAllItems,
+            //appendAllItems,
             removeAllItems,
         } = useUserItemLists();
         const query = useUserItemListsAPI();
         const { data: lists } = query.findAll
-
         const [newListName, setNewListName] = useState('');
         const [open, setOpen] = useState(false);
         const [renameTarget, setRenameTarget] = useState<UUID | null>(null);
@@ -62,9 +61,11 @@ export const ItemListsSideBar: React.FC<{
             itemIds: UUID[]
         } | null>(null);
 
+        const [updatedItemsIds, setUpdatedItemsIds] = useState<UUID[]>([]);
+
         const [elements, setElements] = useState<Blip[]>(blips);
 
-        const [selectedItems, setSelectedItems] = useState<string[]>([]);
+        const [selectedItems, setSelectedItems] = useState<UUID[]>([]);
         const [isMobile, setIsMobile] = useState(false);
         const [mobileDialogOpen, setMobileDialogOpen] = useState(false);
 
@@ -179,6 +180,7 @@ export const ItemListsSideBar: React.FC<{
                                                         query.createList(
                                                             newListName.trim(),
                                                         );
+
                                                         setNewListName('');
                                                         setOpen(false);
                                                     }
@@ -443,7 +445,9 @@ export const ItemListsSideBar: React.FC<{
                                         selectedItems.includes(item.id)
                                 )
 
-                                appendAllItems(addTarget.id, updatedItems);
+                                updatedItems.forEach(blip => setUpdatedItemsIds(prev => [...prev, blip.id]))
+
+                                query.appendAllItem({ listId: addTarget.id, itemIds: updatedItemsIds })
                                 setSelectedItems([]);
                                 setAddTarget(null);
                                 setElements(getAvailableItemsForTarget(addTarget));
@@ -476,10 +480,7 @@ export const ItemListsSideBar: React.FC<{
                             name='eliminarElemento'
                             variant="destructive"
                             onClick={() => {
-                                removeAllItems(
-                                    removeElementTarget.listId,
-                                    removeElementTarget.itemIds
-                                );
+                                query.removeAllItem({ listId: removeElementTarget.listId, itemIds: removeElementTarget.itemIds })
                                 setRemoveElementTarget(null);
                             }}>
                             Remover

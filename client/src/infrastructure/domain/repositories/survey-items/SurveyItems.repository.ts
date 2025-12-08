@@ -11,7 +11,7 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
     constructor() {
 
         this.axios = new AxiosConfiguredInstance(
-            `${getEnv().VITE_SERVER_BASE_URL}/survey-items/`
+            `${getEnv().VITE_SERVER_BASE_URL}/tech-survey/survey-items/`
         );
 
     }
@@ -78,7 +78,7 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
     async create(
         title: string,
     ): Promise<void> {
-        return await this.axios.http.post('create', title)
+        return await this.axios.http.post('create', { title: title })
     }
 
     async createBatch(
