@@ -7,16 +7,27 @@ import {
 import { useEffect, useState } from 'react';
 import { useSurveyItemsAPI } from '../../../../../infrastructure/hooks/use-survey-items/api/useSurveyItemsAPI.hook';
 import { Loader2, ChevronLeft, ChevronRight, RotateCw } from 'lucide-react';
-import radarMock from '../../../../../assets/data/radarMock'
 
 export const RecommendationsFeed: React.FC = () => {
-    const query = useSurveyItemsAPI()
-    const { isPending, isError, refetch, data: apiData } = query.recommended
+    const query = useSurveyItemsAPI();
+    const navigate = useNavigate();
 
     const [selectedItems, setSelectedItems] = useState<SurveyItem[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [itemsPerPage, setItemsPerPage] = useState<number>(9);
     const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
+    const [isMultipleSelection, setIsMultipleSelection] = useState<boolean>(false);
+
+    // Obtener recomendaciones desde la query
+    const {
+        data: recommendedData,
+        isPending: isRecommendedLoading,
+        isError: isRecommendedError,
+        refetch: refetchRecommended
+    } = query.recommended;
+
+    // Datos para renderizar
+    const recommended = recommendedData || [];
 
     // Efecto para manejar el responsive
     useEffect(() => {
@@ -40,6 +51,11 @@ export const RecommendationsFeed: React.FC = () => {
         setCurrentPage(1);
     }, [itemsPerPage]);
 
+    // Limpiar selecciones al desmontar
+    useEffect(() => {
+        return () => setSelectedItems([]);
+    }, []);
+
     const addToSelectedItems = (items: SurveyItem[]) => {
         setSelectedItems(prev => {
             const newItems = items.filter(item =>
@@ -56,12 +72,6 @@ export const RecommendationsFeed: React.FC = () => {
             )
         );
     };
-
-    // Siempre usar radarMock, pero intentar obtener datos de la API primero
-    let recommended = radarMock;
-    if (apiData && apiData.length > 0) {
-        recommended = apiData;
-    }
 
     // Calcular elementos para la página actual
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -106,16 +116,20 @@ export const RecommendationsFeed: React.FC = () => {
         return recommended.every(item => isItemSelected(item));
     };
 
-    useEffect(() => {
-        return () => setSelectedItems([])
-    }, [])
+    // Botón "Actualizar recomendaciones"
+    const handleUpdateRecommendations = () => {
+        query.runGlobalRecommendations(undefined, {
+            onSuccess: () => {
+                // Una vez que se generan nuevas recomendaciones, refetch para obtenerlas
+                refetchRecommended();
+            }
+        });
+    };
 
-    const [
-        isMultipleSelection,
-        setMultipleSelection
-    ] = useState<boolean>(false);
-
-    const navigate = useNavigate();
+    // Botón "Reintentar" en caso de error
+    const handleRetry = () => {
+        query.runGlobalRecommendations();
+    };
 
     // Funciones de paginación
     const goToNextPage = () => {
@@ -134,8 +148,8 @@ export const RecommendationsFeed: React.FC = () => {
         setCurrentPage(pageNumber);
     };
 
-    // Solo mostrar loader si está cargando y no hay datos del mock aún
-    if (isPending && !radarMock.length) {
+    // Solo mostrar loader si está cargando
+    if (isRecommendedLoading && !recommended.length) {
         return (
             <div className="flex items-center justify-center mt-12 p-2">
                 <p className="text-md text-muted-foreground flex gap-x-5">
@@ -146,8 +160,8 @@ export const RecommendationsFeed: React.FC = () => {
         );
     }
 
-    // Si no hay recomendaciones del mock ni de la API
-    if (!recommended || recommended.length === 0) {
+    // Si no hay recomendaciones de la API
+    if (!isRecommendedLoading && recommended.length === 0) {
         return (
             <div className="text-center py-12 px-4">
                 <h3 className="text-lg font-medium text-muted-foreground">
@@ -156,22 +170,22 @@ export const RecommendationsFeed: React.FC = () => {
                 <div className="flex flex-col items-center justify-center gap-4 mt-6">
                     <div className="flex items-center gap-x-5">
                         <p className="text-md text-destructive font-semibold">
-                            Error al cargar las recomendaciones
+                            {isRecommendedError ? "Error al cargar las recomendaciones" : "No hay recomendaciones disponibles"}
                         </p>
                         <Button
                             className='bg-blue-600 hover:bg-blue-800 transition-colors duration-300 flex items-center gap-2'
-                            onClick={() => refetch()}
-                            disabled={isPending}
+                            onClick={handleRetry}
+                            disabled={query.isLoading.runGlobalRecommendations}
                         >
-                            {isPending ? (
+                            {query.isLoading.runGlobalRecommendations ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                    Reintentando...
+                                    Actualizando...
                                 </>
                             ) : (
                                 <>
                                     <RotateCw className="w-4 h-4" />
-                                    Reintentar
+                                    Actualizar recomendaciones
                                 </>
                             )}
                         </Button>
@@ -195,14 +209,12 @@ export const RecommendationsFeed: React.FC = () => {
 
     return (
         <div className="space-y-4 px-4 sm:px-6 lg:px-10 mt-20 sm:mt-8">
-            {/* Mostrar estado de error de la API si existe, pero seguir mostrando contenido */}
-            {(isError || (!isPending && (!apiData || apiData.length === 0))) && (
+            {/* Mostrar estado de error de la API si existe */}
+            {isRecommendedError && (
                 <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4 gap-3">
                     <div className="flex-1">
                         <p className="text-sm text-yellow-800">
-                            {isError
-                                ? "No se pudieron cargar las recomendaciones de la API. Mostrando datos de ejemplo."
-                                : "La API no devolvió recomendaciones. Mostrando datos de ejemplo."}
+                            No se pudieron cargar las recomendaciones de la API.
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -210,10 +222,10 @@ export const RecommendationsFeed: React.FC = () => {
                             size="sm"
                             variant="outline"
                             className='border-yellow-300 text-yellow-800 hover:bg-yellow-100 flex items-center gap-2'
-                            onClick={() => refetch()}
-                            disabled={isPending}
+                            onClick={() => refetchRecommended()}
+                            disabled={isRecommendedLoading}
                         >
-                            {isPending ? (
+                            {isRecommendedLoading ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                     Reintentando...
@@ -232,19 +244,19 @@ export const RecommendationsFeed: React.FC = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 className="text-xl sm:text-2xl font-bold">Recomendaciones</h2>
 
-                {/* Botón para recargar recomendaciones */}
+                {/* Botón para generar nuevas recomendaciones */}
                 <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => refetch()}
-                    disabled={isPending}
+                    onClick={handleUpdateRecommendations}
+                    disabled={query.isLoading.runGlobalRecommendations || isRecommendedLoading}
                     className="flex items-center gap-2"
                 >
-                    {isPending ? (
+                    {query.isLoading.runGlobalRecommendations ? (
                         <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            Actualizando...
+                            Generando...
                         </>
                     ) : (
                         <>
@@ -262,7 +274,7 @@ export const RecommendationsFeed: React.FC = () => {
                     type="button"
                     className="bg-blue-600 hover:bg-blue-800 w-full sm:w-auto sm:min-w-[12%] text-sm sm:text-base"
                     onClick={() => {
-                        if (isMultipleSelection) setMultipleSelection(true);
+                        if (!isMultipleSelection) setIsMultipleSelection(true);
                         if (areAllItemsSelected()) {
                             setSelectedItems([]);
                         } else {
@@ -281,7 +293,7 @@ export const RecommendationsFeed: React.FC = () => {
                     onClick={() => {
                         const selectedIds = selectedItems.map(item => item.id);
                         query.subscribeBatch(selectedIds);
-                        if (isMultipleSelection) setMultipleSelection(true);
+                        if (!isMultipleSelection) setIsMultipleSelection(true);
                         removeFromSelectedItems(selectedItems);
                     }}
                     disabled={selectedItems.length === 0 || query.isLoading.subscribeBatch}
@@ -304,7 +316,7 @@ export const RecommendationsFeed: React.FC = () => {
                     onClick={() => {
                         const selectedIds = selectedItems.map(item => item.id);
                         query.removeBatch(selectedIds);
-                        if (isMultipleSelection) setMultipleSelection(true);
+                        if (!isMultipleSelection) setIsMultipleSelection(true);
                         removeFromSelectedItems(selectedItems);
                     }}
                     disabled={selectedItems.length === 0 || query.isLoading.removeBatch}>
@@ -328,7 +340,7 @@ export const RecommendationsFeed: React.FC = () => {
                         item={item}
                         selected={isItemSelected(item)}
                         onSelect={() => {
-                            if (!isMultipleSelection) setMultipleSelection(true);
+                            if (!isMultipleSelection) setIsMultipleSelection(true);
                             addToSelectedItems([item]);
                         }}
                         onUnselect={() => {

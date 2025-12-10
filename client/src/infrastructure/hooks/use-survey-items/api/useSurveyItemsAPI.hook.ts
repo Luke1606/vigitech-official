@@ -1,12 +1,11 @@
+// useSurveyItemsAPI.hook.ts
 import type { UUID } from 'crypto';
 import { useMutation, useQuery } from '@tanstack/react-query';
-
 import {
 	findOneQueryOptions,
 	getRecommendedQueryOptions,
 	getSubscribedQueryOptions
 } from './query-options';
-
 import {
 	useSubscribeOneMutationOptions,
 	useUnsubscribeOneMutationOptions,
@@ -15,58 +14,34 @@ import {
 	useUnsubscribeBatchMutationOptions,
 	useRemoveBatchMutationOptions,
 	useCreateSurveyItemMutationOptions,
-	useCreateBatchSurveyItemsMutationOptions
+	useCreateBatchSurveyItemsMutationOptions,
+	useRunGlobalRecommendationsMutationOptions
 } from './mutation-options';
 
 export const useSurveyItemsAPI = () => {
-	const useGetRecommendedQuery = useQuery(
-		getRecommendedQueryOptions()
-	);
+	// Queries
+	const useGetRecommendedQuery = useQuery(getRecommendedQueryOptions());
+	const useGetSubscribedQuery = useQuery(getSubscribedQueryOptions());
+	const useFindOneQuery = (itemId: UUID) => useQuery(findOneQueryOptions(itemId));
 
-	const useGetSubscribedQuery = useQuery(
-		getSubscribedQueryOptions()
-	);
-
-	const useFindOneQuery = (itemId: UUID) => useQuery(
-		findOneQueryOptions(itemId)
-	);
-
-	const useSubscribeOneMutation = useMutation(
-		useSubscribeOneMutationOptions()
-	);
-
-	const useUnsubscribeOneMutation = useMutation(
-		useUnsubscribeOneMutationOptions()
-	);
-
-	const useRemoveOneMutation = useMutation(
-		useRemoveOneMutationOptions()
-	);
-
-	const useSubscribeBatchMutation = useMutation(
-		useSubscribeBatchMutationOptions()
-	);
-
-	const useUnsubscribeBatchMutation = useMutation(
-		useUnsubscribeBatchMutationOptions()
-	);
-
-	const useCreateSurveyItemMutation = useMutation(
-		useCreateSurveyItemMutationOptions()
-	);
-
-	const useCreateBatchSurveyItemsMutation = useMutation(
-		useCreateBatchSurveyItemsMutationOptions()
-	);
-
-	const useRemoveBatchMutation = useMutation(
-		useRemoveBatchMutationOptions()
-	);
+	// Mutations
+	const useSubscribeOneMutation = useMutation(useSubscribeOneMutationOptions());
+	const useUnsubscribeOneMutation = useMutation(useUnsubscribeOneMutationOptions());
+	const useRemoveOneMutation = useMutation(useRemoveOneMutationOptions());
+	const useSubscribeBatchMutation = useMutation(useSubscribeBatchMutationOptions());
+	const useUnsubscribeBatchMutation = useMutation(useUnsubscribeBatchMutationOptions());
+	const useRemoveBatchMutation = useMutation(useRemoveBatchMutationOptions());
+	const useCreateSurveyItemMutation = useMutation(useCreateSurveyItemMutationOptions());
+	const useCreateBatchSurveyItemsMutation = useMutation(useCreateBatchSurveyItemsMutationOptions());
+	const useRunGlobalRecommendationsMutation = useMutation(useRunGlobalRecommendationsMutationOptions());
 
 	return {
+		// Queries
 		recommended: useGetRecommendedQuery,
 		subscribed: useGetSubscribedQuery,
 		findOne: useFindOneQuery,
+
+		// Mutation functions
 		subscribeOne: useSubscribeOneMutation.mutate,
 		unsubscribeOne: useUnsubscribeOneMutation.mutate,
 		removeOne: useRemoveOneMutation.mutate,
@@ -75,6 +50,11 @@ export const useSurveyItemsAPI = () => {
 		removeBatch: useRemoveBatchMutation.mutate,
 		create: useCreateSurveyItemMutation.mutate,
 		createBatch: useCreateBatchSurveyItemsMutation.mutate,
+		runGlobalRecommendations: useRunGlobalRecommendationsMutation.mutate,
+
+		// Full mutation objects (for state access)
+		runGlobalRecommendationsMutation: useRunGlobalRecommendationsMutation,
+
 		isLoading: {
 			subscribeOne: useSubscribeOneMutation.isPending,
 			unsubscribeOne: useUnsubscribeOneMutation.isPending,
@@ -84,7 +64,9 @@ export const useSurveyItemsAPI = () => {
 			removeBatch: useRemoveBatchMutation.isPending,
 			create: useCreateSurveyItemMutation.isPending,
 			createBatch: useCreateBatchSurveyItemsMutation.isPending,
+			runGlobalRecommendations: useRunGlobalRecommendationsMutation.isPending,
 		},
+
 		hasError: {
 			subscribeOne: useSubscribeOneMutation.isError,
 			unsubscribeOne: useUnsubscribeOneMutation.isError,
@@ -94,6 +76,7 @@ export const useSurveyItemsAPI = () => {
 			removeBatch: useRemoveBatchMutation.isError,
 			create: useCreateSurveyItemMutation.isError,
 			createBatch: useCreateBatchSurveyItemsMutation.isError,
+			runGlobalRecommendations: useRunGlobalRecommendationsMutation.isError,
 		},
 	};
 };

@@ -42,6 +42,7 @@ export const Radar: React.FC<{
     onBlipHover
 }) => {
         const query = useSurveyItemsAPI();
+        const { data } = query.subscribed;
         const navigate = useNavigate();
         const [hoveredBlipId, setHoveredBlipId] = React.useState<string | null>(null);
         const [menuOpen, setMenuOpen] = React.useState(false);
@@ -70,7 +71,7 @@ export const Radar: React.FC<{
 
         // Estado para el diálogo de búsqueda/importación
         const [searchDialogOpen, setSearchDialogOpen] = React.useState(false);
-        const [searchTerm, setSearchTerm] = React.useState('');
+        const [searchTerm, setSearchTerm] = React.useState<string>('');
         const [excelFile, setExcelFile] = React.useState<File | null>(null);
         const [excelError, setExcelError] = React.useState<string | null>(null);
 

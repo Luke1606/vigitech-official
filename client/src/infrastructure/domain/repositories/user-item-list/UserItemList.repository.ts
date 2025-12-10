@@ -13,7 +13,7 @@ export class UserItemListRepository implements UserItemListInterface {
 
     constructor() {
         this.axios = new AxiosConfiguredInstance(
-            `${getEnv().VITE_SERVER_BASE_URL}/item-lists`
+            `${getEnv().VITE_SERVER_BASE_URL}/user-data/item-lists`
         );
     }
 
@@ -64,7 +64,7 @@ export class UserItemListRepository implements UserItemListInterface {
         itemIds: UUID[]
     ): Promise<UserItemList> {
         return await this.axios.http
-            .patch(`${listId}`, { listId, itemIds });
+            .patch(`batch/${listId}`, itemIds);
     };
 
     async removeOneItem(
@@ -80,7 +80,7 @@ export class UserItemListRepository implements UserItemListInterface {
         itemIds: UUID[]
     ): Promise<UserItemList> {
         return await this.axios.http
-            .patch(`${listId}`, { listId, itemIds });
+            .patch(`batch/${listId}`, itemIds);
     };
 }
 
