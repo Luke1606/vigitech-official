@@ -11,80 +11,88 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
     constructor() {
 
         this.axios = new AxiosConfiguredInstance(
-            `${getEnv().VITE_SERVER_BASE_URL}/tech-survey/survey-items/`
+            `${getEnv().VITE_SERVER_BASE_URL}/tech-survey`
         );
 
     }
 
     async findAllRecommended(): Promise<SurveyItem[]> {
         return await this.axios.http
-            .get('recommended');
+            .get('survey-items/recommended');
     };
 
     async findAllSubscribed(): Promise<SurveyItem[]> {
         return await this.axios.http
-            .get('subscribed');
+            .get('survey-items/subscribed');
     };
 
     async findOne(
         itemId: UUID
     ): Promise<SurveyItem> {
         return await this.axios.http
-            .get(`${itemId}`);
+            .get(`survey-items/${itemId}`);
     };
 
     async subscribeOne(
         itemId: UUID
     ): Promise<void> {
         return await this.axios.http
-            .patch(`subscribe/${itemId}`);
+            .patch(`survey-items/subscribe/${itemId}`);
     };
 
     async unsubscribeOne(
         itemId: UUID
     ): Promise<void> {
         return await this.axios.http
-            .patch(`unsubscribe/${itemId}`);
+            .patch(`survey-items/unsubscribe/${itemId}`);
     };
 
     async removeOne(
         itemId: UUID
     ): Promise<void> {
         return await this.axios.http
-            .delete(`${itemId}`);
+            .delete(`survey-items/${itemId}`);
     };
 
     async subscribeBatch(
         itemIds: UUID[]
     ): Promise<void> {
         return await this.axios.http
-            .patch('batch', { data: itemIds });
+            .patch('survey-items/batch', { data: itemIds });
     };
 
     async unsubscribeBatch(
         itemIds: UUID[]
     ): Promise<void> {
         return await this.axios.http
-            .patch('batch', { data: itemIds });
+            .patch('survey-items/batch', { data: itemIds });
     };
 
     async removeBatch(
         itemIds: UUID[]
     ): Promise<void> {
         return await this.axios.http
-            .delete('batch', { data: { itemIds } });
+            .delete('survey-items/batch', { data: { itemIds } });
     };
 
     async create(
         title: string,
     ): Promise<void> {
-        return await this.axios.http.post('create', { title: title })
+        return await this.axios.http
+            .post('survey-items/create', { title: title })
     }
 
     async createBatch(
         titles: string[],
     ): Promise<void> {
-        return await this.axios.http.post('create/batch', titles)
+        return await this.axios.http
+            .post('survey-items/create/batch', titles)
+    }
+
+    async runGlobalRecommendations(): Promise<{ message: string, data: any[] }> {
+        const response = await this.axios.http
+            .post('orchestration/run-global-recommendations');
+        return response.data;
     }
 }
 

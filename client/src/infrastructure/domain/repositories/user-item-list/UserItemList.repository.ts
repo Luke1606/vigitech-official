@@ -13,7 +13,7 @@ export class UserItemListRepository implements UserItemListInterface {
 
     constructor() {
         this.axios = new AxiosConfiguredInstance(
-            `${getEnv().VITE_SERVER_BASE_URL}/item-lists`
+            `${getEnv().VITE_SERVER_BASE_URL}/user-data/item-lists`
         );
     }
 

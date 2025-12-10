@@ -32,7 +32,6 @@ import { CustomItemsList } from './custom-item-list';
 import { UUID } from 'crypto';
 import blips from '../../../../../assets/data/radarMock';
 import { useUserItemListsAPI } from '../../../../../infrastructure/hooks/use-item-lists/api/useUserItemListsAPI.hook';
-import { useUserItemLists } from '../../../../../infrastructure';
 
 export const ItemListsSideBar: React.FC<{
     visible: boolean
@@ -41,14 +40,6 @@ export const ItemListsSideBar: React.FC<{
     visible,
     toggleVisible
 }) => {
-        const {
-            //lists,
-            //createList,
-            //     updateList,
-            //     removeList,
-            //appendAllItems,
-            removeAllItems,
-        } = useUserItemLists();
         const query = useUserItemListsAPI();
         const { data: lists } = query.findAll
         const [newListName, setNewListName] = useState('');
