@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { KnowledgeFragment } from '@prisma/client';
-import { DataGatewayController } from '../data-gateway/data-gateway.controller';
-import { DataGatewayService } from '../data-gateway/gateway.service';
-import { SearchQueryDto } from '../data-gateway/dto/search-query.dto';
+import { DataGatewayController } from '../gateway.controller';
+import { DataGatewayService } from '../gateway.service';
+import { SearchQueryDto } from '../dto/search-query.dto';
 
 describe('DataGatewayController', () => {
     let controller: DataGatewayController;

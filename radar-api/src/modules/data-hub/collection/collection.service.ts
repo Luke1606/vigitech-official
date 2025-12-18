@@ -35,42 +35,37 @@ export class CollectionService {
     public async collectAllDataAndSave(): Promise<RawData[]> {
         this.logger.log('--- Starting massive data collection across all fetchers ---');
 
-        const allRawDataToInsert: Prisma.RawDataCreateManyInput[] = [];
-
         const fetchPromises = this.fetchers.map(async (fetcher) => {
             const source = fetcher.getDataSource();
             const dataType = fetcher.getDatatype();
             const fetcherName = fetcher.constructor.name;
 
             try {
-                const rawItems = await fetcher.fetch();
+                const rawData: Prisma.RawDataCreateManyInput[] =
+                    (await fetcher.fetch()) as unknown as Prisma.RawDataCreateManyInput[];
 
-                if (Array.isArray(rawItems) && rawItems.length > 0) {
-                    rawItems.forEach((item) => {
-                        if (item !== null) {
-                            allRawDataToInsert.push({
-                                source,
-                                dataType,
-                                content: item,
-                            });
-                        } else {
-                            this.logger.warn(`Skipping null item collected by ${fetcherName}.`);
-                        }
-                    });
-                    this.logger.log(`Fetcher ${fetcherName} collected ${rawItems.length} items.`);
+                if (Array.isArray(rawData) && rawData.length > 0) {
+                    this.logger.log(`Fetcher ${fetcherName} collected ${rawData.length} items.`);
+                    return rawData;
+                } else {
+                    return []; // Ensure empty array is returned if no data or invalid data
                 }
             } catch (error) {
                 this.logger.error(`Error collecting data from ${fetcherName} (${source}#${dataType}):`, error);
+                return []; // Return empty array on error
             }
         });
 
-        await Promise.all(fetchPromises);
+        const allResults = await Promise.all(fetchPromises);
+        const filteredRawDataToInsert = allResults
+            .flat()
+            .filter((data): data is Prisma.RawDataCreateManyInput => data !== undefined && data !== null);
 
-        if (allRawDataToInsert.length > 0) {
-            this.logger.log(`Consolidated a total of ${allRawDataToInsert.length} raw data records.`);
+        if (filteredRawDataToInsert.length > 0) {
+            this.logger.log(`Consolidated a total of ${filteredRawDataToInsert.length} raw data records.`);
             try {
                 const result = await this.prisma.rawData.createManyAndReturn({
-                    data: allRawDataToInsert,
+                    data: filteredRawDataToInsert,
                     skipDuplicates: true,
                 });
 

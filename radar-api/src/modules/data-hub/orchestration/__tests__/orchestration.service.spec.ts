@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RawData, RawDataSource, RawDataType } from '@prisma/client';
 import { PrismaService } from '@/common/services/prisma.service';
-import { OrchestrationService } from '../orchestration/orchestration.service';
-import { CollectionService } from '../collection/collection.service';
-import { ProcessingService } from '../processing/processing.service';
+import { OrchestrationService } from '../orchestration.service';
+import { CollectionService } from '../../collection/collection.service';
+import { ProcessingService } from '../../processing/processing.service';
 
 describe('OrchestrationService', () => {
     let service: OrchestrationService;

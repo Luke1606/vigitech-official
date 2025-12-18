@@ -86,7 +86,7 @@ export class UserItemListsController {
         @Param('id', ParseUUIDPipe) id: UUID,
         @Req() request: AuthenticatedRequest,
     ): Promise<UserItemList> {
-        this.logger.log('Executed findAll');
+        this.logger.log('Executed removeList');
         const userId: UUID = request.userId as UUID;
         return await this.userItemListsService.removeList(userId, id);
     }
@@ -104,7 +104,7 @@ export class UserItemListsController {
         @Body() itemId: UUID,
         @Req() request: AuthenticatedRequest,
     ): Promise<UserItemList> {
-        this.logger.log('Executed findAll');
+        this.logger.log('Executed appendOneItem');
         const userId: UUID = request.userId as UUID;
         return await this.userItemListsService.appendOneItem(userId, listId, itemId);
     }
@@ -122,7 +122,7 @@ export class UserItemListsController {
         @Body() itemIds: UUID[],
         @Req() request: AuthenticatedRequest,
     ): Promise<UserItemList> {
-        this.logger.log('Executed findAll');
+        this.logger.log('Executed appendAllItems');
         const userId: UUID = request.userId as UUID;
         return await this.userItemListsService.appendAllItems(userId, id, itemIds);
     }

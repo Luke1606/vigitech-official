@@ -42,12 +42,11 @@ export class DataGatewayService {
         const conditions: Prisma.Sql[] = [];
 
         if (sources && sources.length > 0) {
-            conditions.push(Prisma.sql`rd.source IN (${Prisma.join(sources.map((s) => Prisma.raw(`'${s}'`)))})`);
+            conditions.push(Prisma.sql`rd."source" IN (${Prisma.join(sources.map((s) => Prisma.sql`${s}`))})`);
         }
+
         if (dataTypes && dataTypes.length > 0) {
-            conditions.push(
-                Prisma.sql`rd."dataType" IN (${Prisma.join(dataTypes.map((dt) => Prisma.raw(`'${dt}'`)))})`,
-            );
+            conditions.push(Prisma.sql`rd."dataType" IN (${Prisma.join(dataTypes.map((dt) => Prisma.sql`${dt}`))})`);
         }
 
         return conditions.length === 0 ? Prisma.empty : Prisma.join(conditions, ' AND ');

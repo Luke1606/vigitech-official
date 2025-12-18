@@ -26,7 +26,7 @@ export class UserPreferencesService {
      */
     async findActualUserPreferences(userId: UUID): Promise<UserPreferences | null> {
         this.logger.log('Executed findActualUserPreferences');
-        return this.prisma.userPreferences.findFirstOrThrow({
+        return this.prisma.userPreferences.findFirst({
             where: { userId },
         });
     }

@@ -3,7 +3,7 @@ import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
 import { NotificationChannel } from '@prisma/client';
 import { CreateUserItemListDto } from './create-user-item-list.dto';
-import { NotificationChannelOption } from '@/common/enums/notification-channel-options';
+import { NotificationChannelOption } from '@/common/enums/notification-channel-options.enum';
 
 /**
  * DTO para la actualización parcial de una lista de elementos de usuario.

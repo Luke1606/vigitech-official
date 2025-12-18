@@ -25,7 +25,7 @@ if errorlevel 1 (
 )
 
 echo [4/5] Ejecutando tests...
-call npm test
+call npm run test:cov
 set TEST_RESULT=%errorlevel%
 
 echo [5/5] Deteniendo base de datos de test...

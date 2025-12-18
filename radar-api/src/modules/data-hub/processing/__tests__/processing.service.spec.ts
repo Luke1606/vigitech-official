@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RawData, RawDataSource, RawDataType } from '@prisma/client';
 import { PrismaService } from '@/common/services/prisma.service';
-import { ProcessingService } from '../processing/processing.service';
-import { AiAgentsService } from '../../ai-agents/ai-agents.service';
+import { ProcessingService } from '../processing.service';
+import { AiAgentsService } from '../../../ai-agents/ai-agents.service';
 
 describe('ProcessingService', () => {
     let service: ProcessingService;
@@ -108,7 +108,10 @@ describe('ProcessingService', () => {
             await service.processRawData([]);
             expect(loggerSpy).toHaveBeenCalledWith('Procesando lote de datos crudos de 0 elementos');
             expect(aiAgentService.generateResponse).not.toHaveBeenCalled();
-            expect(prismaService.rawData.updateMany).not.toHaveBeenCalled();
+            expect(prismaService.rawData.updateMany).toHaveBeenCalledWith({
+                where: { id: { in: [] } },
+                data: { processedAt: expect.any(Date) },
+            });
         });
 
         it('should log if AI response contains no fragments', async () => {
@@ -117,7 +120,7 @@ describe('ProcessingService', () => {
 
             await service.processRawData(mockRawDataBatch);
 
-            expect(loggerSpy).toHaveBeenCalledWith('AI response contained no knowledge fragments.');
+            expect(loggerSpy).toHaveBeenCalledWith('AI response contained no knowledge fragments to create.');
             expect(aiAgentService.generateEmbeddings).not.toHaveBeenCalled();
             expect(prismaService.$executeRaw).not.toHaveBeenCalled();
             expect(prismaService.rawData.updateMany).toHaveBeenCalled(); // RawData should still be marked as processed
@@ -131,7 +134,7 @@ describe('ProcessingService', () => {
 
             await service.processRawData(mockRawDataBatch);
 
-            expect(loggerSpy).toHaveBeenCalledWith('Error during AI response generation', expect.any(Error));
+            expect(loggerSpy).toHaveBeenCalledWith('Error generando texto con Gemini Flash client', expect.any(Error));
             expect(prismaService.$executeRaw).not.toHaveBeenCalled();
             expect(prismaService.rawData.updateMany).toHaveBeenCalled(); // RawData should still be marked as processed
         });
@@ -154,7 +157,7 @@ describe('ProcessingService', () => {
 
             await service.processRawData(mockRawDataBatch);
 
-            expect(loggerSpy).toHaveBeenCalledWith('Error during embedding generation', expect.any(Error));
+            expect(loggerSpy).toHaveBeenCalledWith('Error generando embeddings con el cliente de OpenAI', expect.any(Error));
             expect(prismaService.$executeRaw).not.toHaveBeenCalled();
             expect(prismaService.rawData.updateMany).toHaveBeenCalled(); // RawData should still be marked as processed
         });
@@ -178,7 +181,7 @@ describe('ProcessingService', () => {
 
             await service.processRawData(mockRawDataBatch);
 
-            expect(loggerSpy).toHaveBeenCalledWith('Error during bulk knowledge fragment insertion', expect.any(Error));
+            expect(loggerSpy).toHaveBeenCalledWith('Error during bulk insertion to database', expect.any(Error));
             expect(prismaService.rawData.updateMany).toHaveBeenCalled(); // RawData should still be marked as processed
         });
     });

@@ -13,7 +13,6 @@ import { firstValueFrom } from 'rxjs';
 export class LLMClient {
     private readonly logger: Logger = new Logger(LLMClient.name);
     private readonly baseURL: string;
-    private readonly apiKey: string;
 
     /**
      * @param httpService Servicio HTTP para realizar solicitudes.
@@ -23,11 +22,13 @@ export class LLMClient {
         private readonly httpService: HttpService,
         private readonly configService: ConfigService,
     ) {
-        this.apiKey = this.configService.get<string>('LLM_API_KEY') as string;
+        const apiKey = this.configService.get<string>('LLM_API_KEY') as string;
 
-        if (!this.apiKey) throw new Error('LLM API key not found.');
+        const model = this.configService.get<string>('LLM_MODEL') as string;
 
-        this.baseURL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.apiKey}`;
+        if (!apiKey) throw new Error('LLM API key not found.');
+
+        this.baseURL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
         this.logger.log('Initialized');
     }

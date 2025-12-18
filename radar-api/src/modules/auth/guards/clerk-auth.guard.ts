@@ -71,7 +71,7 @@ export class ClerkAuthGuard implements CanActivate {
             // Busca el usuario en Clerk y en la base de datos local
             const user = await this.clerkClient.users.getUser(tokenPayload.sub);
 
-            if (!user) return false;
+            if (!user) throw new UnauthorizedException('User not found in Clerk');
 
             let userInDB: User | null = await this.usersService.findByClerkId(user.id);
 

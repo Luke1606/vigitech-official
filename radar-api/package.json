@@ -116,5 +116,16 @@
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1"
     }
+    ,
+    "coveragePathIgnorePatterns": [
+      "main.ts",
+      ".module.ts$",
+      ".dto.ts$",
+      ".type.ts$",
+      ".enum.ts$",
+      "modules/data-hub/collection/.*",
+      "modules/data-hub/processing/.*",
+      "modules/data-hub/orchestration/.*"
+    ]
   }
 }

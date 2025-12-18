@@ -17,6 +17,17 @@ export class ProcessingService {
         private readonly aiAgentService: AiAgentsService,
     ) {}
 
+    private async updateRawDataProcessedAt(rawDataBatch: RawData[]): Promise<void> {
+        await this.prisma.rawData.updateMany({
+            where: {
+                id: {
+                    in: rawDataBatch.map((data: RawData) => data.id),
+                },
+            },
+            data: { processedAt: new Date() },
+        });
+    }
+
     /**
      * Procesa un lote de entradas de datos crudos.
      * Extrae fragmentos de conocimiento y KPIs asociados utilizando un agente de IA, genera embeddings,
@@ -60,15 +71,30 @@ export class ProcessingService {
                 fragments: KnowledgeFragmentWithoutEmbedding[];
             };
 
-            const aiResponse: KnowledgeAiResponse = (await this.aiAgentService.generateResponse(
-                prompt,
-            )) as KnowledgeAiResponse;
+            let aiResponse: KnowledgeAiResponse;
+            try {
+                aiResponse = (await this.aiAgentService.generateResponse(
+                    prompt,
+                    rawDataSummaries,
+                )) as KnowledgeAiResponse;
+            } catch (error) {
+                this.logger.error('Error generando texto con Gemini Flash client', error);
+                await this.updateRawDataProcessedAt(rawDataBatch);
+                return;
+            }
 
             const knowledgeFragmentsData: KnowledgeFragmentWithoutEmbedding[] = aiResponse.fragments || [];
 
             if (knowledgeFragmentsData.length > 0) {
-                const textSnippets: string[] = knowledgeFragmentsData.map((fragment) => fragment.textSnippet);
-                const embeddings = await this.aiAgentService.generateEmbeddings(textSnippets);
+                let embeddings: number[][];
+                try {
+                    const textSnippets: string[] = knowledgeFragmentsData.map((fragment) => fragment.textSnippet);
+                    embeddings = await this.aiAgentService.generateEmbeddings(textSnippets);
+                } catch (error) {
+                    this.logger.error('Error generando embeddings con el cliente de OpenAI', error);
+                    await this.updateRawDataProcessedAt(rawDataBatch);
+                    return;
+                }
 
                 const knowledgeFragmentsToCreate: CreateKnowledgeFragment[] = knowledgeFragmentsData.map(
                     (fragment, index) => ({
@@ -87,18 +113,24 @@ export class ProcessingService {
                     return Prisma.sql`(gen_random_uuid(), ${fragment.textSnippet}, ${vectorExpression}, ${fragment.associatedKPIs}::jsonb, ${fragment.sourceRawDataId})`;
                 });
 
-                await this.prisma.$executeRaw(
-                    Prisma.sql`
-                        INSERT INTO "KnowledgeFragment" ("id", "textSnippet", "embedding", "associatedKPIs", "sourceRawDataId")
-                        VALUES ${Prisma.join(values, ', ')};
-                    `,
-                );
-                this.logger.log(`${knowledgeFragmentsToCreate.length} fragmentos de conocimiento creados.`);
+                try {
+                    await this.prisma.$executeRaw(
+                        Prisma.sql`
+                            INSERT INTO "KnowledgeFragment" ("id", "textSnippet", "embedding", "associatedKPIs", "sourceRawDataId")
+                            VALUES ${Prisma.join(values, ', ')};
+                        `,
+                    );
+                    this.logger.log(`${knowledgeFragmentsToCreate.length} fragmentos de conocimiento creados.`);
+                } catch (error) {
+                    this.logger.error('Error during bulk insertion to database', error);
+                    await this.updateRawDataProcessedAt(rawDataBatch);
+                    return;
+                }
             } else {
-                this.logger.log('No knowledge fragments to create.');
+                this.logger.log('AI response contained no knowledge fragments to create.');
             }
         } else {
-            this.logger.log('AI response contained no knowledge fragments.');
+            this.logger.log('The provided raw data batch is empty. No processing needed.');
         }
 
         await this.prisma.rawData.updateMany({

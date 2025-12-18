@@ -58,7 +58,7 @@ export class EmbeddingAiClient {
 
             return result.embeddings.map((e: { values: number[] }) => e.values);
         } catch (error) {
-            console.error('ERROR al generar embeddings con el SDK de Gemini.', error);
+            this.logger.error('ERROR al generar embeddings con el SDK de Gemini.', error);
             throw new Error('Falló la generación de embeddings. Revisa tu clave y modelo.');
         }
     }

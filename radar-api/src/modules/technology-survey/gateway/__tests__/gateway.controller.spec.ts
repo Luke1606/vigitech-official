@@ -1,10 +1,10 @@
+import { UUID } from 'crypto';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ItemsGatewayController } from '../items-gateway.controller';
-import { ItemsGatewayService } from '../items-gateway.service';
 import { Item, UserSubscribedItem } from '@prisma/client';
 import { AuthenticatedRequest } from '@/shared/types/authenticated-request.type';
-import { CreateUnclassifiedItemDto } from '../../shared/dto/create-unclassified-item.dto';
-import { UUID } from 'crypto';
+import { CreateUnclassifiedItemDto } from '@/modules/technology-survey/shared/dto/create-unclassified-item.dto';
+import { ItemsGatewayController } from '../gateway.controller';
+import { ItemsGatewayService } from '../gateway.service';
 
 const MOCK_USER_ID: UUID = 'user-id-123' as UUID;
 const MOCK_ITEM_ID: UUID = 'item-id-456' as UUID;
@@ -102,7 +102,6 @@ describe('ItemsGatewayController', () => {
         it('should call create with the data and userId', async () => {
             const createDto: CreateUnclassifiedItemDto = {
                 title: 'New Item',
-                summary: 'Summary of new item',
             };
             service.create.mockResolvedValue(undefined);
             const result = await controller.create(createDto, mockAuthenticatedRequest);
@@ -146,7 +145,7 @@ describe('ItemsGatewayController', () => {
 
     describe('PATCH /create/batch', () => {
         it('should call createBatch with the array of DTOs and userId', async () => {
-            const createDtos: CreateUnclassifiedItemDto[] = [{ title: 'Batch Item 1', summary: 'Summary 1' }];
+            const createDtos: CreateUnclassifiedItemDto[] = [{ title: 'Batch Item 1' }];
             service.createBatch.mockResolvedValue(undefined);
 
             const result = await controller.createBatch(createDtos, mockAuthenticatedRequest);
