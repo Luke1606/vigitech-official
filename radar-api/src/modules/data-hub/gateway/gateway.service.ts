@@ -84,20 +84,23 @@ export class DataGatewayService {
                 const finalWhereClause =
                     whereClauses.length > 0 ? Prisma.sql`WHERE ${Prisma.join(whereClauses, ' AND ')}` : Prisma.empty;
 
+                const vectorString = `[${queryEmbedding.join(',')}]`;
+
                 const rawResults = await this.prisma.$queryRaw<KnowledgeFragment[]>(
                     Prisma.sql`
                         SELECT
-                            kf.id, kf."textSnippet", kf.embedding, kf."associatedKPIs", kf."sourceRawDataId", kf."createdAt"
+                            kf.id, kf."textSnippet", kf."associatedKPIs", kf."sourceRawDataId", kf."createdAt"
                         FROM
                             "KnowledgeFragment" AS kf
                         JOIN
                             "RawData" AS rd ON kf."sourceRawDataId" = rd.id
                         ${finalWhereClause}
                         ORDER BY
-                            kf.embedding <-> ${Prisma.join(queryEmbedding)}::vector
+                            kf.embedding <-> ${Prisma.raw(`'${vectorString}'`)}::vector
                         LIMIT ${limit} OFFSET ${offset};
                     `,
                 );
+
                 knowledgeFragments = rawResults;
             } else {
                 // Búsqueda por Identidad (sin K)
