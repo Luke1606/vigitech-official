@@ -92,6 +92,7 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
     async runGlobalRecommendations(): Promise<{ message: string, data: any[] }> {
         const response = await this.axios.http
             .post('orchestration/run-global-recommendations');
+
         return response.data;
     }
 }

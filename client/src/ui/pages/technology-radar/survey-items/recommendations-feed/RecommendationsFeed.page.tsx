@@ -118,12 +118,7 @@ export const RecommendationsFeed: React.FC = () => {
 
     // Botón "Actualizar recomendaciones"
     const handleUpdateRecommendations = () => {
-        query.runGlobalRecommendations(undefined, {
-            onSuccess: () => {
-                // Una vez que se generan nuevas recomendaciones, refetch para obtenerlas
-                refetchRecommended();
-            }
-        });
+        query.runGlobalRecommendations()
     };
 
     // Botón "Reintentar" en caso de error
