@@ -36,18 +36,14 @@ export class EmbeddingAiClient {
     async generateEmbeddings(text: string[]): Promise<number[][]> {
         this.logger.log(`Generando ${text.length} embeddings.`);
 
-        // Mapeamos cada string de texto a la estructura Content esperada
         const requestsWithContent: { content: Content }[] = text.map((textElement) => {
-            // 1. Crear el objeto Part
             const part: Part = { text: textElement };
 
-            // 2. Crear el objeto Content (requiere role y parts)
             const content: Content = {
-                role: 'user', // El rol es genérico, pero requerido por la interfaz
+                role: 'user',
                 parts: [part],
             };
 
-            // 3. Crear el objeto EmbedContentRequest (requiere la propiedad 'content')
             return { content };
         });
 

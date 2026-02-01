@@ -24,8 +24,8 @@ export class AiAgentsService {
      * @param context (Opcional) Contexto adicional o datos brutos que el modelo debe considerar.
      * @returns Una promesa que resuelve con la respuesta generada por el modelo.
      */
-    async generateResponse(prompt: string, context?: object): Promise<object> {
-        return this.multiPurposeClient.generateResponse(prompt, context);
+    async generateResponse<T>(prompt: string, context?: object): Promise<T> {
+        return this.multiPurposeClient.generateResponse<T>(prompt, context);
     }
 
     /**

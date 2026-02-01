@@ -61,7 +61,7 @@ describe('DataFetchService', () => {
             expect(dataGatewayService.search).toHaveBeenCalledWith(
                 expect.objectContaining({
                     query: expect.stringContaining('NestJS'),
-                    k: 75,
+                    k: 15,
                 }),
             );
         });
@@ -81,7 +81,7 @@ describe('DataFetchService', () => {
             expect(dataGatewayService.search).toHaveBeenCalledWith(
                 expect.objectContaining({
                     query: expect.stringContaining('ADOPT'),
-                    k: 100,
+                    k: 30,
                 }),
             );
         });

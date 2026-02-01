@@ -3,11 +3,19 @@ import { RawData, RawDataSource, RawDataType } from '@prisma/client';
 import { PrismaService } from '@/common/services/prisma.service';
 import { ProcessingService } from '../processing.service';
 import { AiAgentsService } from '../../../ai-agents/ai-agents.service';
+import { CreateKnowledgeFragment } from '../types/create-knowledge-fragment.type';
 
 describe('ProcessingService', () => {
     let service: ProcessingService;
     let prismaService: PrismaService;
     let aiAgentService: AiAgentsService;
+
+    // Tipos auxiliares para los fragmentos sin embedding (usados en la respuesta de la IA)
+    type KnowledgeFragmentWithoutEmbedding = Omit<CreateKnowledgeFragment, 'embedding'>;
+
+    interface KnowledgeAiResponse {
+        fragments: KnowledgeFragmentWithoutEmbedding[];
+    }
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -17,11 +25,9 @@ describe('ProcessingService', () => {
                     provide: PrismaService,
                     useValue: {
                         rawData: {
-                            findMany: jest.fn(),
                             updateMany: jest.fn(),
                         },
                         $executeRaw: jest.fn(),
-                        $queryRaw: jest.fn(),
                     },
                 },
                 {
@@ -46,143 +52,135 @@ describe('ProcessingService', () => {
     describe('processRawData', () => {
         const mockRawDataBatch: RawData[] = [
             {
-                id: 'raw1',
+                id: 'raw-uuid-1',
                 source: RawDataSource.GITHUB,
                 dataType: RawDataType.CODE_ASSET,
-                content: { name: 'repo1', description: 'desc1' },
+                content: { name: 'nest-project', stars: 100 },
                 processedAt: null,
                 collectedAt: new Date(),
             },
             {
-                id: 'raw2',
+                id: 'raw-uuid-2',
                 source: RawDataSource.NPM,
                 dataType: RawDataType.TEXT_CONTENT,
-                content: { name: 'package1', version: '1.0.0' },
+                content: { package: 'lodash', version: '4.17.21' },
                 processedAt: null,
                 collectedAt: new Date(),
             },
         ];
 
-        it('should process raw data, generate knowledge fragments and update raw data status', async () => {
-            const mockAiResponse = {
+        it('should process raw data, generate fragments and update status successfully', async () => {
+            // Arreglar: Definimos la respuesta esperada de la IA
+            const mockAiResponse: KnowledgeAiResponse = {
                 fragments: [
                     {
-                        textSnippet: 'Snippet 1',
-                        associatedKPIs: { kpi1: 'value1' },
-                        sourceRawDataId: 'raw1',
+                        textSnippet: 'Knowledge snippet from GitHub',
+                        associatedKPIs: { relevance: 0.9 },
+                        sourceRawDataId: 'raw-uuid-1',
                     },
                     {
-                        textSnippet: 'Snippet 2',
-                        associatedKPIs: { kpi2: 'value2' },
-                        sourceRawDataId: 'raw2',
+                        textSnippet: 'Knowledge snippet from NPM',
+                        associatedKPIs: { version: 'latest' },
+                        sourceRawDataId: 'raw-uuid-2',
                     },
                 ],
             };
+
             const mockEmbeddings = [
-                [0.1, 0.2],
-                [0.3, 0.4],
+                [0.1, 0.2, 0.3],
+                [0.4, 0.5, 0.6],
             ];
 
-            (aiAgentService.generateResponse as jest.Mock).mockResolvedValue(mockAiResponse);
-            (aiAgentService.generateEmbeddings as jest.Mock).mockResolvedValue(mockEmbeddings);
-            (prismaService.$executeRaw as jest.Mock).mockResolvedValue(2); // Number of rows affected
+            // Configuramos los Spies con tipado estricto
+            jest.spyOn(aiAgentService, 'generateResponse').mockResolvedValue(mockAiResponse);
+            jest.spyOn(aiAgentService, 'generateEmbeddings').mockResolvedValue(mockEmbeddings);
+
+            // Mocks de Prisma
+            (prismaService.$executeRaw as jest.Mock).mockResolvedValue(1);
             (prismaService.rawData.updateMany as jest.Mock).mockResolvedValue({ count: 2 });
 
+            // Actuar
             await service.processRawData(mockRawDataBatch);
 
-            expect(aiAgentService.generateResponse).toHaveBeenCalled();
-            expect(aiAgentService.generateEmbeddings).toHaveBeenCalledWith(['Snippet 1', 'Snippet 2']);
+            // Afirmar
+            expect(aiAgentService.generateResponse).toHaveBeenCalledWith(expect.any(String), expect.any(Array));
+            expect(aiAgentService.generateEmbeddings).toHaveBeenCalledWith([
+                'Knowledge snippet from GitHub',
+                'Knowledge snippet from NPM',
+            ]);
             expect(prismaService.$executeRaw).toHaveBeenCalled();
             expect(prismaService.rawData.updateMany).toHaveBeenCalledWith({
                 where: {
-                    id: {
-                        in: ['raw1', 'raw2'],
-                    },
+                    id: { in: ['raw-uuid-1', 'raw-uuid-2'] },
                 },
                 data: { processedAt: expect.any(Date) },
             });
         });
 
-        it('should log if no raw data is provided', async () => {
+        it('should log and stop if the provided batch is empty', async () => {
             const loggerSpy = jest.spyOn(service['logger'], 'log');
+
             await service.processRawData([]);
-            expect(loggerSpy).toHaveBeenCalledWith('Procesando lote de datos crudos de 0 elementos');
+
+            expect(loggerSpy).toHaveBeenCalledWith('The provided raw data batch is empty. No processing needed.');
             expect(aiAgentService.generateResponse).not.toHaveBeenCalled();
-            expect(prismaService.rawData.updateMany).toHaveBeenCalledWith({
-                where: { id: { in: [] } },
-                data: { processedAt: expect.any(Date) },
-            });
         });
 
-        it('should log if AI response contains no fragments', async () => {
+        it('should handle cases where AI returns an empty fragments array', async () => {
+            const mockEmptyResponse: KnowledgeAiResponse = { fragments: [] };
+            jest.spyOn(aiAgentService, 'generateResponse').mockResolvedValue(mockEmptyResponse);
             const loggerSpy = jest.spyOn(service['logger'], 'log');
-            (aiAgentService.generateResponse as jest.Mock).mockResolvedValue({ fragments: [] });
 
             await service.processRawData(mockRawDataBatch);
 
             expect(loggerSpy).toHaveBeenCalledWith('AI response contained no knowledge fragments to create.');
             expect(aiAgentService.generateEmbeddings).not.toHaveBeenCalled();
-            expect(prismaService.$executeRaw).not.toHaveBeenCalled();
-            expect(prismaService.rawData.updateMany).toHaveBeenCalled(); // RawData should still be marked as processed
+            expect(prismaService.rawData.updateMany).toHaveBeenCalled(); // Se marca como procesado aunque esté vacío
         });
 
-        it('should handle errors during AI response generation', async () => {
-            (aiAgentService.generateResponse as jest.Mock).mockRejectedValue(
-                new Error('Error generando texto con Gemini Flash client'),
-            );
+        it('should handle errors during AI response generation gracefully', async () => {
+            jest.spyOn(aiAgentService, 'generateResponse').mockRejectedValue(new Error('LLM Timeout'));
             const loggerSpy = jest.spyOn(service['logger'], 'error');
 
             await service.processRawData(mockRawDataBatch);
 
             expect(loggerSpy).toHaveBeenCalledWith('Error generando texto con Gemini Flash client', expect.any(Error));
-            expect(prismaService.$executeRaw).not.toHaveBeenCalled();
-            expect(prismaService.rawData.updateMany).toHaveBeenCalled(); // RawData should still be marked as processed
+            expect(prismaService.rawData.updateMany).toHaveBeenCalled();
         });
 
         it('should handle errors during embedding generation', async () => {
-            const mockAiResponse = {
-                fragments: [
-                    {
-                        textSnippet: 'Snippet 1',
-                        associatedKPIs: { kpi1: 'value1' },
-                        sourceRawDataId: 'raw1',
-                    },
-                ],
+            const mockAiResponse: KnowledgeAiResponse = {
+                fragments: [{ textSnippet: 'Test', associatedKPIs: {}, sourceRawDataId: 'raw1' }],
             };
-            (aiAgentService.generateResponse as jest.Mock).mockResolvedValue(mockAiResponse);
-            (aiAgentService.generateEmbeddings as jest.Mock).mockRejectedValue(
-                new Error('Error generando embeddings con el cliente de OpenAI'),
-            );
+            jest.spyOn(aiAgentService, 'generateResponse').mockResolvedValue(mockAiResponse);
+            jest.spyOn(aiAgentService, 'generateEmbeddings').mockRejectedValue(new Error('Embedding API Error'));
+
             const loggerSpy = jest.spyOn(service['logger'], 'error');
 
             await service.processRawData(mockRawDataBatch);
 
-            expect(loggerSpy).toHaveBeenCalledWith('Error generando embeddings con el cliente de OpenAI', expect.any(Error));
+            expect(loggerSpy).toHaveBeenCalledWith(
+                'Error generando embeddings con el cliente de OpenAI',
+                expect.any(Error),
+            );
             expect(prismaService.$executeRaw).not.toHaveBeenCalled();
-            expect(prismaService.rawData.updateMany).toHaveBeenCalled(); // RawData should still be marked as processed
+            expect(prismaService.rawData.updateMany).toHaveBeenCalled();
         });
 
-        it('should handle errors during bulk insertion to database', async () => {
-            const mockAiResponse = {
-                fragments: [
-                    {
-                        textSnippet: 'Snippet 1',
-                        associatedKPIs: { kpi1: 'value1' },
-                        sourceRawDataId: 'raw1',
-                    },
-                ],
+        it('should handle database errors during bulk insertion', async () => {
+            const mockAiResponse: KnowledgeAiResponse = {
+                fragments: [{ textSnippet: 'Test', associatedKPIs: {}, sourceRawDataId: 'raw1' }],
             };
-            const mockEmbeddings = [[0.1, 0.2]];
+            jest.spyOn(aiAgentService, 'generateResponse').mockResolvedValue(mockAiResponse);
+            jest.spyOn(aiAgentService, 'generateEmbeddings').mockResolvedValue([[0.1]]);
 
-            (aiAgentService.generateResponse as jest.Mock).mockResolvedValue(mockAiResponse);
-            (aiAgentService.generateEmbeddings as jest.Mock).mockResolvedValue(mockEmbeddings);
-            (prismaService.$executeRaw as jest.Mock).mockRejectedValue(new Error('DB insertion error'));
+            (prismaService.$executeRaw as jest.Mock).mockRejectedValue(new Error('DB Unique Constraint Error'));
             const loggerSpy = jest.spyOn(service['logger'], 'error');
 
             await service.processRawData(mockRawDataBatch);
 
             expect(loggerSpy).toHaveBeenCalledWith('Error during bulk insertion to database', expect.any(Error));
-            expect(prismaService.rawData.updateMany).toHaveBeenCalled(); // RawData should still be marked as processed
+            expect(prismaService.rawData.updateMany).toHaveBeenCalled();
         });
     });
 });

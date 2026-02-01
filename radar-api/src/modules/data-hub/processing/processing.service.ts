@@ -73,10 +73,7 @@ export class ProcessingService {
 
             let aiResponse: KnowledgeAiResponse;
             try {
-                aiResponse = (await this.aiAgentService.generateResponse(
-                    prompt,
-                    rawDataSummaries,
-                )) as KnowledgeAiResponse;
+                aiResponse = await this.aiAgentService.generateResponse<KnowledgeAiResponse>(prompt, rawDataSummaries);
             } catch (error) {
                 this.logger.error('Error generando texto con Gemini Flash client', error);
                 await this.updateRawDataProcessedAt(rawDataBatch);
