@@ -387,7 +387,7 @@ export const Header: React.FC = () => {
                             </SheetTrigger>
                             <SheetContent
                                 side="right"
-                                className="bg-gradient-to-b from-indigo-700 via-blue-600 to-sky-500 text-white border-none shadow-xl backdrop-blur-md"
+                                className="bg-linear-to-b from-indigo-700 via-blue-600 to-sky-500 text-white border-none shadow-xl backdrop-blur-md"
                             >
                                 <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
                                 <SheetDescription className="sr-only">

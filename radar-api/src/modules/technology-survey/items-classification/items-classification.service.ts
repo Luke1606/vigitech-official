@@ -51,18 +51,21 @@ export class ItemsClassificationService {
             Responde ÚNICAMENTE con un objeto JSON que coincida con el tipo CreateNewItemClassification.
 
             type CreateNewItemClassification = {
-                classification: "ADOPT" | "TEST" | "SUSTAIN" | "HOLD";
-                itemField: "BUSSINESS_INTEL" | "SCIENTIFIC_STAGE" | "SUPPORT_PLATTFORMS_AND_TECHNOLOGIES" | "LANGUAGES_AND_FRAMEWORKS";
-                insightsValues: { 
-                    insight: string; // Justificación concisa basada en el contexto.
-                    reasoningMetrics: { [key: string]: number | string }; // Métricas o razonamiento estructurado.
-                    citedFragmentIds: string[]; // IDs de fragmentos usados como evidencia directa.
-                };
-                unclassifiedItem: { title: string; summary: string }; // Devuelve el DTO pero con un summary breve e introductorio al elemento.
+                "classification": "ADOPT" | "TEST" | "SUSTAIN" | "HOLD",
+                "itemField": "BUSSINESS_INTEL" | "SCIENTIFIC_STAGE" | "SUPPORT_PLATTFORMS_AND_TECHNOLOGIES" | "LANGUAGES_AND_FRAMEWORKS",
+                "itemSummary": "Un resumen breve e introductorio del elemento tecnológico",
+                "insightsValues": { 
+                    "insight": "string",
+                    "reasoningMetrics": {},
+                    "citedFragmentIds": ["uuid-1", "uuid-2"]
+                },
+                "unclassifiedItem": { 
+                    "title": "${item.title}"
+                }
             }
         `;
 
-        return (await this.aiAgentsService.generateResponse(prompt, context)) as CreateNewItemClassification;
+        return await this.aiAgentsService.generateResponse<CreateNewItemClassification>(prompt, context);
     }
 
     /**
@@ -129,7 +132,7 @@ export class ItemsClassificationService {
             }
         `;
 
-        return (await this.aiAgentsService.generateResponse(prompt, context)) as CreateExistentItemClassification;
+        return await this.aiAgentsService.generateResponse<CreateExistentItemClassification>(prompt, context);
     }
 
     /**
