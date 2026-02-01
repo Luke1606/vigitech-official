@@ -97,7 +97,7 @@ export const Header: React.FC = () => {
                             }`}
                         onClick={() => setSheetOpen(false)}
                     >
-                        HOME
+                        Inicio
                     </NavLink>
 
                     <div className="px-4 py-2 font-semibold text-white border-b border-white/30">
@@ -151,7 +151,7 @@ export const Header: React.FC = () => {
                             }`}
                         onClick={() => setSheetOpen(false)}
                     >
-                        Home del Radar
+                        Inicio del Radar
                     </NavLink>
 
                     <NavLink
@@ -196,7 +196,7 @@ export const Header: React.FC = () => {
                                             ${currentPath === PathOption.VIGITECH_PORTAL_HOME &&
                                             styles.navigationMenuLinkFocused
                                             }`}>
-                                        <NavLink to={PathOption.VIGITECH_PORTAL_HOME}>HOME</NavLink>
+                                        <NavLink to={PathOption.VIGITECH_PORTAL_HOME}>Inicio</NavLink>
                                     </NavigationMenuLink>
                                 </NavigationMenuItem>
 
@@ -271,7 +271,7 @@ export const Header: React.FC = () => {
                                             ${currentPath === PathOption.TECHNOLOGY_RADAR_PORTAL &&
                                             styles.navigationMenuLinkFocused
                                             }`}>
-                                        <NavLink to={PathOption.TECHNOLOGY_RADAR_PORTAL}>Home</NavLink>
+                                        <NavLink to={PathOption.TECHNOLOGY_RADAR_PORTAL}>Inicio</NavLink>
                                     </NavigationMenuLink>
                                 </NavigationMenuItem>
 
