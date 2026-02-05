@@ -6,8 +6,8 @@ import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-ite
 import { ItemWithClassification } from '../shared/types/classified-item.type';
 
 // --- CONFIGURACIÓN DE PARÁMETROS PREDETERMINADOS ---
-const K_FOR_CLASSIFICATION = 75;
-const K_FOR_RECLASSIFICATION = 100;
+const K_FOR_CLASSIFICATION = 15;
+const K_FOR_RECLASSIFICATION = 30;
 const TREND_ANALYSIS_LIMIT = 1000;
 const DEFAULT_RENEW_FREQUENCY = Frequency.DAILY;
 

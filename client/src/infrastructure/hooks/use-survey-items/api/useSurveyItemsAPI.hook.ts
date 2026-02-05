@@ -1,4 +1,3 @@
-// useSurveyItemsAPI.hook.ts
 import type { UUID } from 'crypto';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
