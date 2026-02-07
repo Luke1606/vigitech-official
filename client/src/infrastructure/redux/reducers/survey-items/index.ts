@@ -1,10 +1,11 @@
-export { 
+export {
     type SurveyItemsState,
-    addToSelectedItems,
-    removeFromSelectedItems, 
-    addPendingSubscribes, 
+    addToSurveyItems,
+    setSurveyItems,
+    removeFromSurveyItems,
+    addPendingSubscribes,
     addPendingUnsubscribes,
-    addPendingRemoves, 
+    addPendingRemoves,
     clearPendingChanges,
-    surveyItemsReducer 
+    surveyItemsReducer
 } from './slice';

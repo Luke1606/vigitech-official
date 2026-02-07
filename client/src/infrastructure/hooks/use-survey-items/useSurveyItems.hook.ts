@@ -1,8 +1,9 @@
 import { useDispatch, useSelector } from 'react-redux';
 import {
 	type SurveyItem,
-	addToSelectedItems,
-	removeFromSelectedItems,
+	addToSurveyItems,
+	setSurveyItems,
+	removeFromSurveyItems,
 	addPendingSubscribes,
 	addPendingUnsubscribes,
 	addPendingRemoves,
@@ -14,26 +15,32 @@ import { useSurveyItemsAPI } from './api/useSurveyItemsAPI.hook';
 
 export const useSurveyItems = () => {
 	const dispatch = useDispatch<AppDispatch>();
-	const selectedItems = useSelector((state: RootState) => state.surveyItems.selectedItems);
+	const surveyItems = useSelector((state: RootState) => state.surveyItems.surveyItems);
 	const pendingChanges = useSelector((state: RootState) => state.surveyItems.pendingChanges);
 
 	const query = useSurveyItemsAPI();
 
 	return {
 		...query,
-		selectedItems,
+		surveyItems,
 		pendingChanges,
 
-		addToSelectedItems: (
+		addToSurveyItems: (
 			items: SurveyItem[]
 		) => dispatch(
-			addToSelectedItems(items)
+			addToSurveyItems(items)
 		),
 
-		removeFromSelectedItems: (
+		setSurveyItems: (
 			items: SurveyItem[]
 		) => dispatch(
-			removeFromSelectedItems(items)
+			setSurveyItems(items)
+		),
+
+		removeFromSurveyItems: (
+			items: SurveyItem[]
+		) => dispatch(
+			removeFromSurveyItems(items)
 		),
 
 		addPendingSubscribes: (

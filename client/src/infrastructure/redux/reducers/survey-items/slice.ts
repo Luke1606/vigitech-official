@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { SurveyItem } from '../../..';
 
 export interface SurveyItemsState {
-    selectedItems: SurveyItem[];
+    surveyItems: SurveyItem[];
     pendingChanges: {
         toRemoveItems: SurveyItem[];
         toSubscribeItems: SurveyItem[];
@@ -11,7 +11,7 @@ export interface SurveyItemsState {
 }
 
 const initialState: SurveyItemsState = {
-    selectedItems: [],
+    surveyItems: [],
     pendingChanges: {
         toRemoveItems: [],
         toSubscribeItems: [],
@@ -23,29 +23,36 @@ export const surveyItemsSlice = createSlice({
     name: 'surveyItems',
     initialState,
     reducers: {
-        addToSelectedItems: (
+        addToSurveyItems: (
             state: SurveyItemsState,
             action: PayloadAction<SurveyItem[]>
         ) => {
             action.payload.forEach(
                 (item: SurveyItem) => {
-                    if (!state.selectedItems.includes(item))
-                        state.selectedItems.push(item)
+                    if (!state.surveyItems.includes(item))
+                        state.surveyItems.push(item)
                 }
             );
         },
 
-        removeFromSelectedItems: (
-            state: SurveyItemsState, 
+        setSurveyItems: (
+            state: SurveyItemsState,
             action: PayloadAction<SurveyItem[]>
         ) => {
-            state.selectedItems = state.selectedItems.filter(
+            state.surveyItems = action.payload;
+        },
+
+        removeFromSurveyItems: (
+            state: SurveyItemsState,
+            action: PayloadAction<SurveyItem[]>
+        ) => {
+            state.surveyItems = state.surveyItems.filter(
                 (item: SurveyItem) => action.payload.includes(item)
             )
         },
 
         addPendingSubscribes: (
-            state: SurveyItemsState, 
+            state: SurveyItemsState,
             action: PayloadAction<SurveyItem[]>
         ) => {
             const notReplicatedData = action.payload.filter(
@@ -56,7 +63,7 @@ export const surveyItemsSlice = createSlice({
         },
 
         addPendingUnsubscribes: (
-            state: SurveyItemsState, 
+            state: SurveyItemsState,
             action: PayloadAction<SurveyItem[]>
         ) => {
             const notReplicatedData = action.payload.filter(
@@ -67,7 +74,7 @@ export const surveyItemsSlice = createSlice({
         },
 
         addPendingRemoves: (
-            state: SurveyItemsState, 
+            state: SurveyItemsState,
             action: PayloadAction<SurveyItem[]>
         ) => {
             const notReplicatedData = action.payload.filter(
@@ -87,12 +94,13 @@ export const surveyItemsSlice = createSlice({
     },
 });
 
-export const { 
-    addToSelectedItems,
-    removeFromSelectedItems, 
-    addPendingSubscribes, 
+export const {
+    addToSurveyItems,
+    setSurveyItems,
+    removeFromSurveyItems,
+    addPendingSubscribes,
     addPendingUnsubscribes,
-    addPendingRemoves, 
+    addPendingRemoves,
     clearPendingChanges,
 } = surveyItemsSlice.actions;
 
