@@ -24,12 +24,16 @@ export const getQuadrantLightColor = (quadrant: RadarQuadrant) => {
     return `rgb(var(--color-${colorName}-light))`;
 };
 
-export const getRingColor = (ring: RadarRing) => {
-    const colorName = RING_COLORS[ring];
-    return `rgb(var(--color-${colorName}))`;
+export const getRingColor = (ring: RadarRing | undefined) => {
+    if (ring !== undefined) {
+        const colorName = RING_COLORS[ring];
+        return `rgb(var(--color-${colorName}))`;
+    }
 };
 
-export const getRingLightColor = (ring: RadarRing) => {
-    const colorName = RING_COLORS[ring];
-    return `rgb(var(--color-${colorName}-light))`;
+export const getRingLightColor = (ring: RadarRing | undefined) => {
+    if (ring !== undefined) {
+        const colorName = RING_COLORS[ring];
+        return `rgb(var(--color-${colorName}-light))`;
+    }
 };
