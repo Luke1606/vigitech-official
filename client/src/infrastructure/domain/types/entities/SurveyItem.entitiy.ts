@@ -1,12 +1,26 @@
 import type { UUID } from "crypto";
 import type { RadarQuadrant, RadarRing } from "../../enums";
-import { type SurveyItemAnalysis } from "../SurveyItemAnalysis.type";
+
+type InsightsValues = {
+    citedFragmentIds: UUID[];
+    insight: string;
+    reasoningMetrics: any;
+};
 
 export type SurveyItem = {
+    createdAt: string;
     id: UUID;
+    insertedById: string | null;
+    itemField: RadarQuadrant;
+    latestClassification: {
+        id: UUID;
+        analyzedAt: string;
+        itemId: string;
+        classification: RadarRing;
+        insightsValues: InsightsValues;
+    };
+    latestClassificationId: UUID;
+    summary: string;
     title: string;
-    summary?: string;
-    radarQuadrant: RadarQuadrant;
-    radarRing: RadarRing;
-    lastAnalysis?: SurveyItemAnalysis;
-}
+    updatedAt: string;
+};
