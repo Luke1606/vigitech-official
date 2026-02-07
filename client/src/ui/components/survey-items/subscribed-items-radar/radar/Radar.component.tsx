@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    Blip,
     getRingColor,
     RadarQuadrant,
     RadarRing,
@@ -17,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '../../../../components/shared';
 import { Label } from '../../../../components/shared';
 import { useSurveyItemsAPI } from '../../../../../infrastructure/hooks/use-survey-items/api/useSurveyItemsAPI.hook';
+import { useSurveyItems } from '../../../../../infrastructure';
 import * as XLSX from 'xlsx';
 import {
     DropdownMenu,
@@ -24,29 +24,28 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "../../../../components/shared";
+import blipsFromMock from '../../../../../assets/data/radarMock';
 
 export const Radar: React.FC<{
-    entries?: Blip[];
     onBlipClick?: (
-        blip: Blip,
+        blip: SurveyItem,
         position: {
             x: number;
             y: number
         }) => void;
     onBlipHover?: (
-        blip: Blip
+        blip: SurveyItem
     ) => void;
 }> = ({
-    entries,
     onBlipClick,
     onBlipHover
 }) => {
-        const query = useSurveyItemsAPI();
-        const { data } = query.subscribed;
+        const { surveyItems: entries } = useSurveyItems()
+        const query = useSurveyItemsAPI()
         const navigate = useNavigate();
         const [hoveredBlipId, setHoveredBlipId] = React.useState<string | null>(null);
         const [menuOpen, setMenuOpen] = React.useState(false);
-        const [selectedBlip, setSelectedBlip] = React.useState<Blip | null>(null);
+        const [selectedBlip, setSelectedBlip] = React.useState<SurveyItem | null>(null);
         const [menuPosition, setMenuPosition] = React.useState({ x: 0, y: 0 });
 
         // Estado para controlar qué blip está seleccionado en la lista móvil
@@ -99,10 +98,20 @@ export const Radar: React.FC<{
 
         // Filtrar entradas basado en la visibilidad de cuadrantes
         const filteredEntries = React.useMemo(() => {
-            return entries?.filter(blip => visibleQuadrants[blip.radarQuadrant]) ?? [];
+            return entries?.filter(blip => visibleQuadrants[blip.itemField]) ?? [];
         }, [entries, visibleQuadrants]);
 
-        const blipPositions = React.useMemo(() => generateBlipPositions(filteredEntries), [filteredEntries]);
+        // Asegurar que generateBlipPositions use las nuevas propiedades
+        const blipPositions = React.useMemo(() => {
+            // Si generateBlipPositions espera las propiedades antiguas, necesitamos adaptarlas
+            const adaptedEntries = filteredEntries.map(blip => ({
+                ...blip,
+                radarQuadrant: blip.itemField,
+                radarRing: blip.latestClassification.classification,
+                previousRing: RadarRing.SUSTAIN // Valor por defecto si es necesario
+            }));
+            return generateBlipPositions(adaptedEntries);
+        }, [filteredEntries]);
 
         // Determinar si el botón aceptar está habilitado
         const isAcceptEnabled = React.useMemo(() => {
@@ -260,7 +269,7 @@ export const Radar: React.FC<{
         };
 
         // Manejador para cuando se hace clic en un blip
-        const handleBlipClick = (blip: Blip, position: { x: number; y: number }) => {
+        const handleBlipClick = (blip: SurveyItem, position: { x: number; y: number }) => {
             setSelectedBlip(blip);
             setMenuPosition(position);
             setMenuOpen(true);
@@ -268,7 +277,7 @@ export const Radar: React.FC<{
         };
 
         // Manejador para seleccionar/deseleccionar blip en la lista móvil
-        const handleMobileBlipSelect = (blip: Blip) => {
+        const handleMobileBlipSelect = (blip: SurveyItem) => {
             if (selectedBlipId === blip.id) {
                 // Si ya está seleccionado, deseleccionar
                 setSelectedBlipId(null);
@@ -279,7 +288,7 @@ export const Radar: React.FC<{
         };
 
         // NUEVO MANEJADOR: Para seleccionar blip en el semicírculo y abrir menú
-        const handleMobileBlipClick = (blip: Blip, position: { x: number; y: number }, event: React.MouseEvent) => {
+        const handleMobileBlipClick = (blip: SurveyItem, position: { x: number; y: number }, event: React.MouseEvent) => {
             event.stopPropagation();
 
             // Seleccionar el blip (activar animación de pulso)
@@ -447,7 +456,7 @@ export const Radar: React.FC<{
         }, [isMobile]);
 
         // Función para generar posiciones de blips en semicírculo móvil
-        const generateMobileBlipPositions = (blips: Blip[]) => {
+        const generateMobileBlipPositions = (blips: SurveyItem[]) => {
             const positions: Record<string, { x: number; y: number }> = {};
             const centerX = 200;
             const baseY = 180;
@@ -461,7 +470,7 @@ export const Radar: React.FC<{
             };
 
             // Agrupar blips por ring
-            const blipsByRing: Record<RadarRing, Blip[]> = {
+            const blipsByRing: Record<RadarRing, SurveyItem[]> = {
                 [RadarRing.ADOPT]: [],
                 [RadarRing.TEST]: [],
                 [RadarRing.SUSTAIN]: [],
@@ -469,8 +478,8 @@ export const Radar: React.FC<{
             };
 
             blips.forEach(blip => {
-                if (blipsByRing[blip.radarRing]) {
-                    blipsByRing[blip.radarRing].push(blip);
+                if (blipsByRing[blip.latestClassification.classification]) {
+                    blipsByRing[blip.latestClassification.classification].push(blip);
                 }
             });
 
@@ -575,7 +584,7 @@ export const Radar: React.FC<{
 
                             // Filtrar blips por cuadrante y visibilidad
                             const quadrantBlips = entries.filter((b) =>
-                                b.radarQuadrant === quadrant.label && visibleQuadrants[quadrant.label]
+                                b.itemField === quadrant.label && visibleQuadrants[quadrant.label]
                             );
 
                             // Generar posiciones específicas para móvil SOLO si hay blips
@@ -736,7 +745,7 @@ export const Radar: React.FC<{
                                                                 cx={0}
                                                                 cy={0}
                                                                 r={isMobileSelected ? 10 : 6}
-                                                                fill={getRingColor(blip.radarRing)}
+                                                                fill={getRingColor(blip.latestClassification.classification)}
                                                                 stroke={isMobileSelected ? '#000' : (isActive ? '#000' : '#333')}
                                                                 strokeWidth={isMobileSelected ? 3 : (isActive ? 2 : 1)}
                                                                 style={{
@@ -752,7 +761,7 @@ export const Radar: React.FC<{
                                                                     cy={0}
                                                                     r={14}
                                                                     fill="none"
-                                                                    stroke={getRingColor(blip.radarRing)}
+                                                                    stroke={getRingColor(blip.latestClassification.classification)}
                                                                     strokeWidth={6}
                                                                     className="pulseCircle"
                                                                 />
@@ -793,7 +802,7 @@ export const Radar: React.FC<{
                                                                 <div
                                                                     className="w-4 h-4 rounded-full shrink-0 border border-white shadow-sm transition-all duration-300"
                                                                     style={{
-                                                                        backgroundColor: getRingColor(blip.radarRing),
+                                                                        backgroundColor: getRingColor(blip.latestClassification.classification),
                                                                         transform: isMobileSelected ? 'scale(1.2)' : 'scale(1)'
                                                                     }}
                                                                 />
@@ -811,10 +820,10 @@ export const Radar: React.FC<{
                                                                 {blip.title}
                                                             </span>
                                                             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded transition-all duration-300">
-                                                                {blip.radarRing === RadarRing.ADOPT ? 'ADOPTAR' :
-                                                                    blip.radarRing === RadarRing.TEST ? 'PROBAR' :
-                                                                        blip.radarRing === RadarRing.SUSTAIN ? 'EVALUAR' :
-                                                                            blip.radarRing === RadarRing.HOLD ? 'DETENER' : blip.radarRing}
+                                                                {blip.latestClassification.classification === RadarRing.ADOPT ? 'ADOPTAR' :
+                                                                    blip.latestClassification.classification === RadarRing.TEST ? 'PROBAR' :
+                                                                        blip.latestClassification.classification === RadarRing.SUSTAIN ? 'EVALUAR' :
+                                                                            blip.latestClassification.classification === RadarRing.HOLD ? 'DETENER' : blip.latestClassification.classification}
                                                             </span>
                                                         </div>
                                                     );
@@ -1224,7 +1233,7 @@ export const Radar: React.FC<{
 
                         // Filtrar blips por cuadrante y visibilidad
                         const quadrantBlips = entries.filter((b) =>
-                            b.radarQuadrant === quadrant.label && visibleQuadrants[quadrant.label]
+                            b.itemField === quadrant.label && visibleQuadrants[quadrant.label]
                         );
                         const column1 = quadrantBlips.slice(0, 10);
                         const column2 = quadrantBlips.slice(10);
@@ -1344,7 +1353,7 @@ export const Radar: React.FC<{
                                                         cx={baseX}
                                                         cy={y}
                                                         r={7}
-                                                        fill={getRingColor(b.radarRing)}
+                                                        fill={getRingColor(b.latestClassification.classification)}
                                                         stroke={isSelected ? '#10b981' : (isActive ? '#000' : '#333')}
                                                         strokeWidth={isSelected ? 3 : (isActive ? 2 : 1)}
                                                     />
@@ -1415,7 +1424,7 @@ export const Radar: React.FC<{
                                     cx={0}
                                     cy={0}
                                     r={isActive ? 10 : 8}
-                                    fill={getRingColor(blip.radarRing)}
+                                    fill={getRingColor(blip.latestClassification.classification)}
                                     stroke={isSelected ? '#10b981' : (isActive ? '#000' : '#333')}
                                     strokeWidth={isSelected ? 4 : (isActive ? 3 : 1)}
                                     style={{
@@ -1431,7 +1440,7 @@ export const Radar: React.FC<{
                                         cy={0}
                                         r={14}
                                         fill="none"
-                                        stroke={getRingColor(blip.radarRing)}
+                                        stroke={getRingColor(blip.latestClassification.classification)}
                                         strokeWidth={10}
                                         className="pulseCircle"
                                     />
