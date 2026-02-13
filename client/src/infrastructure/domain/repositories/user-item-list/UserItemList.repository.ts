@@ -1,4 +1,3 @@
-// src/infrastructure/domain/repositories/user-item-list/UserItemList.repository.ts
 import { UUID } from 'crypto';
 import {
     type UserItemListInterface,
@@ -7,7 +6,6 @@ import {
 import { AxiosConfiguredInstance } from '../../../utils/AxiosConfiguredInstance.util';
 import { getEnv } from '../../../config/env';
 
-// Exporta la clase para testing
 export class UserItemListRepository implements UserItemListInterface {
     private readonly axios: AxiosConfiguredInstance;
 
@@ -18,71 +16,44 @@ export class UserItemListRepository implements UserItemListInterface {
     }
 
     async findAll(): Promise<UserItemList[]> {
-        return await this.axios.http
-            .get('');
-    };
+        return await this.axios.http.get('');
+    }
 
-    async findOne(
-        listId: UUID
-    ): Promise<UserItemList> {
-        return await this.axios.http
-            .get(`${listId}`);
-    };
+    async findOne(listId: UUID): Promise<UserItemList> {
+        return await this.axios.http.get(`${listId}`);
+    }
 
-    async createList(
-        listName: string
-    ): Promise<UserItemList> {
-        return await this.axios.http
-            .post('', { name: listName });
-    };
+    async createList(listName: string): Promise<UserItemList> {
+        return await this.axios.http.post('', { name: listName });
+    }
 
-    async updateList(
-        listId: UUID,
-        listName: string
-    ): Promise<UserItemList> {
-        return await this.axios.http
-            .patch(`${listId}`, { name: listName });
-    };
+    async updateList(listId: UUID, listName: string): Promise<UserItemList> {
+        return await this.axios.http.patch(`${listId}`, { name: listName });
+    }
 
-    async removeList(
-        listId: UUID
-    ): Promise<UserItemList> {
-        return await this.axios.http
-            .delete(`${listId}`);
-    };
+    async removeList(listId: UUID): Promise<UserItemList> {
+        return await this.axios.http.delete(`${listId}`);
+    }
 
-    async appendOneItem(
-        listId: UUID,
-        itemId: UUID
-    ): Promise<UserItemList> {
-        return await this.axios.http
-            .patch(`${listId}`, { listId, itemId });
-    };
+    async appendOneItem(listId: UUID, itemId: UUID): Promise<UserItemList> {
+        return await this.axios.http.patch(`item/${listId}`, itemId);
+    }
 
-    async appendAllItems(
-        listId: UUID,
-        itemIds: UUID[]
-    ): Promise<UserItemList> {
-        return await this.axios.http
-            .patch(`batch/${listId}`, itemIds);
-    };
+    async appendAllItems(listId: UUID, itemIds: UUID[]): Promise<UserItemList> {
+        return await this.axios.http.patch(`batch/${listId}`, itemIds);
+    }
 
-    async removeOneItem(
-        listId: UUID,
-        itemId: UUID
-    ): Promise<UserItemList> {
-        return await this.axios.http
-            .patch(`${listId}`, { listId, itemId });
-    };
+    async removeOneItem(listId: UUID, itemId: UUID): Promise<UserItemList> {
+        return await this.axios.http.delete(`item/${listId}`, {
+            data: itemId
+        });
+    }
 
-    async removeAllItems(
-        listId: UUID,
-        itemIds: UUID[]
-    ): Promise<UserItemList> {
-        return await this.axios.http
-            .patch(`batch/${listId}`, itemIds);
-    };
+    async removeAllItems(listId: UUID, itemIds: UUID[]): Promise<UserItemList> {
+        return await this.axios.http.delete(`batch/${listId}`, {
+            data: itemIds
+        });
+    }
 }
 
-// Exporta la instancia singleton para uso normal
 export const userItemListRepository = new UserItemListRepository();
