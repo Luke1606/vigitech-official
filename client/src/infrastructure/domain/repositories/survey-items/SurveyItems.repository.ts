@@ -54,26 +54,21 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
             .delete(`survey-items/${itemId}`);
     };
 
-    async subscribeBatch(
-        itemIds: UUID[]
-    ): Promise<void> {
-        return await this.axios.http
-            .patch('survey-items/batch', { data: itemIds });
-    };
+    async subscribeBatch(itemIds: UUID[]): Promise<void> {
+        console.log('URL:', 'survey-items/subscribe/batch');
+        console.log('Body:', itemIds);
+        return await this.axios.http.patch('survey-items/subscribe/batch', itemIds);
+    }
 
-    async unsubscribeBatch(
-        itemIds: UUID[]
-    ): Promise<void> {
+    async unsubscribeBatch(itemIds: UUID[]): Promise<void> {
         return await this.axios.http
-            .patch('survey-items/batch', { data: itemIds });
-    };
+            .patch('survey-items/unsubscribe/batch', itemIds);
+    }
 
-    async removeBatch(
-        itemIds: UUID[]
-    ): Promise<void> {
+    async removeBatch(itemIds: UUID[]): Promise<void> {
         return await this.axios.http
-            .delete('survey-items/batch', { data: { itemIds } });
-    };
+            .delete('survey-items/batch', { data: itemIds });
+    }
 
     async create(
         title: string,
@@ -82,11 +77,9 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
             .post('survey-items/create', { title: title })
     }
 
-    async createBatch(
-        titles: string[],
-    ): Promise<void> {
-        return await this.axios.http
-            .post('survey-items/create/batch', titles)
+    async createBatch(titles: string[]): Promise<void> {
+        const payload = titles.map(title => ({ title }));
+        return await this.axios.http.patch('survey-items/create/batch', payload);
     }
 
     async runGlobalRecommendations(): Promise<{ message: string, data: any[] }> {
