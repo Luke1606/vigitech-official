@@ -180,7 +180,7 @@ export const RecommendationsFeed: React.FC = () => {
                             ) : (
                                 <>
                                     <RotateCw className="w-4 h-4" />
-                                    Actualizar recomendaciones
+                                    Obtener nuevas recomendaciones
                                 </>
                             )}
                         </Button>
