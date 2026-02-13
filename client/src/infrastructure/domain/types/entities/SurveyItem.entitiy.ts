@@ -1,7 +1,7 @@
 import type { UUID } from "crypto";
 import type { RadarQuadrant, RadarRing } from "../../enums";
 
-type InsightsValues = {
+export type InsightsValues = {
     citedFragmentIds: UUID[];
     insight: string;
     reasoningMetrics: any;
