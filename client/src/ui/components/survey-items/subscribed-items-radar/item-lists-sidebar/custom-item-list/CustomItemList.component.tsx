@@ -29,7 +29,7 @@ export const CustomItemsList: React.FC<{
     onDeleteList
 }) => {
         const { id, name, items } = list;
-        
+
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -73,11 +73,14 @@ export const CustomItemsList: React.FC<{
                                             name='cesto'
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => onRemoveItem?.(id, [item.id])}
+                                            onClick={(e) => {
+                                                e.preventDefault(); // Evitar que el Dropdown se cierre
+                                                e.stopPropagation(); // Evitar propagación
+                                                onRemoveItem?.(id, [item.id]);
+                                            }}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
-
                                     </TooltipTrigger>
                                     <TooltipContent>
                                         <p>Quitar elemento</p>

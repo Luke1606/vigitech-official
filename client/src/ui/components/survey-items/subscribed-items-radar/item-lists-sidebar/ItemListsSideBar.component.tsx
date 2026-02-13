@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { EyeIcon, EyeOff, Loader2, Plus, List } from 'lucide-react';
 import {
     Blip,
@@ -6,7 +6,9 @@ import {
     getQuadrantLightColor,
     getRingColor,
     getRingLightColor,
-    type UserItemList
+    type UserItemList,
+    RadarQuadrant,
+    RadarRing
 } from '../../../../../infrastructure';
 import {
     Button,
@@ -27,11 +29,58 @@ import {
     Input,
 } from '../../..';
 import { SyncButton } from '../../../sync-button';
-
 import { CustomItemsList } from './custom-item-list';
 import { UUID } from 'crypto';
-import blips from '../../../../../assets/data/radarMock';
 import { useUserItemListsAPI } from '../../../../../infrastructure/hooks/use-item-lists/api/useUserItemListsAPI.hook';
+import { useSurveyItemsAPI } from '../../../../../infrastructure/hooks/use-survey-items/api/useSurveyItemsAPI.hook';
+
+// ============ FUNCIONES DE NORMALIZACIÓN (copiadas desde Radar) ============
+const mapApiQuadrantToEnum = (apiValue: string): RadarQuadrant => {
+    switch (apiValue) {
+        case 'LANGUAGES_AND_FRAMEWORKS':
+            return RadarQuadrant.LANGUAGES_AND_FRAMEWORKS;
+        case 'BUSSINESS_INTEL':
+            return RadarQuadrant.BUSSINESS_INTEL;
+        case 'SCIENTIFIC_STAGE':
+            return RadarQuadrant.SCIENTIFIC_STAGE;
+        case 'SUPPORT_PLATTFORMS_AND_TECHNOLOGIES':
+            return RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES;
+        default:
+            console.warn(`Unknown quadrant from API: ${apiValue}`);
+            return RadarQuadrant.LANGUAGES_AND_FRAMEWORKS;
+    }
+};
+
+const mapApiRingToEnum = (apiValue: string): RadarRing => {
+    switch (apiValue) {
+        case 'ADOPT':
+            return RadarRing.ADOPT;
+        case 'TEST':
+            return RadarRing.TEST;
+        case 'SUSTAIN':
+            return RadarRing.SUSTAIN;
+        case 'HOLD':
+            return RadarRing.HOLD;
+        default:
+            console.warn(`Unknown ring from API: ${apiValue}`);
+            return RadarRing.SUSTAIN;
+    }
+};
+
+const transformApiData = (apiData: any[]): Blip[] => {
+    if (!apiData || !Array.isArray(apiData)) {
+        return [];
+    }
+    return apiData.map(item => ({
+        ...item,
+        itemField: mapApiQuadrantToEnum(item.itemField),
+        latestClassification: {
+            ...item.latestClassification,
+            classification: mapApiRingToEnum(item.latestClassification.classification)
+        }
+    }));
+};
+// ========================================================================
 
 export const ItemListsSideBar: React.FC<{
     visible: boolean
@@ -40,8 +89,27 @@ export const ItemListsSideBar: React.FC<{
     visible,
     toggleVisible
 }) => {
+        // ----- OBTENCIÓN DE DATOS DESDE LA API (sin Redux) -----
+        const surveyItemsAPI = useSurveyItemsAPI();
+        const [normalizedBlips, setNormalizedBlips] = useState<Blip[]>([]);
+
+        useEffect(() => {
+            const { data } = surveyItemsAPI.subscribed;
+            if (data) {
+                console.log("[ItemListsSideBar] Datos crudos de la API:", data);
+                const transformed = transformApiData(data);
+                console.log("[ItemListsSideBar] Datos transformados:", transformed);
+                setNormalizedBlips(transformed);
+            } else {
+                setNormalizedBlips([]);
+            }
+        }, [surveyItemsAPI.subscribed.data]);
+
+        const blips = normalizedBlips; // Alias para mantener el resto del código
+
+        // ----- LÓGICA EXISTENTE SIN CAMBIOS -----
         const query = useUserItemListsAPI();
-        const { data: lists } = query.findAll
+        const { data: lists } = query.findAll;
         const [newListName, setNewListName] = useState('');
         const [open, setOpen] = useState(false);
         const [renameTarget, setRenameTarget] = useState<UUID | null>(null);
@@ -52,10 +120,7 @@ export const ItemListsSideBar: React.FC<{
             itemIds: UUID[]
         } | null>(null);
 
-        const [updatedItemsIds, setUpdatedItemsIds] = useState<UUID[]>([]);
-
         const [elements, setElements] = useState<Blip[]>(blips);
-
         const [selectedItems, setSelectedItems] = useState<UUID[]>([]);
         const [isMobile, setIsMobile] = useState(false);
         const [mobileDialogOpen, setMobileDialogOpen] = useState(false);
@@ -88,28 +153,42 @@ export const ItemListsSideBar: React.FC<{
 
             if (currentList) {
                 setAddTarget(currentList);
-                setElements(
-                    prev =>
-                        prev.filter(
-                            (element: Blip) =>
-                                !currentList.items.includes(element)
-                        )
-                );
+                // Filtrar elementos disponibles inmediatamente
+                const usedIds = new Set(currentList.items.map(item => item.id));
+                const availableItems = blips.filter(item => !usedIds.has(item.id));
+                setElements(availableItems);
+                setSelectedItems([]); // Resetear selección
             };
         };
 
         const openRemoveItemDialog = (listId: UUID, itemIds: UUID[]) => {
+            console.log("Abriendo diálogo de eliminación:", { listId, itemIds });
             setRemoveElementTarget({ listId, itemIds });
         };
 
+        // Función para obtener elementos disponibles para una lista
         const getAvailableItemsForTarget = useCallback((target: UserItemList): Blip[] => {
             const usedIds = new Set(target.items.map(item => item.id));
             return blips.filter(item => !usedIds.has(item.id));
-        }, []);
+        }, [blips]);
 
+        // Función para manejar búsqueda
+        const handleSearchChange = useCallback((searchQuery: string, target: UserItemList) => {
+            const availableItems = getAvailableItemsForTarget(target);
+            const filteredItems = availableItems.filter(item =>
+                item.title.toLowerCase().includes(searchQuery) ||
+                (typeof item.itemField === 'string' && item.itemField.toLowerCase().includes(searchQuery)) ||
+                (typeof item.latestClassification?.classification === 'string' &&
+                    item.latestClassification?.classification?.toLowerCase().includes(searchQuery))
+            );
+            setElements(filteredItems);
+        }, [getAvailableItemsForTarget]);
+
+        // Actualizar elementos cuando addTarget cambia
         useEffect(() => {
             if (addTarget) {
-                setElements(getAvailableItemsForTarget(addTarget));
+                const availableItems = getAvailableItemsForTarget(addTarget);
+                setElements(availableItems);
                 setSelectedItems([]);
             }
         }, [addTarget, getAvailableItemsForTarget]);
@@ -209,75 +288,6 @@ export const ItemListsSideBar: React.FC<{
             </>
         );
 
-        const listElements = !lists || lists.length === 0 ?
-            (
-                <SidebarMenuItem key="none">
-                    <p>No hay listas</p>
-                </SidebarMenuItem>
-            ) : (
-                lists.map((list: UserItemList) => (
-                    <SidebarMenuItem key={list.id}>
-                        <CustomItemsList
-                            list={list}
-                            onRename={(id, listNewName) => openRenameDialog(id, listNewName)}
-                            onAddItem={(id) => openAddItemDialog(id)}
-                            onDeleteList={(id) => openDeleteDialog(id)}
-                            onRemoveItem={(listId, itemIds) => openRemoveItemDialog(listId, itemIds)}
-                        />
-                    </SidebarMenuItem>
-                ))
-            );
-
-        const createButton = (
-            <SidebarMenuItem key="create-button">
-                <Dialog open={open} onOpenChange={setOpen}>
-                    <DialogTrigger asChild>
-                        <SidebarMenuButton asChild className='mt-5'>
-                            <Button disabled={query.isPending.createList}>
-                                {query.isPending.createList ?
-                                    <Loader2 className='animate-spin' />
-                                    :
-                                    <>
-                                        <Plus />
-                                        Crear
-                                    </>
-                                }
-                            </Button>
-                        </SidebarMenuButton>
-                    </DialogTrigger>
-
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Crear lista</DialogTitle>
-                        </DialogHeader>
-
-                        <Input
-                            id='create-list-name'
-                            placeholder="Nombre de la lista"
-                            value={newListName}
-                            onChange={(e) => setNewListName(e.target.value)}
-                        />
-
-                        <DialogFooter>
-                            <Button
-                                name='crearLista'
-                                onClick={() => {
-                                    if (newListName.trim()) {
-                                        query.createList(
-                                            newListName.trim(),
-                                        );
-                                        setNewListName('');
-                                        setOpen(false);
-                                    }
-                                }}>
-                                Crear
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            </SidebarMenuItem>
-        );
-
         const renameListDialog = renameTarget && (
             <Dialog open={true} onOpenChange={() => setRenameTarget(null)}>
                 <DialogContent>
@@ -347,7 +357,10 @@ export const ItemListsSideBar: React.FC<{
         );
 
         const addElementToListDialog = addTarget && (
-            <Dialog open={true} onOpenChange={() => setAddTarget(null)}>
+            <Dialog open={true} onOpenChange={() => {
+                setAddTarget(null);
+                setSelectedItems([]);
+            }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Agregar elementos a <span className='text-blue-800 font-bold'>{addTarget.name}</span></DialogTitle>
@@ -358,98 +371,102 @@ export const ItemListsSideBar: React.FC<{
                         type="text"
                         placeholder="Busca por nombre..."
                         onChange={(e) => {
-                            const query = e.target.value.toLowerCase();
-                            const available = getAvailableItemsForTarget(addTarget);
-                            setElements(
-                                available.filter(item =>
-                                    item.title.toLowerCase().includes(query) ||
-                                    item.radarQuadrant.toLowerCase().includes(query) ||
-                                    item.radarRing.toLowerCase().includes(query)
-                                )
-                            );
+                            const searchQuery = e.target.value.toLowerCase();
+                            handleSearchChange(searchQuery, addTarget);
                         }}
-
                     />
 
                     <div className="max-h-64 overflow-y-auto">
                         <ul className="space-y-2" role="list">
-                            {elements.map((item: Blip) => (
-                                <li
-                                    key={item.id}
-                                    className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                                    <label className="flex items-center gap-4 p-4 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedItems.includes(item.id)}
-                                            onChange={(e) => {
-                                                if (e.target.checked)
-                                                    setSelectedItems(prev => [...prev, item.id]);
-                                                else
-                                                    setSelectedItems(prev => prev.filter(id => id !== item.id));
-                                            }}
-                                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                            aria-labelledby={`item-title-${item.id}`}
-                                        />
-
-                                        <div className="flex-1 min-w-0">
-                                            <h3
-                                                id={`item-title-${item.id}`}
-                                                className="text-gray-900 font-medium truncate">
-                                                {item.title}
-                                            </h3>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <span
-                                                className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium"
-                                                style={{
-                                                    backgroundColor: getQuadrantLightColor(item.radarQuadrant),
-                                                    color: getQuadrantColor(item.radarQuadrant)
-                                                }}>
-                                                {item.radarQuadrant}
-                                            </span>
-
-                                            <span
-                                                className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium"
-                                                style={{
-                                                    backgroundColor: getRingLightColor(item.radarRing),
-                                                    color: getRingColor(item.radarRing)
-                                                }}>
-                                                {item.radarRing}
-                                            </span>
-                                        </div>
-                                    </label>
+                            {elements.length === 0 ? (
+                                <li className="text-center p-4 text-gray-500">
+                                    No hay elementos disponibles para agregar
                                 </li>
-                            ))}
+                            ) : (
+                                elements.map((item: Blip) => (
+                                    <li
+                                        key={item.id}
+                                        className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                                        <label className="flex items-center gap-4 p-4 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedItems.includes(item.id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setSelectedItems(prev => [...prev, item.id]);
+                                                    } else {
+                                                        setSelectedItems(prev => prev.filter(id => id !== item.id));
+                                                    }
+                                                }}
+                                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                aria-labelledby={`item-title-${item.id}`}
+                                            />
+
+                                            <div className="flex-1 min-w-0">
+                                                <h3
+                                                    id={`item-title-${item.id}`}
+                                                    className="text-gray-900 font-medium truncate">
+                                                    {item.title}
+                                                </h3>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <span
+                                                    className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium"
+                                                    style={{
+                                                        backgroundColor: getQuadrantLightColor(item.itemField),
+                                                        color: getQuadrantColor(item.itemField)
+                                                    }}>
+                                                    {item.itemField}
+                                                </span>
+
+                                                <span
+                                                    className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium"
+                                                    style={{
+                                                        backgroundColor: getRingLightColor(item.latestClassification?.classification),
+                                                        color: getRingColor(item.latestClassification?.classification)
+                                                    }}>
+                                                    {item.latestClassification?.classification}
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </li>
+                                ))
+                            )}
                         </ul>
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setAddTarget(null)}>
+                        <Button variant="outline" onClick={() => {
+                            setAddTarget(null);
+                            setSelectedItems([]);
+                        }}>
                             Cancelar
                         </Button>
                         <Button
                             name='agregarElementos'
+                            disabled={selectedItems.length === 0 || query.isPending.appendAllItem}
                             onClick={() => {
-                                const updatedItems: Blip[] = elements.filter(
-                                    (item: Blip) =>
-                                        selectedItems.includes(item.id)
-                                )
+                                if (selectedItems.length > 0) {
+                                    console.log("Agregando items a lista:", {
+                                        listId: addTarget.id,
+                                        itemIds: selectedItems
+                                    });
 
-                                updatedItems.forEach(blip => setUpdatedItemsIds(prev => [...prev, blip.id]))
+                                    query.appendAllItem({
+                                        listId: addTarget.id,
+                                        itemIds: selectedItems
+                                    });
 
-                                query.appendAllItem({ listId: addTarget.id, itemIds: updatedItemsIds })
-                                setSelectedItems([]);
-                                setAddTarget(null);
-                                setElements(getAvailableItemsForTarget(addTarget));
-
-                            }
-                            }>
-                            Agregar
+                                    setSelectedItems([]);
+                                    setAddTarget(null);
+                                }
+                            }}>
+                            {query.isPending.appendAllItem ? 'Agregando...' : `Agregar (${selectedItems.length})`}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
-            </Dialog >
+            </Dialog>
         );
 
         const removeElementFromListDialog = removeElementTarget && (
@@ -463,6 +480,20 @@ export const ItemListsSideBar: React.FC<{
                             lists?.find((list: UserItemList) => list.id === removeElementTarget.listId)?.name
                         }</strong> de la lista?
                     </p>
+                    <div className="max-h-40 overflow-y-auto">
+                        <p className="text-sm font-semibold mb-2">Elementos a remover ({removeElementTarget.itemIds.length}):</p>
+                        <ul className="text-sm space-y-1">
+                            {removeElementTarget.itemIds.map(itemId => {
+                                const item = blips.find(blip => blip.id === itemId);
+                                return (
+                                    <li key={itemId} className="flex items-center gap-2">
+                                        <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                                        <span>{item?.title || `ID: ${itemId}`}</span>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setRemoveElementTarget(null)}>
                             Cancelar
@@ -470,15 +501,27 @@ export const ItemListsSideBar: React.FC<{
                         <Button
                             name='eliminarElemento'
                             variant="destructive"
-                            onClick={() => {
-                                query.removeAllItem({ listId: removeElementTarget.listId, itemIds: removeElementTarget.itemIds })
-                                setRemoveElementTarget(null);
+                            disabled={query.isPending.removeAllItem}
+                            onClick={async () => {
+                                console.log("Iniciando eliminación de elementos:", removeElementTarget);
+
+                                try {
+                                    await query.removeAllItem({
+                                        listId: removeElementTarget.listId,
+                                        itemIds: removeElementTarget.itemIds
+                                    });
+                                    console.log("Eliminación completada exitosamente");
+                                } catch (error) {
+                                    console.error("Error en eliminación:", error);
+                                } finally {
+                                    setRemoveElementTarget(null);
+                                }
                             }}>
-                            Remover
+                            {query.isPending.removeAllItem ? 'Removiendo...' : `Remover (${removeElementTarget.itemIds.length})`}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
-            </Dialog >
+            </Dialog>
         );
 
         return (
