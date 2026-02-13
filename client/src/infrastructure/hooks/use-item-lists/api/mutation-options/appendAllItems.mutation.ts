@@ -1,8 +1,9 @@
+// mutation-options.ts
 import { mutationOptions, useQueryClient } from '@tanstack/react-query';
 import { userItemListRepository } from '../../../..';
 import type { UUID } from 'crypto';
 import { userItemListsKey } from '../constants';
-import type { SurveyItem, UserItemList } from '../../../..';
+import { SurveyItem, UserItemList, RadarQuadrant, RadarRing, InsightsValues } from '../../../..';
 import { toast } from 'react-toastify';
 
 export const useAppendAllItemsMutationOptions = () => {
@@ -13,36 +14,71 @@ export const useAppendAllItemsMutationOptions = () => {
             userItemListRepository.appendAllItems(listId, itemIds),
 
         onMutate: async ({ listId, itemIds }) => {
-            await queryClient.cancelQueries({ queryKey: [userItemListsKey, listId] });
+            await queryClient.cancelQueries({ queryKey: [userItemListsKey] });
 
-            const previousList = queryClient.getQueryData<UserItemList>([userItemListsKey, listId]);
+            const previousLists = queryClient.getQueryData<UserItemList[]>([userItemListsKey]);
 
-            if (previousList) {
-                const newItems = itemIds.map(id => ({ id } as SurveyItem));
-
-                queryClient.setQueryData<UserItemList>([userItemListsKey, listId], {
-                    ...previousList,
-                    items: [...previousList.items, ...newItems],
-                });
+            if (previousLists) {
+                // Actualización optimista
+                const updatedLists = previousLists.map(list =>
+                    list.id === listId
+                        ? {
+                            ...list,
+                            items: [
+                                ...list.items,
+                                // Crear objetos SurveyItem temporales con todos los campos requeridos
+                                ...itemIds.map(id => {
+                                    const tempItem: SurveyItem = {
+                                        id,
+                                        title: 'Cargando...', // Placeholder temporal
+                                        summary: '',
+                                        itemField: RadarQuadrant.LANGUAGES_AND_FRAMEWORKS,
+                                        latestClassification: {
+                                            id: '00000000-0000-0000-0000-000000000000' as UUID,
+                                            analyzedAt: new Date().toISOString(),
+                                            itemId: id,
+                                            classification: RadarRing.ADOPT,
+                                            insightsValues: {
+                                                citedFragmentIds: [],
+                                                insight: '',
+                                                reasoningMetrics: {}
+                                            } as InsightsValues
+                                        },
+                                        latestClassificationId: '00000000-0000-0000-0000-000000000000' as UUID,
+                                        createdAt: new Date().toISOString(),
+                                        insertedById: null,
+                                        updatedAt: new Date().toISOString()
+                                    };
+                                    return tempItem;
+                                })
+                            ]
+                        }
+                        : list
+                );
+                queryClient.setQueryData([userItemListsKey], updatedLists);
             }
 
-            return { previousList };
+            return { previousLists };
         },
 
-        onError: (_error, { listId }, context) => {
-            if (context?.previousList) {
-                queryClient.setQueryData([userItemListsKey, listId], context.previousList);
+        onError: (_error, _, context) => {
+            // Revertir cambios optimistas
+            if (context?.previousLists) {
+                queryClient.setQueryData([userItemListsKey], context.previousLists);
             }
-            toast.error("Error al añadir los elementos a la lista. Compruebe su conexión o inténtelo de nuevo.")
+            toast.error("Error al añadir los elementos a la lista.");
         },
 
-        onSuccess: () => {
-            toast.success("Se añadieron con éxito los elementos.")                                 
+        onSuccess: (updatedList) => {
+            queryClient.setQueryData<UserItemList[]>([userItemListsKey], (old) =>
+                old ? old.map(list => list.id === updatedList.id ? updatedList : list) : []
+            );
+
+            toast.success("Elementos añadidos exitosamente.");
         },
 
-        onSettled: (_data, _error, { listId }) => {
-            queryClient.invalidateQueries({ queryKey: [userItemListsKey, listId] });
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: [userItemListsKey] });
         },
     });
 };
-

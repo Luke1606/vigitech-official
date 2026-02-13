@@ -18,34 +18,58 @@ export const useRemoveAllItemsMutationOptions = () => {
             userItemListRepository.removeAllItems(listId, itemIds),
 
         onMutate: async ({ listId, itemIds }) => {
+            // Cancelar queries en curso
             await queryClient.cancelQueries({ queryKey: [userItemListsKey, listId] });
+            await queryClient.cancelQueries({ queryKey: [userItemListsKey] });
 
-            const previousList = queryClient.getQueryData<UserItemList>([userItemListsKey, listId]);
+            const previousLists = queryClient.getQueryData<UserItemList[]>([userItemListsKey]);
 
-            if (previousList) {
-                queryClient.setQueryData<UserItemList>([userItemListsKey, listId], {
-                    ...previousList,
-                    items: previousList.items.filter(item => !itemIds.includes(item.id)),
-                });
+            if (previousLists) {
+                // Optimistic update en todas las listas
+                const updatedLists = previousLists.map(list =>
+                    list.id === listId
+                        ? {
+                            ...list,
+                            items: list.items.filter(item => !itemIds.includes(item.id))
+                        }
+                        : list
+                );
+
+                queryClient.setQueryData<UserItemList[]>([userItemListsKey], updatedLists);
             }
 
-            return { previousList };
+            return { previousLists };
         },
 
-        onError: (_error, { listId }, context) => {
-            if (context?.previousList) {
-                queryClient.setQueryData([userItemListsKey, listId], context.previousList);
+        onError: (error, _, context) => {
+            console.error("Error removiendo elementos:", error);
+
+            // Revertir al estado anterior
+            if (context?.previousLists) {
+                queryClient.setQueryData([userItemListsKey], context.previousLists);
             }
-            toast.error("Error al remover los elementos de la lista. Compruebe su conexión o inténtelo de nuevo.")
+
+            toast.error("Error al remover los elementos de la lista. Compruebe su conexión o inténtelo de nuevo.");
         },
 
-        onSuccess: (_, { listId }) => {
+        onSuccess: (updatedList, { listId, itemIds }) => {
+            console.log("Elementos removidos exitosamente:", {
+                listId,
+                itemsRemoved: itemIds.length,
+                remainingItems: updatedList.items.length
+            });
+
+            // Invalidar ambas queries para forzar refetch
             queryClient.invalidateQueries({ queryKey: [userItemListsKey, listId] });
-            toast.success("Se quitaron con éxito los elementos de la lista.")     
+            queryClient.invalidateQueries({ queryKey: [userItemListsKey] });
+
+            toast.success(`Se quitaron ${itemIds.length} elemento(s) de la lista.`);
         },
 
         onSettled: (_data, _error, { listId }) => {
+            // Invalidar siempre al final
             queryClient.invalidateQueries({ queryKey: [userItemListsKey, listId] });
+            queryClient.invalidateQueries({ queryKey: [userItemListsKey] });
         },
     });
 };
