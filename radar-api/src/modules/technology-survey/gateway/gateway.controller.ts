@@ -65,7 +65,7 @@ export class ItemsGatewayController {
         return await this.itemsService.removeOne(id, userId);
     }
 
-    @Patch('create/batch')
+    @Post('create/batch')
     async createBatch(@Body() data: CreateUnclassifiedItemDto[], @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed create');
         const userId: UUID = request.userId as UUID;

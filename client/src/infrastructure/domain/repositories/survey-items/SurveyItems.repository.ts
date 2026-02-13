@@ -33,6 +33,13 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
             .get(`survey-items/${itemId}`);
     };
 
+    async create(
+        title: string,
+    ): Promise<void> {
+        return await this.axios.http
+            .post('survey-items/create', { title: title })
+    }
+
     async subscribeOne(
         itemId: UUID
     ): Promise<void> {
@@ -54,41 +61,36 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
             .delete(`survey-items/${itemId}`);
     };
 
+    async createBatch(
+        titles: string[],
+    ): Promise<void> {
+        const data = titles.map(title => ({ title }));
+
+        return await this.axios.http
+            .post('survey-items/create/batch', data)
+    }
+
     async subscribeBatch(
         itemIds: UUID[]
     ): Promise<void> {
         return await this.axios.http
-            .patch('survey-items/batch', { data: itemIds });
+            .patch('survey-items/subscribe/batch', itemIds);
     };
 
     async unsubscribeBatch(
         itemIds: UUID[]
     ): Promise<void> {
         return await this.axios.http
-            .patch('survey-items/batch', { data: itemIds });
+            .patch('survey-items/unsubscribe/batch', itemIds);
     };
 
     async removeBatch(
         itemIds: UUID[]
     ): Promise<void> {
         return await this.axios.http
-            .delete('survey-items/batch', { data: { itemIds } });
+            .delete('survey-items/batch', { data: itemIds });
     };
-
-    async create(
-        title: string,
-    ): Promise<void> {
-        return await this.axios.http
-            .post('survey-items/create', { title: title })
-    }
-
-    async createBatch(
-        titles: string[],
-    ): Promise<void> {
-        return await this.axios.http
-            .post('survey-items/create/batch', titles)
-    }
-
+   
     async runGlobalRecommendations(): Promise<{ message: string, data: any[] }> {
         const response = await this.axios.http
             .post('orchestration/run-global-recommendations');
