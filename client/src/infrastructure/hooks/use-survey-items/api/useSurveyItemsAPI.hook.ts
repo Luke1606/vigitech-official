@@ -3,7 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import {
 	findOneQueryOptions,
 	getRecommendedQueryOptions,
-	getSubscribedQueryOptions
+	getSubscribedQueryOptions,
 } from './query-options';
 import {
 	useSubscribeOneMutationOptions,
@@ -14,33 +14,71 @@ import {
 	useRemoveBatchMutationOptions,
 	useCreateSurveyItemMutationOptions,
 	useCreateBatchSurveyItemsMutationOptions,
-	useRunGlobalRecommendationsMutationOptions
+	useRunGlobalRecommendationsMutationOptions,
 } from './mutation-options';
 
-export const useSurveyItemsAPI = () => {
+// ----------------------------------------------------------------------
+// Tipado para las opciones del hook (solo batch por ahora)
+// ----------------------------------------------------------------------
+export type SurveyItemsAPIOptions = {
+	onSubscribeBatchSuccess?: (subscribedIds: UUID[]) => void;
+	onRemoveBatchSuccess?: (removedIds: UUID[]) => void;
+	// Si necesitas limpieza en otras mutaciones, añádelas aquí
+};
+
+// ----------------------------------------------------------------------
+// Hook principal
+// ----------------------------------------------------------------------
+export const useSurveyItemsAPI = (options: SurveyItemsAPIOptions = {}) => {
+	// ----------------------------------------------------------------
 	// Queries
+	// ----------------------------------------------------------------
 	const useGetRecommendedQuery = useQuery(getRecommendedQueryOptions());
 	const useGetSubscribedQuery = useQuery(getSubscribedQueryOptions());
-	const useFindOneQuery = (itemId: UUID) => useQuery(findOneQueryOptions(itemId));
+	const useFindOneQuery = (itemId: UUID) =>
+		useQuery(findOneQueryOptions(itemId));
 
-	// Mutations
+	// ----------------------------------------------------------------
+	// Mutations individuales (sin cambios)
+	// ----------------------------------------------------------------
 	const useSubscribeOneMutation = useMutation(useSubscribeOneMutationOptions());
-	const useUnsubscribeOneMutation = useMutation(useUnsubscribeOneMutationOptions());
+	const useUnsubscribeOneMutation = useMutation(
+		useUnsubscribeOneMutationOptions()
+	);
 	const useRemoveOneMutation = useMutation(useRemoveOneMutationOptions());
-	const useSubscribeBatchMutation = useMutation(useSubscribeBatchMutationOptions());
-	const useUnsubscribeBatchMutation = useMutation(useUnsubscribeBatchMutationOptions());
-	const useRemoveBatchMutation = useMutation(useRemoveBatchMutationOptions());
-	const useCreateSurveyItemMutation = useMutation(useCreateSurveyItemMutationOptions());
-	const useCreateBatchSurveyItemsMutation = useMutation(useCreateBatchSurveyItemsMutationOptions());
-	const useRunGlobalRecommendationsMutation = useMutation(useRunGlobalRecommendationsMutationOptions());
+	const useUnsubscribeBatchMutation = useMutation(
+		useUnsubscribeBatchMutationOptions()
+	);
+	const useCreateSurveyItemMutation = useMutation(
+		useCreateSurveyItemMutationOptions()
+	);
+	const useCreateBatchSurveyItemsMutation = useMutation(
+		useCreateBatchSurveyItemsMutationOptions()
+	);
+	const useRunGlobalRecommendationsMutation = useMutation(
+		useRunGlobalRecommendationsMutationOptions()
+	);
 
+	// ----------------------------------------------------------------
+	// Mutaciones BATCH - con callbacks de limpieza inyectados
+	// ----------------------------------------------------------------
+	const useSubscribeBatchMutation = useMutation(
+		useSubscribeBatchMutationOptions(options.onSubscribeBatchSuccess)
+	);
+	const useRemoveBatchMutation = useMutation(
+		useRemoveBatchMutationOptions(options.onRemoveBatchSuccess)
+	);
+
+	// ----------------------------------------------------------------
+	// Retorno del hook
+	// ----------------------------------------------------------------
 	return {
-		// Queries
+		// ----- Queries -----
 		recommended: useGetRecommendedQuery,
 		subscribed: useGetSubscribedQuery,
 		findOne: useFindOneQuery,
 
-		// Mutation functions
+		// ----- Funciones mutate -----
 		subscribeOne: useSubscribeOneMutation.mutate,
 		unsubscribeOne: useUnsubscribeOneMutation.mutate,
 		removeOne: useRemoveOneMutation.mutate,
@@ -51,9 +89,10 @@ export const useSurveyItemsAPI = () => {
 		createBatch: useCreateBatchSurveyItemsMutation.mutate,
 		runGlobalRecommendations: useRunGlobalRecommendationsMutation.mutate,
 
-		// Full mutation objects (for state access)
+		// ----- Objetos completos de mutación (acceso a estados) -----
 		runGlobalRecommendationsMutation: useRunGlobalRecommendationsMutation,
 
+		// ----- Estados de carga -----
 		isLoading: {
 			subscribeOne: useSubscribeOneMutation.isPending,
 			unsubscribeOne: useUnsubscribeOneMutation.isPending,
@@ -66,6 +105,7 @@ export const useSurveyItemsAPI = () => {
 			runGlobalRecommendations: useRunGlobalRecommendationsMutation.isPending,
 		},
 
+		// ----- Estados de error -----
 		hasError: {
 			subscribeOne: useSubscribeOneMutation.isError,
 			unsubscribeOne: useUnsubscribeOneMutation.isError,
