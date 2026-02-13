@@ -10,13 +10,12 @@ import {
 import { RadarMenu } from './radar-menu/RadarMenu.component';
 import type { SurveyItem, UUID } from '../../../../../infrastructure';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Search, Upload, RefreshCw, Menu, X, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, EyeOff, Search, Upload, RefreshCw, Menu, X, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '../../../../components/shared';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../components/shared';
 import { Input } from '../../../../components/shared';
 import { Label } from '../../../../components/shared';
 import { useSurveyItemsAPI } from '../../../../../infrastructure/hooks/use-survey-items/api/useSurveyItemsAPI.hook';
-import { useSurveyItems } from '../../../../../infrastructure';
 import * as XLSX from 'xlsx';
 import {
     DropdownMenu,
@@ -24,7 +23,54 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "../../../../components/shared";
-import blipsFromMock from '../../../../../assets/data/radarMock';
+
+// ============ FUNCIONES DE NORMALIZACIÓN ============
+const mapApiQuadrantToEnum = (apiValue: string): RadarQuadrant => {
+    switch (apiValue) {
+        case 'LANGUAGES_AND_FRAMEWORKS':
+            return RadarQuadrant.LANGUAGES_AND_FRAMEWORKS;
+        case 'BUSSINESS_INTEL':
+            return RadarQuadrant.BUSSINESS_INTEL;
+        case 'SCIENTIFIC_STAGE':
+            return RadarQuadrant.SCIENTIFIC_STAGE;
+        case 'SUPPORT_PLATTFORMS_AND_TECHNOLOGIES':
+            return RadarQuadrant.SUPPORT_PLATTFORMS_AND_TECHNOLOGIES;
+        default:
+            console.warn(`Unknown quadrant from API: ${apiValue}`);
+            return RadarQuadrant.LANGUAGES_AND_FRAMEWORKS;
+    }
+};
+
+const mapApiRingToEnum = (apiValue: string): RadarRing => {
+    switch (apiValue) {
+        case 'ADOPT':
+            return RadarRing.ADOPT;
+        case 'TEST':
+            return RadarRing.TEST;
+        case 'SUSTAIN':
+            return RadarRing.SUSTAIN;
+        case 'HOLD':
+            return RadarRing.HOLD;
+        default:
+            console.warn(`Unknown ring from API: ${apiValue}`);
+            return RadarRing.SUSTAIN;
+    }
+};
+
+const transformApiData = (apiData: any[]): SurveyItem[] => {
+    if (!apiData || !Array.isArray(apiData)) {
+        return [];
+    }
+    return apiData.map(item => ({
+        ...item,
+        itemField: mapApiQuadrantToEnum(item.itemField),
+        latestClassification: {
+            ...item.latestClassification,
+            classification: mapApiRingToEnum(item.latestClassification.classification)
+        }
+    }));
+};
+// ====================================================
 
 export const Radar: React.FC<{
     onBlipClick?: (
@@ -40,9 +86,32 @@ export const Radar: React.FC<{
     onBlipClick,
     onBlipHover
 }) => {
-        const { surveyItems: entries } = useSurveyItems()
-        const query = useSurveyItemsAPI()
+        const query = useSurveyItemsAPI();
         const navigate = useNavigate();
+
+        // Estado local para los items normalizados
+        const [normalizedEntries, setNormalizedEntries] = useState<SurveyItem[]>([]);
+
+        // Efecto para transformar datos cuando la API responde
+        useEffect(() => {
+            const { data } = query.subscribed;
+            if (data) {
+                console.log("Datos crudos de la API:", data);
+                const transformed = transformApiData(data);
+                console.log("Datos transformados:", transformed);
+                setNormalizedEntries(transformed);
+            } else {
+                setNormalizedEntries([]);
+            }
+        }, [query.subscribed.data]);
+
+        const entries = normalizedEntries;
+
+        // Estados de carga de las mutaciones de creación
+        const isCreateLoading = query.isLoading.create;
+        const isCreateBatchLoading = query.isLoading.createBatch;
+        const isCreating = isCreateLoading || isCreateBatchLoading;
+
         const [hoveredBlipId, setHoveredBlipId] = React.useState<string | null>(null);
         const [menuOpen, setMenuOpen] = React.useState(false);
         const [selectedBlip, setSelectedBlip] = React.useState<SurveyItem | null>(null);
@@ -77,7 +146,7 @@ export const Radar: React.FC<{
         // Estados separados para el hover de cada botón en desktop
         const [isSearchButtonHovered, setIsSearchButtonHovered] = React.useState(false);
         const [isChangesButtonHovered, setIsChangesButtonHovered] = React.useState(false);
-        const [isDeselectAllButtonHovered, setIsDeselectAllButtonHovered] = React.useState(false); // Estado para hover del botón Deseleccionar Todos
+        const [isDeselectAllButtonHovered, setIsDeselectAllButtonHovered] = React.useState(false);
 
         // Estado para el loading de cambios
         const [isLoadingChanges, setIsLoadingChanges] = React.useState(false);
@@ -103,30 +172,29 @@ export const Radar: React.FC<{
 
         // Asegurar que generateBlipPositions use las nuevas propiedades
         const blipPositions = React.useMemo(() => {
-            // Si generateBlipPositions espera las propiedades antiguas, necesitamos adaptarlas
             const adaptedEntries = filteredEntries.map(blip => ({
                 ...blip,
                 radarQuadrant: blip.itemField,
                 radarRing: blip.latestClassification.classification,
-                previousRing: RadarRing.SUSTAIN // Valor por defecto si es necesario
+                previousRing: RadarRing.SUSTAIN
             }));
             return generateBlipPositions(adaptedEntries);
         }, [filteredEntries]);
 
         // Determinar si el botón aceptar está habilitado
         const isAcceptEnabled = React.useMemo(() => {
-            return (searchTerm.trim() !== '' && !excelFile) || (excelFile && searchTerm.trim() === '' && !excelError);
-        }, [searchTerm, excelFile, excelError]);
+            return ((searchTerm.trim() !== '' && !excelFile) || (excelFile && searchTerm.trim() === '' && !excelError)) && !isCreating;
+        }, [searchTerm, excelFile, excelError, isCreating]);
 
         // Determinar si el input de búsqueda está deshabilitado
         const isSearchInputDisabled = React.useMemo(() => {
-            return excelFile !== null;
-        }, [excelFile]);
+            return excelFile !== null || isCreating;
+        }, [excelFile, isCreating]);
 
         // Determinar si el input de archivo está deshabilitado
         const isFileInputDisabled = React.useMemo(() => {
-            return searchTerm.trim() !== '';
-        }, [searchTerm]);
+            return searchTerm.trim() !== '' || isCreating;
+        }, [searchTerm, isCreating]);
 
         // Colores para el botón de búsqueda de tecnología
         const searchButtonFillColor = isSearchButtonHovered ? '#1d4ed8' : '#2563eb';
@@ -242,10 +310,8 @@ export const Radar: React.FC<{
             if (selectedIds.length > 0) {
                 console.log('Dejando de seguir seleccionados:', selectedIds);
                 query.unsubscribeBatch(selectedIds);
-                // Limpiar selección después de la acción
                 setSelectedBlips(new Set());
             } else if (selectedBlip) {
-                // Si no hay seleccionados pero hay un blip en el menú, usar unsubscribeOne
                 console.log('Dejando de seguir uno:', selectedBlip.id);
                 query.unsubscribeOne(selectedBlip.id);
             }
@@ -257,11 +323,9 @@ export const Radar: React.FC<{
             const selectedIds = getSelectedBlipIds();
             if (selectedIds.length > 0) {
                 console.log('Eliminando seleccionados:', selectedIds);
-                query.removeBatch(selectedIds); // Usar removeBatch
-                // Limpiar selección después de la acción
+                query.removeBatch(selectedIds);
                 setSelectedBlips(new Set());
             } else if (selectedBlip) {
-                // Si no hay seleccionados pero hay un blip en el menú, usar removeOne
                 console.log('Eliminando uno:', selectedBlip.id);
                 query.removeOne(selectedBlip.id);
             }
@@ -279,22 +343,18 @@ export const Radar: React.FC<{
         // Manejador para seleccionar/deseleccionar blip en la lista móvil
         const handleMobileBlipSelect = (blip: SurveyItem) => {
             if (selectedBlipId === blip.id) {
-                // Si ya está seleccionado, deseleccionar
                 setSelectedBlipId(null);
             } else {
-                // Si no está seleccionado, seleccionar
                 setSelectedBlipId(blip.id);
             }
         };
 
-        // NUEVO MANEJADOR: Para seleccionar blip en el semicírculo y abrir menú
+        // Manejador para seleccionar blip en el semicírculo y abrir menú
         const handleMobileBlipClick = (blip: SurveyItem, position: { x: number; y: number }, event: React.MouseEvent) => {
             event.stopPropagation();
 
-            // Seleccionar el blip (activar animación de pulso)
             setSelectedBlipId(blip.id);
 
-            // Obtener la posición real del blip en la pantalla
             const svgElement = event.currentTarget.closest('svg');
             const svgRect = svgElement?.getBoundingClientRect();
 
@@ -305,22 +365,16 @@ export const Radar: React.FC<{
                 const screenX = svgRect.left + (position.x * scaleX);
                 const screenY = svgRect.top + (position.y * scaleY);
 
-                handleBlipClick(blip, {
-                    x: screenX,
-                    y: screenY
-                });
+                handleBlipClick(blip, { x: screenX, y: screenY });
             } else {
-                handleBlipClick(blip, {
-                    x: event.clientX,
-                    y: event.clientY
-                });
+                handleBlipClick(blip, { x: event.clientX, y: event.clientY });
             }
         };
 
         // Manejadores para las acciones del menú
         const handleViewDetails = (item: SurveyItem) => {
             console.log('Ver detalles:', item);
-            navigate(`/vigitech/technology-radar/item-details/${item.id}`)
+            navigate(`/vigitech/technology-radar/item-details/${item.id}`);
             setMenuOpen(false);
         };
 
@@ -332,7 +386,8 @@ export const Radar: React.FC<{
 
         // Manejadores para el diálogo de búsqueda/importación
         const handleOpenSearchDialog = () => {
-            setMobileMenuOpen(false); // Cerrar el menú móvil
+            if (isCreating) return; // No abrir si ya hay una operación en curso
+            setMobileMenuOpen(false);
             setSearchDialogOpen(true);
         };
 
@@ -346,7 +401,6 @@ export const Radar: React.FC<{
         const handleSearchTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             const value = e.target.value;
             setSearchTerm(value);
-            // Si se escribe algo, limpiar el archivo Excel
             if (value.trim() !== '') {
                 setExcelFile(null);
                 setExcelError(null);
@@ -356,26 +410,18 @@ export const Radar: React.FC<{
         const handleExcelFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
             const file = e.target.files?.[0] || null;
             setExcelFile(file);
-            setExcelError(null); // Limpiar errores anteriores
+            setExcelError(null);
 
             if (file) {
-                // Limpiar el término de búsqueda
                 setSearchTerm('');
 
                 try {
-                    // Leer y validar el Excel
                     await readAndValidateExcel(file);
-                    // Si la validación es exitosa, no hacemos nada más aquí
-                    // Los títulos se leerán nuevamente en handleAccept
                 } catch (error) {
                     const errorMessage = (error as Error).message;
                     setExcelError(errorMessage);
-                    setExcelFile(null); // Limpiar el archivo si hay error
-
-                    // Limpiar el input file
-                    if (e.target) {
-                        e.target.value = '';
-                    }
+                    setExcelFile(null);
+                    if (e.target) e.target.value = '';
                 }
             }
         };
@@ -383,7 +429,7 @@ export const Radar: React.FC<{
         // Función para buscar cambios (ejecuta query.subscribed)
         const handleSearchChanges = async () => {
             console.log('Buscando cambios...');
-            setMobileMenuOpen(false); // Cerrar el menú móvil
+            setMobileMenuOpen(false);
             setIsLoadingChanges(true);
             try {
                 await query.subscribed;
@@ -402,19 +448,13 @@ export const Radar: React.FC<{
             } else if (excelFile) {
                 try {
                     console.log('Importando archivo Excel:', excelFile.name);
-
-                    // Leer el archivo para obtener los títulos
                     const titles = await readAndValidateExcel(excelFile);
                     console.log('Títulos a importar:', titles);
-
-                    // Llamar a createBatch con los títulos extraídos
                     query.createBatch(titles);
-
                     handleCloseSearchDialog();
                 } catch (error) {
                     const errorMessage = (error as Error).message;
                     setExcelError(errorMessage);
-                    // No cerrar el diálogo si hay error
                 }
             }
         };
@@ -437,7 +477,6 @@ export const Radar: React.FC<{
         // Effect: Cerrar el highlight cuando se hace clic fuera del listado
         React.useEffect(() => {
             const handleClickOutsideList = (event: MouseEvent) => {
-                // Verificar si el clic fue fuera de cualquier listado de blips
                 const target = event.target as HTMLElement;
                 const isClickInsideList = target.closest('.blip-list-container');
 
@@ -461,7 +500,6 @@ export const Radar: React.FC<{
             const centerX = 200;
             const baseY = 180;
 
-            // DEFINICIÓN DE ANILLOS CONTINUOS SIN ESPACIOS
             const ringRanges = {
                 [RadarRing.ADOPT]: { min: 0, max: 80 },
                 [RadarRing.TEST]: { min: 80, max: 120 },
@@ -469,7 +507,6 @@ export const Radar: React.FC<{
                 [RadarRing.HOLD]: { min: 160, max: 200 }
             };
 
-            // Agrupar blips por ring
             const blipsByRing: Record<RadarRing, SurveyItem[]> = {
                 [RadarRing.ADOPT]: [],
                 [RadarRing.TEST]: [],
@@ -478,35 +515,28 @@ export const Radar: React.FC<{
             };
 
             blips.forEach(blip => {
-                if (blipsByRing[blip.latestClassification.classification]) {
-                    blipsByRing[blip.latestClassification.classification].push(blip);
+                const ring = blip.latestClassification.classification;
+                if (blipsByRing[ring]) {
+                    blipsByRing[ring].push(blip);
                 }
             });
 
-            // Para cada ring, distribuir los blips uniformemente en el arco del semicírculo
             Object.entries(blipsByRing).forEach(([ring, ringBlips]) => {
                 const radarRing = ring as RadarRing;
                 const range = ringRanges[radarRing];
-
-                // Calcular el radio medio dentro del rango del anillo
                 const midRadius = (range.min + range.max) / 2;
 
-                // Solo procesar si hay blips en este ring
                 if (ringBlips.length > 0) {
                     ringBlips.forEach((blip, index) => {
-                        // Distribuir uniformemente en el semicírculo del ring específico
                         const totalBlipsInRing = ringBlips.length;
-
-                        // Calcular ángulo (evitando los extremos)
                         let angle;
                         if (totalBlipsInRing === 1) {
-                            angle = Math.PI / 2; // Centro si solo hay uno
+                            angle = Math.PI / 2;
                         } else {
-                            const margin = 0.2; // Margen para evitar bordes
+                            const margin = 0.2;
                             angle = margin + (index / (totalBlipsInRing - 1)) * (Math.PI - 2 * margin);
                         }
 
-                        // Calcular posición dentro del rango del anillo
                         const radius = midRadius;
                         const x = centerX + radius * Math.cos(angle);
                         const y = baseY - radius * Math.sin(angle);
@@ -519,11 +549,11 @@ export const Radar: React.FC<{
             return positions;
         };
 
-        // Vista móvil - Cuadrantes apilados verticalmente como semicírculos
+        // ==================== VISTA MÓVIL ====================
         if (isMobile) {
             return (
                 <div className="w-full min-h-screen flex flex-col items-center py-4 px-2 bg-gray-50">
-                    {/* Contenedor del menú móvil - CENTRADO HORIZONTALMENTE EN LA PARTE SUPERIOR */}
+                    {/* Contenedor del menú móvil */}
                     <div className="absolute top-18">
                         <DropdownMenu open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                             <DropdownMenuTrigger asChild>
@@ -540,13 +570,23 @@ export const Radar: React.FC<{
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="center" className="w-56 mt-2">
+                                {/* Buscar Tecnología - con estado de carga */}
                                 <DropdownMenuItem
-                                    onClick={handleOpenSearchDialog}
-                                    className="flex items-center cursor-pointer py-3"
+                                    onClick={!isCreating ? handleOpenSearchDialog : undefined}
+                                    disabled={isCreating}
+                                    className={`flex items-center cursor-pointer py-3 ${isCreating ? 'opacity-50' : ''}`}
                                 >
-                                    <Search size={18} className="mr-3" />
-                                    <span className="text-base">Buscar Tecnología</span>
+                                    {isCreating ? (
+                                        <Loader2 size={18} className="mr-3 animate-spin" />
+                                    ) : (
+                                        <Search size={18} className="mr-3" />
+                                    )}
+                                    <span className="text-base">
+                                        {isCreating ? 'Buscando...' : 'Buscar Tecnología'}
+                                    </span>
                                 </DropdownMenuItem>
+
+                                {/* Buscar Cambios */}
                                 <DropdownMenuItem
                                     onClick={handleSearchChanges}
                                     disabled={isLoadingChanges}
@@ -557,9 +597,12 @@ export const Radar: React.FC<{
                                     ) : (
                                         <RefreshCw size={18} className="mr-3" />
                                     )}
-                                    <span className="text-base">{isLoadingChanges ? 'Buscando...' : 'Buscar Cambios'}</span>
+                                    <span className="text-base">
+                                        {isLoadingChanges ? 'Buscando...' : 'Buscar Cambios'}
+                                    </span>
                                 </DropdownMenuItem>
-                                {/* Opción para Deseleccionar Todos en móvil */}
+
+                                {/* Deseleccionar Todos */}
                                 <DropdownMenuItem
                                     onClick={deselectAllBlips}
                                     disabled={selectedBlips.size === 0}
@@ -582,12 +625,10 @@ export const Radar: React.FC<{
                         {quadrantLabels.map((quadrant) => {
                             if (!entries) return null;
 
-                            // Filtrar blips por cuadrante y visibilidad
                             const quadrantBlips = entries.filter((b) =>
                                 b.itemField === quadrant.label && visibleQuadrants[quadrant.label]
                             );
 
-                            // Generar posiciones específicas para móvil SOLO si hay blips
                             const mobileBlipPositions = quadrantBlips.length > 0
                                 ? generateMobileBlipPositions(quadrantBlips)
                                 : {};
@@ -627,18 +668,15 @@ export const Radar: React.FC<{
                                                 className="w-full h-full"
                                                 preserveAspectRatio="xMidYMid meet"
                                             >
-                                                {/* 1. Fondo del semicírculo */}
+                                                {/* Fondo del semicírculo */}
                                                 <path
-                                                    d="M 50,180 
-                                               Q 200,30 350,180 
-                                               L 350,180 
-                                               L 50,180 Z"
+                                                    d="M 50,180 Q 200,30 350,180 L 350,180 L 50,180 Z"
                                                     fill="#f8f9fa"
                                                     stroke="#e9ecef"
                                                     strokeWidth="1"
                                                 />
 
-                                                {/* 2. Anillos del semicírculo */}
+                                                {/* Anillos del semicírculo */}
                                                 {[
                                                     { min: 0, max: 80, ring: RadarRing.ADOPT },
                                                     { min: 80, max: 120, ring: RadarRing.TEST },
@@ -647,16 +685,13 @@ export const Radar: React.FC<{
                                                 ].map(({ min, max, ring }) => {
                                                     const centerX = 200;
                                                     const baseY = 180;
-
-                                                    // Crear anillo con relleno
                                                     const path = `
-        M ${centerX - max},${baseY}
-        A ${max} ${max} 0 0 1 ${centerX + max},${baseY}
-        L ${centerX + min},${baseY}
-        A ${min} ${min} 0 0 0 ${centerX - min},${baseY}
-        Z
-    `;
-
+                                                        M ${centerX - max},${baseY}
+                                                        A ${max} ${max} 0 0 1 ${centerX + max},${baseY}
+                                                        L ${centerX + min},${baseY}
+                                                        A ${min} ${min} 0 0 0 ${centerX - min},${baseY}
+                                                        Z
+                                                    `;
                                                     return (
                                                         <path
                                                             key={ring}
@@ -669,30 +704,21 @@ export const Radar: React.FC<{
                                                     );
                                                 })}
 
-                                                {/* 3. Líneas divisorias del semicírculo */}
+                                                {/* Líneas divisorias del semicírculo */}
                                                 <line x1="50" y1="180" x2="350" y2="180" stroke="#999" strokeWidth="1" />
                                                 <line x1="200" y1="180" x2="200" y2="30" stroke="#999" strokeDasharray="4 2" />
 
-                                                {/* 4. Etiquetas de anillos en el semicírculo - RENDERIZAR ANTES DE LOS BLIPS */}
-                                                <text x="200" y="135" fontSize="10" fill={getRingColor(RadarRing.ADOPT)} textAnchor="middle" fontWeight="bold">
-                                                    ADOPTAR
-                                                </text>
-                                                <text x="200" y="90" fontSize="10" fill={getRingColor(RadarRing.TEST)} textAnchor="middle" fontWeight="bold">
-                                                    PROBAR
-                                                </text>
-                                                <text x="200" y="45" fontSize="10" fill={getRingColor(RadarRing.SUSTAIN)} textAnchor="middle" fontWeight="bold">
-                                                    EVALUAR
-                                                </text>
-                                                <text x="200" y="0" fontSize="10" fill={getRingColor(RadarRing.HOLD)} textAnchor="middle" fontWeight="bold">
-                                                    DETENER
-                                                </text>
+                                                {/* Etiquetas de anillos */}
+                                                <text x="200" y="135" fontSize="10" fill={getRingColor(RadarRing.ADOPT)} textAnchor="middle" fontWeight="bold">ADOPTAR</text>
+                                                <text x="200" y="90" fontSize="10" fill={getRingColor(RadarRing.TEST)} textAnchor="middle" fontWeight="bold">PROBAR</text>
+                                                <text x="200" y="45" fontSize="10" fill={getRingColor(RadarRing.SUSTAIN)} textAnchor="middle" fontWeight="bold">EVALUAR</text>
+                                                <text x="200" y="0" fontSize="10" fill={getRingColor(RadarRing.HOLD)} textAnchor="middle" fontWeight="bold">DETENER</text>
 
-                                                {/* 5. Blips en el semicírculo móvil - RENDERIZAR AL FINAL PARA QUE ESTÉN ENCIMA */}
+                                                {/* Blips */}
                                                 {quadrantBlips.map((blip) => {
                                                     const position = mobileBlipPositions[blip.id];
                                                     const isSelected = isBlipSelected(blip.id);
 
-                                                    // Si no hay posición, no renderizar el blip
                                                     if (!position) {
                                                         console.warn(`No position found for blip: ${blip.id} in quadrant ${quadrant.label}`);
                                                         return null;
@@ -715,32 +741,12 @@ export const Radar: React.FC<{
                                                             onClick={(e) => {
                                                                 handleMobileBlipClick(blip, position, e);
                                                             }}
-                                                            style={{
-                                                                cursor: 'pointer',
-                                                            }}
+                                                            style={{ cursor: 'pointer' }}
                                                         >
-                                                            {/* Círculo invisible más grande para mejor área de clic */}
-                                                            <circle
-                                                                cx={0}
-                                                                cy={0}
-                                                                r={20}
-                                                                fill="transparent"
-                                                            />
-
-                                                            {/* Indicador de selección (círculo exterior) */}
+                                                            <circle cx={0} cy={0} r={20} fill="transparent" />
                                                             {isSelected && (
-                                                                <circle
-                                                                    cx={0}
-                                                                    cy={0}
-                                                                    r={16}
-                                                                    fill="none"
-                                                                    stroke="#10b981"
-                                                                    strokeWidth={3}
-                                                                    opacity={0.8}
-                                                                />
+                                                                <circle cx={0} cy={0} r={16} fill="none" stroke="#10b981" strokeWidth={3} opacity={0.8} />
                                                             )}
-
-                                                            {/* Círculo principal con transición suave */}
                                                             <circle
                                                                 cx={0}
                                                                 cy={0}
@@ -753,8 +759,6 @@ export const Radar: React.FC<{
                                                                     transformOrigin: 'center center'
                                                                 }}
                                                             />
-
-                                                            {/* Efecto de pulso FIJADO en la posición del blip */}
                                                             {isMobileSelected && (
                                                                 <circle
                                                                     cx={0}
@@ -773,7 +777,7 @@ export const Radar: React.FC<{
                                         </div>
                                     )}
 
-                                    {/* Lista de blips del cuadrante - CON HIGHLIGHT MANTENIDO */}
+                                    {/* Lista de blips del cuadrante */}
                                     {visibleQuadrants[quadrant.label] && quadrantBlips.length > 0 && (
                                         <div className="mt-4 border-t border-gray-200 pt-4 blip-list-container">
                                             <div className="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto">
@@ -797,7 +801,6 @@ export const Radar: React.FC<{
                                                                 handleMobileBlipSelect(blip);
                                                             }}
                                                         >
-                                                            {/* Icono de selección */}
                                                             <div className="relative">
                                                                 <div
                                                                     className="w-4 h-4 rounded-full shrink-0 border border-white shadow-sm transition-all duration-300"
@@ -836,10 +839,10 @@ export const Radar: React.FC<{
                         })}
                     </div>
 
-                    {/* Menú contextual para móvil - USANDO DIALOG DE SHADCN */}
+                    {/* Menú contextual para móvil */}
                     {menuOpen && selectedBlip && (
                         <RadarMenu
-                            item={selectedBlip as unknown as SurveyItem}
+                            item={selectedBlip}
                             position={menuPosition}
                             onViewDetails={handleViewDetails}
                             onUnsubscribe={handleUnsubscribeSelected}
@@ -877,7 +880,7 @@ export const Radar: React.FC<{
                                     />
                                     {isSearchInputDisabled && (
                                         <p className="text-xs text-gray-500 mt-1">
-                                            Este campo está deshabilitado porque hay un archivo Excel seleccionado
+                                            {isCreating ? 'Búsqueda en curso...' : 'Este campo está deshabilitado porque hay un archivo Excel seleccionado'}
                                         </p>
                                     )}
                                 </div>
@@ -905,8 +908,8 @@ export const Radar: React.FC<{
                                             type="file"
                                             accept=".xlsx,.xls"
                                             onChange={handleExcelFileChange}
-                                            className={`flex-1 ${isFileInputDisabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
                                             disabled={isFileInputDisabled}
+                                            className={`flex-1 ${isFileInputDisabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
                                         />
                                         <Upload
                                             size={16}
@@ -914,21 +917,19 @@ export const Radar: React.FC<{
                                         />
                                     </div>
 
-                                    {/* Mostrar información del archivo */}
                                     {excelFile && (
                                         <p className="text-sm text-green-600">
                                             Archivo seleccionado: {excelFile.name}
                                         </p>
                                     )}
 
-                                    {/* Mostrar error de validación */}
                                     {excelError && (
                                         <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
                                             {excelError}
                                         </p>
                                     )}
 
-                                    {isFileInputDisabled && (
+                                    {isFileInputDisabled && !isCreating && (
                                         <p className="text-xs text-gray-500 mt-1">
                                             Este campo está deshabilitado porque hay texto en la búsqueda
                                         </p>
@@ -941,6 +942,7 @@ export const Radar: React.FC<{
                                     variant="outline"
                                     onClick={handleCloseSearchDialog}
                                     className="flex-1"
+                                    disabled={isCreating}
                                 >
                                     Cancelar
                                 </Button>
@@ -949,7 +951,14 @@ export const Radar: React.FC<{
                                     disabled={!isAcceptEnabled}
                                     className="flex-1 bg-blue-600 hover:bg-blue-700"
                                 >
-                                    Aceptar
+                                    {isCreating ? (
+                                        <>
+                                            <Loader2 size={16} className="mr-2 animate-spin" />
+                                            Buscando...
+                                        </>
+                                    ) : (
+                                        'Aceptar'
+                                    )}
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
@@ -958,18 +967,9 @@ export const Radar: React.FC<{
                     {/* Estilos CSS para la animación de pulso */}
                     <style>{`
                         @keyframes pulse {
-                            0% {
-                                r: 14;
-                                stroke-opacity: 0.6;
-                            }
-                            50% {
-                                r: 18;
-                                stroke-opacity: 0.3;
-                            }
-                            100% {
-                                r: 14;
-                                stroke-opacity: 0.6;
-                            }
+                            0% { r: 14; stroke-opacity: 0.6; }
+                            50% { r: 18; stroke-opacity: 0.3; }
+                            100% { r: 14; stroke-opacity: 0.6; }
                         }
                         .pulseCircle {
                             animation: pulse 2s infinite;
@@ -980,7 +980,7 @@ export const Radar: React.FC<{
             );
         }
 
-        // Vista desktop - Sin nombres de blips y con animación de pulso
+        // ==================== VISTA DESKTOP ====================
         return (
             <div className="w-screen h-screen flex flex-col items-center justify-center overflow-x-hidden -mt-3 -mb-24">
                 <svg
@@ -991,28 +991,28 @@ export const Radar: React.FC<{
                 >
                     {/* Grupo de botones DENTRO DEL SVG */}
                     <g className="transition-all duration-200 ease-in-out">
-                        {/* Botón de Buscar Tecnología */}
+                        {/* Botón de Buscar Tecnología - con estado de carga */}
                         <g
-                            onClick={handleOpenSearchDialog}
-                            onMouseEnter={() => setIsSearchButtonHovered(true)}
+                            onClick={!isCreating ? handleOpenSearchDialog : undefined}
+                            onMouseEnter={() => !isCreating && setIsSearchButtonHovered(true)}
                             onMouseLeave={() => setIsSearchButtonHovered(false)}
-                            style={{ cursor: 'pointer' }}
+                            style={{
+                                cursor: isCreating ? 'not-allowed' : 'pointer',
+                                opacity: isCreating ? 0.6 : 1
+                            }}
                             className="transition-all duration-200 ease-in-out"
                         >
-                            {/* Fondo del botón */}
                             <rect
                                 x="-190"
                                 y="-440"
                                 width="180"
                                 height="36"
                                 rx="6"
-                                fill={searchButtonFillColor}
-                                stroke={searchButtonStrokeColor}
+                                fill={isCreating ? '#9ca3af' : searchButtonFillColor}
+                                stroke={isCreating ? '#6b7280' : searchButtonStrokeColor}
                                 strokeWidth="1"
-                                className="transition-all duration-200 ease-in-out"
                             />
 
-                            {/* Texto del botón */}
                             <text
                                 x="-90"
                                 y="-416"
@@ -1021,31 +1021,41 @@ export const Radar: React.FC<{
                                 textAnchor="middle"
                                 fontWeight="500"
                                 style={{ userSelect: 'none', pointerEvents: 'none' }}
-                                className="transition-all duration-200 ease-in-out"
                             >
-                                Buscar Tecnología
+                                {isCreating ? 'Buscando...' : 'Buscar Tecnología'}
                             </text>
 
-                            {/* Ícono de búsqueda */}
                             <g transform="translate(-170, -422)" style={{ pointerEvents: 'none' }}>
-                                <circle
-                                    cx="0"
-                                    cy="0"
-                                    r="8"
-                                    fill="none"
-                                    stroke="white"
-                                    strokeWidth="1.5"
-                                    className="transition-all duration-200 ease-in-out"
-                                />
-                                <line
-                                    x1="5.5"
-                                    y1="5.5"
-                                    x2="10"
-                                    y2="10"
-                                    stroke="white"
-                                    strokeWidth="1.5"
-                                    className="transition-all duration-200 ease-in-out"
-                                />
+                                {isCreating ? (
+                                    <circle
+                                        cx="0"
+                                        cy="0"
+                                        r="8"
+                                        fill="none"
+                                        stroke="white"
+                                        strokeWidth="1.5"
+                                        className="animate-spin"
+                                    />
+                                ) : (
+                                    <>
+                                        <circle
+                                            cx="0"
+                                            cy="0"
+                                            r="8"
+                                            fill="none"
+                                            stroke="white"
+                                            strokeWidth="1.5"
+                                        />
+                                        <line
+                                            x1="5.5"
+                                            y1="5.5"
+                                            x2="10"
+                                            y2="10"
+                                            stroke="white"
+                                            strokeWidth="1.5"
+                                        />
+                                    </>
+                                )}
                             </g>
                         </g>
 
@@ -1057,7 +1067,6 @@ export const Radar: React.FC<{
                             style={{ cursor: 'pointer' }}
                             className="transition-all duration-200 ease-in-out"
                         >
-                            {/* Fondo del botón (verde) */}
                             <rect
                                 x="10"
                                 y="-440"
@@ -1067,10 +1076,7 @@ export const Radar: React.FC<{
                                 fill={changesButtonFillColor}
                                 stroke={changesButtonStrokeColor}
                                 strokeWidth="1"
-                                className="transition-all duration-200 ease-in-out"
                             />
-
-                            {/* Texto del botón */}
                             <text
                                 x="115"
                                 y="-416"
@@ -1079,15 +1085,11 @@ export const Radar: React.FC<{
                                 textAnchor="middle"
                                 fontWeight="500"
                                 style={{ userSelect: 'none', pointerEvents: 'none' }}
-                                className="transition-all duration-200 ease-in-out"
                             >
                                 {isLoadingChanges ? 'Buscando...' : 'Buscar Cambios'}
                             </text>
-
-                            {/* Ícono de refresh */}
                             <g transform="translate(35, -422)" style={{ pointerEvents: 'none' }}>
                                 {isLoadingChanges ? (
-                                    // Ícono de loading (spinner)
                                     <circle
                                         cx="0"
                                         cy="0"
@@ -1098,29 +1100,27 @@ export const Radar: React.FC<{
                                         className="animate-spin"
                                     />
                                 ) : (
-                                    // Ícono de refresh normal
-                                    <circle
-                                        cx="0"
-                                        cy="0"
-                                        r="8"
-                                        fill="none"
-                                        stroke="white"
-                                        strokeWidth="1.5"
-                                        className="transition-all duration-200 ease-in-out"
-                                    />
-                                )}
-                                {!isLoadingChanges && (
-                                    <path
-                                        d="M 4 -4 L 0 -8 L -4 -4 M 0 -8 L 0 6 M 4 4 L 0 8 L -4 4"
-                                        stroke="white"
-                                        strokeWidth="1.5"
-                                        fill="none"
-                                        className="transition-all duration-200 ease-in-out"
-                                    />
+                                    <>
+                                        <circle
+                                            cx="0"
+                                            cy="0"
+                                            r="8"
+                                            fill="none"
+                                            stroke="white"
+                                            strokeWidth="1.5"
+                                        />
+                                        <path
+                                            d="M 4 -4 L 0 -8 L -4 -4 M 0 -8 L 0 6 M 4 4 L 0 8 L -4 4"
+                                            stroke="white"
+                                            strokeWidth="1.5"
+                                            fill="none"
+                                        />
+                                    </>
                                 )}
                             </g>
                         </g>
 
+                        {/* Botón Deseleccionar Todos */}
                         {selectedBlips.size > 0 && (
                             <g
                                 onClick={deselectAllBlips}
@@ -1129,7 +1129,6 @@ export const Radar: React.FC<{
                                 style={{ cursor: 'pointer' }}
                                 className="transition-all duration-200 ease-in-out"
                             >
-                                {/* Fondo del botón (rojo) */}
                                 <rect
                                     x="210"
                                     y="-440"
@@ -1139,10 +1138,7 @@ export const Radar: React.FC<{
                                     fill={deselectAllButtonFillColor}
                                     stroke={deselectAllButtonStrokeColor}
                                     strokeWidth="1"
-                                    className="transition-all duration-200 ease-in-out"
                                 />
-
-                                {/* Texto del botón con contador */}
                                 <text
                                     x="325"
                                     y="-416"
@@ -1151,12 +1147,9 @@ export const Radar: React.FC<{
                                     textAnchor="middle"
                                     fontWeight="500"
                                     style={{ userSelect: 'none', pointerEvents: 'none' }}
-                                    className="transition-all duration-200 ease-in-out"
                                 >
                                     Deseleccionar Todos ({selectedBlips.size})
                                 </text>
-
-                                {/* Ícono de X */}
                                 <g transform="translate(225, -422)" style={{ pointerEvents: 'none' }}>
                                     <circle
                                         cx="0"
@@ -1165,14 +1158,12 @@ export const Radar: React.FC<{
                                         fill="none"
                                         stroke="white"
                                         strokeWidth="1.5"
-                                        className="transition-all duration-200 ease-in-out"
                                     />
                                     <path
                                         d="M -4 -4 L 4 4 M -4 4 L 4 -4"
                                         stroke="white"
                                         strokeWidth="1.5"
                                         fill="none"
-                                        className="transition-all duration-200 ease-in-out"
                                     />
                                 </g>
                             </g>
@@ -1186,22 +1177,19 @@ export const Radar: React.FC<{
 
                         return (
                             <g key={ring}>
-                                {/* Sombreado */}
                                 <path
                                     d={`
-                            M ${rMax} 0
-                            A ${rMax} ${rMax} 0 1 0 ${-rMax} 0
-                            A ${rMax} ${rMax} 0 1 0 ${rMax} 0
-                            M ${rMin} 0
-                            A ${rMin} ${rMin} 0 1 1 ${-rMin} 0
-                            A ${rMin} ${rMin} 0 1 1 ${rMin} 0
-                            Z
-                        `}
+                                        M ${rMax} 0
+                                        A ${rMax} ${rMax} 0 1 0 ${-rMax} 0
+                                        A ${rMax} ${rMax} 0 1 0 ${rMax} 0
+                                        M ${rMin} 0
+                                        A ${rMin} ${rMin} 0 1 1 ${-rMin} 0
+                                        A ${rMin} ${rMin} 0 1 1 ${rMin} 0
+                                        Z
+                                    `}
                                     fill={color}
                                     opacity={0.08}
                                 />
-
-                                {/* Etiqueta del anillo */}
                                 <text
                                     x={0}
                                     y={ring === RadarRing.ADOPT ? 0 : -labelRadius}
@@ -1218,12 +1206,12 @@ export const Radar: React.FC<{
                     })}
 
                     {/* Anillos */}
-                    {[140, 230, 310, 380].map((radious, index) => {
+                    {[140, 230, 310, 380].map((radius, index) => {
                         const ring = Object.keys(ringBounds)[index] as RadarRing;
-                        return <circle key={index} r={radious} stroke={getRingColor(ring)} fill="none" strokeWidth={2} />;
+                        return <circle key={index} r={radius} stroke={getRingColor(ring)} fill="none" strokeWidth={2} />;
                     })}
 
-                    {/* Líneas divisorias más largas y espaciadas */}
+                    {/* Líneas divisorias */}
                     <line x1={-380} y1={0} x2={380} y2={0} stroke="#999" strokeDasharray="6 6" />
                     <line x1={0} y1={-380} x2={0} y2={380} stroke="#999" strokeDasharray="6 6" />
 
@@ -1231,21 +1219,18 @@ export const Radar: React.FC<{
                     {quadrantLabels.map((quadrant) => {
                         if (!entries) return null;
 
-                        // Filtrar blips por cuadrante y visibilidad
                         const quadrantBlips = entries.filter((b) =>
                             b.itemField === quadrant.label && visibleQuadrants[quadrant.label]
                         );
                         const column1 = quadrantBlips.slice(0, 10);
                         const column2 = quadrantBlips.slice(10);
 
-                        // Calcular posición del título
                         const titleX = quadrant.label === RadarQuadrant.BUSSINESS_INTEL
                             ? quadrant.x + 60
                             : quadrant.label === RadarQuadrant.SCIENTIFIC_STAGE
                                 ? quadrant.x + 135
                                 : quadrant.x;
 
-                        // Calcular posición del botón (solo BUSSINESS_INTEL y SCIENTIFIC_STAGE se mueven más a la izquierda)
                         const getButtonX = () => {
                             switch (quadrant.label) {
                                 case RadarQuadrant.BUSSINESS_INTEL:
@@ -1268,12 +1253,10 @@ export const Radar: React.FC<{
                             <g key={quadrant.label}>
                                 {/* Título del cuadrante con botón de ojo */}
                                 <g>
-                                    {/* Botón de ojo - AHORA A LA IZQUIERDA DEL TÍTULO */}
                                     <g
                                         onClick={() => toggleQuadrantVisibility(quadrant.label)}
                                         style={{ cursor: 'pointer' }}
                                     >
-                                        {/* Fondo del botón */}
                                         <rect
                                             x={buttonX}
                                             y={buttonY}
@@ -1284,8 +1267,6 @@ export const Radar: React.FC<{
                                             stroke="#ccc"
                                             strokeWidth={1}
                                         />
-
-                                        {/* Ícono de Lucide React */}
                                         <foreignObject
                                             x={buttonX}
                                             y={buttonY}
@@ -1308,23 +1289,19 @@ export const Radar: React.FC<{
                                             </div>
                                         </foreignObject>
                                     </g>
-
-                                    {/* Título del cuadrante */}
                                     <text
                                         x={titleX}
                                         y={quadrant.y}
                                         fontSize={22}
                                         fill="#333"
-                                        textAnchor={
-                                            quadrant.label === RadarQuadrant.BUSSINESS_INTEL ? 'middle' : quadrant.align
-                                        }
+                                        textAnchor={quadrant.label === RadarQuadrant.BUSSINESS_INTEL ? 'middle' : quadrant.align}
                                         fontWeight="bold"
                                     >
                                         {quadrant.label}
                                     </text>
                                 </g>
 
-                                {/* Lista de blips del cuadrante (solo si está visible) */}
+                                {/* Lista de blips del cuadrante */}
                                 {visibleQuadrants[quadrant.label] &&
                                     [column1, column2].map((column, colIndex) =>
                                         column.map((b, j) => {
@@ -1337,7 +1314,6 @@ export const Radar: React.FC<{
 
                                             return (
                                                 <g key={`${b.id}-label`}>
-                                                    {/* Indicador de selección */}
                                                     {isSelected && (
                                                         <circle
                                                             cx={baseX}
@@ -1380,7 +1356,7 @@ export const Radar: React.FC<{
                         );
                     })}
 
-                    {/* Blips en el radar (solo los de cuadrantes visibles) - SIN NOMBRES Y CON ANIMACIÓN DE PULSO */}
+                    {/* Blips en el radar */}
                     {filteredEntries.map((blip) => {
                         const { x, y } = blipPositions[blip.id];
                         const isActive = hoveredBlipId === blip.id;
@@ -1405,7 +1381,6 @@ export const Radar: React.FC<{
                                 }}
                                 style={{ cursor: 'pointer' }}
                             >
-                                {/* Indicador de selección (círculo exterior verde) */}
                                 {isSelected && (
                                     <circle
                                         cx={0}
@@ -1418,8 +1393,6 @@ export const Radar: React.FC<{
                                         className="transition-all duration-300 ease-in-out"
                                     />
                                 )}
-
-                                {/* Círculo principal con transición suave */}
                                 <circle
                                     cx={0}
                                     cy={0}
@@ -1432,8 +1405,6 @@ export const Radar: React.FC<{
                                         transformOrigin: 'center center'
                                     }}
                                 />
-
-                                {/* Efecto de pulso cuando está activo (hover) */}
                                 {isActive && (
                                     <circle
                                         cx={0}
@@ -1445,16 +1416,9 @@ export const Radar: React.FC<{
                                         className="pulseCircle"
                                     />
                                 )}
-
-                                {/* Icono de check para blips seleccionados */}
                                 {isSelected && (
                                     <g transform="translate(-6, -6)">
-                                        <circle
-                                            cx={6}
-                                            cy={6}
-                                            r={8}
-                                            fill="#10b981"
-                                        />
+                                        <circle cx={6} cy={6} r={8} fill="#10b981" />
                                         <path
                                             d="M 3 6 L 5 8 L 9 4"
                                             fill="none"
@@ -1473,7 +1437,7 @@ export const Radar: React.FC<{
                 {/* Menú contextual */}
                 {menuOpen && selectedBlip && (
                     <RadarMenu
-                        item={selectedBlip as unknown as SurveyItem}
+                        item={selectedBlip}
                         position={menuPosition}
                         onViewDetails={handleViewDetails}
                         onUnsubscribe={handleUnsubscribeSelected}
@@ -1485,7 +1449,7 @@ export const Radar: React.FC<{
                     />
                 )}
 
-                {/* Diálogo de búsqueda/importación */}
+                {/* Diálogo de búsqueda/importación (idéntico al de móvil) */}
                 <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
@@ -1496,11 +1460,8 @@ export const Radar: React.FC<{
                         </DialogHeader>
 
                         <div className="space-y-4 py-4">
-                            {/* Input de búsqueda por nombre */}
                             <div className="space-y-2">
-                                <Label htmlFor="technology-search">
-                                    Buscar por nombre de tecnología
-                                </Label>
+                                <Label htmlFor="technology-search">Buscar por nombre de tecnología</Label>
                                 <Input
                                     id="technology-search"
                                     placeholder="Escribe el nombre de la tecnología..."
@@ -1511,61 +1472,37 @@ export const Radar: React.FC<{
                                 />
                                 {isSearchInputDisabled && (
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Este campo está deshabilitado porque hay un archivo Excel seleccionado
+                                        {isCreating ? 'Búsqueda en curso...' : 'Este campo está deshabilitado porque hay un archivo Excel seleccionado'}
                                     </p>
                                 )}
                             </div>
 
-                            {/* Separador */}
                             <div className="relative">
                                 <div className="absolute inset-0 flex items-center">
                                     <span className="w-full border-t" />
                                 </div>
                                 <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-background px-2 text-muted-foreground">
-                                        O
-                                    </span>
+                                    <span className="bg-background px-2 text-muted-foreground">O</span>
                                 </div>
                             </div>
 
-                            {/* Input para importar Excel */}
                             <div className="space-y-2">
-                                <Label htmlFor="excel-import">
-                                    Importar desde Excel
-                                </Label>
+                                <Label htmlFor="excel-import">Importar desde Excel</Label>
                                 <div className="flex items-center space-x-2">
                                     <Input
                                         id="excel-import"
                                         type="file"
                                         accept=".xlsx,.xls"
                                         onChange={handleExcelFileChange}
-                                        className={`flex-1 ${isFileInputDisabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
                                         disabled={isFileInputDisabled}
+                                        className={`flex-1 ${isFileInputDisabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
                                     />
-                                    <Upload
-                                        size={16}
-                                        className={`${isFileInputDisabled ? "text-gray-400" : "text-muted-foreground"}`}
-                                    />
+                                    <Upload size={16} className={isFileInputDisabled ? "text-gray-400" : "text-muted-foreground"} />
                                 </div>
-
-                                {/* Mostrar información del archivo */}
-                                {excelFile && (
-                                    <p className="text-sm text-green-600">
-                                        Archivo seleccionado: {excelFile.name}
-                                    </p>
-                                )}
-
-                                {/* Mostrar error de validación */}
-                                {excelError && (
-                                    <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
-                                        {excelError}
-                                    </p>
-                                )}
-
-                                {isFileInputDisabled && (
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        Este campo está deshabilitado porque hay texto en la búsqueda
-                                    </p>
+                                {excelFile && <p className="text-sm text-green-600">Archivo seleccionado: {excelFile.name}</p>}
+                                {excelError && <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">{excelError}</p>}
+                                {isFileInputDisabled && !isCreating && (
+                                    <p className="text-xs text-gray-500 mt-1">Este campo está deshabilitado porque hay texto en la búsqueda</p>
                                 )}
                             </div>
                         </div>
@@ -1575,6 +1512,7 @@ export const Radar: React.FC<{
                                 variant="outline"
                                 onClick={handleCloseSearchDialog}
                                 className="flex-1"
+                                disabled={isCreating}
                             >
                                 Cancelar
                             </Button>
@@ -1583,7 +1521,14 @@ export const Radar: React.FC<{
                                 disabled={!isAcceptEnabled}
                                 className="flex-1 bg-blue-600 hover:bg-blue-700"
                             >
-                                Aceptar
+                                {isCreating ? (
+                                    <>
+                                        <Loader2 size={16} className="mr-2 animate-spin" />
+                                        Buscando...
+                                    </>
+                                ) : (
+                                    'Aceptar'
+                                )}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
