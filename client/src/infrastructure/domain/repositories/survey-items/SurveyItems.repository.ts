@@ -70,22 +70,17 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
             .post('survey-items/create/batch', data)
     }
 
-    async subscribeBatch(
-        itemIds: UUID[]
-    ): Promise<void> {
-        return await this.axios.http
-            .patch('survey-items/batch', { data: itemIds });
-    };
+    async subscribeBatch(itemIds: UUID[]): Promise<void> {
+        return await this.axios.http.patch('survey-items/subscribe/batch', itemIds);
+    }
 
     async unsubscribeBatch(itemIds: UUID[]): Promise<void> {
-        return await this.axios.http
-            .patch('survey-items/batch', { data: itemIds });
-    };
+        return await this.axios.http.patch('survey-items/unsubscribe/batch', itemIds);
+    }
 
     async removeBatch(itemIds: UUID[]): Promise<void> {
-        return await this.axios.http
-            .delete('survey-items/batch', { data: { itemIds } });
-    };
+        return await this.axios.http.delete('survey-items/batch', { data: itemIds });
+    }
 
     async runGlobalRecommendations(): Promise<{ message: string, data: any[] }> {
         const response = await this.axios.http

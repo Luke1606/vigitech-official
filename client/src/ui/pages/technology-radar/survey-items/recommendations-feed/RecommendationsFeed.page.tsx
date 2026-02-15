@@ -3,6 +3,7 @@ import { Button, SurveyItemCard } from '../../../../components';
 import {
     type SurveyItem,
     PathOption,
+    UUID,
 } from '../../../../../infrastructure';
 import { useEffect, useState } from 'react';
 import { useSurveyItemsAPI } from '../../../../../infrastructure/hooks/use-survey-items/api/useSurveyItemsAPI.hook';
@@ -293,7 +294,7 @@ export const RecommendationsFeed: React.FC = () => {
                     type="button"
                     variant="secondary"
                     onClick={() => {
-                        const selectedIds = selectedItems.map((item) => item.id);
+                        const selectedIds: UUID[] = selectedItems.map((item) => item.id);
                         query.subscribeBatch(selectedIds); // 🟢 La limpieza se maneja en el hook
                     }}
                     disabled={selectedItems.length === 0 || query.isLoading.subscribeBatch}
