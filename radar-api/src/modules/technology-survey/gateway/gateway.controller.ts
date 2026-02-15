@@ -75,6 +75,7 @@ export class ItemsGatewayController {
     @Patch('subscribe/batch')
     async subscribeBatch(@Body() itemIds: UUID[], @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed subscribeBatch');
+        this.logger.warn(itemIds)
         const userId: UUID = request.userId as UUID;
         return await this.itemsService.subscribeBatch(itemIds, userId);
     }
@@ -89,6 +90,7 @@ export class ItemsGatewayController {
     @Delete('batch')
     async removeBatch(@Body() itemIds: UUID[], @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed removeBatch');
+        this.logger.warn(itemIds)
         const userId: UUID = request.userId as UUID;
         return await this.itemsService.removeBatch(itemIds, userId);
     }
