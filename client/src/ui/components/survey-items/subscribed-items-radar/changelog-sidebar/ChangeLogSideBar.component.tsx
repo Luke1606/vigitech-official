@@ -1,4 +1,4 @@
-import { Clock, EyeIcon, EyeOff, Trash2, List, Download } from 'lucide-react';
+import { Clock, EyeIcon, EyeOff, Trash2, List, Download, Calendar, ChevronDown } from 'lucide-react';
 import {
     Button,
     ScrollArea,
@@ -15,7 +15,7 @@ import {
 } from '../../..';
 import { useChangelog } from '../../../../../infrastructure/hooks/use-changelog';
 import { ChangeLogEntry, RadarRing } from '../../../../../infrastructure';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import ExcelJS from 'exceljs';
 
 export const ChangeLogSideBar: React.FC<{
@@ -31,6 +31,9 @@ export const ChangeLogSideBar: React.FC<{
         const [currentDate, setCurrentDate] = useState('');
         const [currentTime, setCurrentTime] = useState('');
         const [timeZone, setTimeZone] = useState('');
+
+        // Estado para controlar qué fechas están expandidas
+        const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
         // Mapeo de colores RGB para cada anillo - TODOS con texto blanco
         const ringColors = {
@@ -108,7 +111,74 @@ export const ChangeLogSideBar: React.FC<{
             };
         }, []);
 
-        // Función para descargar el registro de cambios como Excel con estilos reales
+        // ========== DATOS DE PRUEBA (10 cambios con fechas variadas) ==========
+        useEffect(() => {
+            // Función para crear fechas relativas
+            const getDate = (daysAgo: number) => {
+                const d = new Date();
+                d.setDate(d.getDate() - daysAgo);
+                return d.toISOString();
+            };
+
+            // Datos de prueba: cada entrada es única en tecnología y cambio
+            const testLogs: Array<{ title: string; oldRing: RadarRing; newRing: RadarRing; daysAgo: number }> = [
+                { title: "FTP", oldRing: RadarRing.SUSTAIN, newRing: RadarRing.HOLD, daysAgo: 0 },
+                { title: "TypeScript", oldRing: RadarRing.TEST, newRing: RadarRing.ADOPT, daysAgo: 0 },
+                { title: "Cypress", oldRing: RadarRing.SUSTAIN, newRing: RadarRing.TEST, daysAgo: 1 },
+                { title: "Terraform", oldRing: RadarRing.TEST, newRing: RadarRing.ADOPT, daysAgo: 1 },
+                { title: "Perl", oldRing: RadarRing.SUSTAIN, newRing: RadarRing.HOLD, daysAgo: 2 },
+                { title: "React", oldRing: RadarRing.ADOPT, newRing: RadarRing.SUSTAIN, daysAgo: 2 },
+                { title: "Angular", oldRing: RadarRing.TEST, newRing: RadarRing.HOLD, daysAgo: 3 },
+                { title: "Vue", oldRing: RadarRing.SUSTAIN, newRing: RadarRing.TEST, daysAgo: 3 },
+                { title: "Docker", oldRing: RadarRing.ADOPT, newRing: RadarRing.TEST, daysAgo: 4 },
+                { title: "Kubernetes", oldRing: RadarRing.SUSTAIN, newRing: RadarRing.ADOPT, daysAgo: 4 },
+            ];
+
+            testLogs.forEach(({ title, oldRing, newRing, daysAgo }) => {
+                addChangeLog({
+                    itemTitle: title,
+                    oldRing,
+                    newRing,
+                    timestamp: getDate(daysAgo),
+                });
+            });
+        }, []);// Solo se ejecuta una vez al montar el componente
+        // =====================================================================
+
+        // Agrupar changelogs por fecha (YYYY-MM-DD)
+        const groupedLogs = useMemo(() => {
+            const groups: Record<string, ChangeLogEntry[]> = {};
+            changelogs.forEach(log => {
+                // Si no tiene timestamp, usar fecha actual (por compatibilidad)
+                const date = log.timestamp ? log.timestamp.split('T')[0] : new Date().toISOString().split('T')[0];
+                if (!groups[date]) {
+                    groups[date] = [];
+                }
+                groups[date].push(log);
+            });
+            // Ordenar las fechas de más reciente a más antigua
+            return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+        }, [changelogs]);
+
+        // Inicializar expandedDates con todas las fechas expandidas cuando cambian los grupos
+        useEffect(() => {
+            setExpandedDates(new Set(groupedLogs.map(([date]) => date)));
+        }, [groupedLogs]);
+
+        // Función para alternar expansión de una fecha
+        const toggleDate = (date: string) => {
+            setExpandedDates(prev => {
+                const newSet = new Set(prev);
+                if (newSet.has(date)) {
+                    newSet.delete(date);
+                } else {
+                    newSet.add(date);
+                }
+                return newSet;
+            });
+        };
+
+        // ========== FUNCIÓN DE DESCARGA (definida antes de controlsContent) ==========
         const downloadChangeLog = async () => {
             if (changelogs.length === 0) return;
 
@@ -209,12 +279,16 @@ export const ChangeLogSideBar: React.FC<{
                 const rowNumber = 8 + index;
                 const row = worksheet.getRow(rowNumber);
 
+                const changeDate = log.timestamp
+                    ? new Date(log.timestamp).toLocaleDateString('es-ES')
+                    : new Date().toLocaleDateString('es-ES');
+
                 const cells = [
                     index + 1,
                     log.itemTitle,
-                    log.oldRing.toUpperCase(), // Convertir a mayúsculas
-                    log.newRing.toUpperCase(), // Convertir a mayúsculas
-                    new Date().toLocaleDateString('es-ES')
+                    log.oldRing.toUpperCase(),
+                    log.newRing.toUpperCase(),
+                    changeDate
                 ];
 
                 cells.forEach((value, cellIndex) => {
@@ -361,34 +435,7 @@ export const ChangeLogSideBar: React.FC<{
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
         };
-
-        useEffect(() => {
-            addChangeLog({
-                itemTitle: "FTP",
-                oldRing: RadarRing.SUSTAIN,
-                newRing: RadarRing.HOLD
-            })
-            addChangeLog({
-                itemTitle: "TypeScript",
-                oldRing: RadarRing.TEST,
-                newRing: RadarRing.ADOPT
-            })
-            addChangeLog({
-                itemTitle: "Cypress",
-                oldRing: RadarRing.SUSTAIN,
-                newRing: RadarRing.TEST
-            })
-            addChangeLog({
-                itemTitle: "Terraform",
-                oldRing: RadarRing.TEST,
-                newRing: RadarRing.ADOPT
-            })
-            addChangeLog({
-                itemTitle: "Perl",
-                oldRing: RadarRing.SUSTAIN,
-                newRing: RadarRing.HOLD
-            })
-        }, [])
+        // =====================================================================
 
         const handleMobileToggle = () => {
             if (isMobile) {
@@ -396,6 +443,17 @@ export const ChangeLogSideBar: React.FC<{
             } else {
                 toggleVisible();
             }
+        };
+
+        // Formatear fecha para mostrarla de forma legible
+        const formatDisplayDate = (dateStr: string): string => {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
         };
 
         // Controles con fecha, hora actual y botones (reutilizable)
@@ -453,33 +511,56 @@ export const ChangeLogSideBar: React.FC<{
 
                                 <ScrollArea className="h-160 pb-5">
                                     <div className="">
-                                        {changelogs?.length === 0 ? (
+                                        {groupedLogs.length === 0 ? (
                                             <p className="text-md text-muted-foreground text-center py-4">
                                                 No hay cambios recientes
                                             </p>
                                         ) : (
-                                            changelogs?.map((log: ChangeLogEntry, index: number) => (
-                                                <div key={index} className="text-md p-2 rounded w-full">
-                                                    <p className='bg-gray-200 px-2 py-2 rounded-md flex flex-wrap items-center'>
-                                                        <span>Elemento</span>
-                                                        <span className='font-bold mx-1'>{log.itemTitle}</span>
-                                                        <span>se ha movido de</span>
-                                                        <span
-                                                            className='p-1 mx-1 rounded-lg font-semibold'
-                                                            style={{
-                                                                backgroundColor: `rgb(${ringColors[log.oldRing as RadarRing].background})`,
-                                                                color: `rgb(${ringColors[log.oldRing as RadarRing].text})`
-                                                            }}
-                                                        >{log.oldRing.toUpperCase()}</span>
-                                                        <span>a</span>
-                                                        <span
-                                                            className='p-1 mx-1 rounded-lg font-semibold'
-                                                            style={{
-                                                                backgroundColor: `rgb(${ringColors[log.newRing as RadarRing].background})`,
-                                                                color: `rgb(${ringColors[log.newRing as RadarRing].text})`
-                                                            }}
-                                                        >{log.newRing.toUpperCase()}</span>
-                                                    </p>
+                                            groupedLogs.map(([date, logs]) => (
+                                                <div key={date} className="mb-6">
+                                                    {/* Encabezado de fecha clickeable */}
+                                                    <div
+                                                        className="flex items-center gap-2 mb-3 cursor-pointer select-none"
+                                                        onClick={() => toggleDate(date)}
+                                                    >
+                                                        <Calendar className="h-4 w-4 text-blue-600" />
+                                                        <span className="text-sm font-semibold text-blue-800 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+                                                            {formatDisplayDate(date)}
+                                                        </span>
+                                                        <ChevronDown
+                                                            className={`h-4 w-4 text-blue-600 transition-transform duration-200 ${expandedDates.has(date) ? '' : '-rotate-90'
+                                                                }`}
+                                                        />
+                                                    </div>
+                                                    {/* Logs de la fecha (solo si está expandida) */}
+                                                    {expandedDates.has(date) && (
+                                                        <>
+                                                            {logs.map((log, index) => (
+                                                                <div key={index} className="text-md p-2 rounded w-full">
+                                                                    <p className='bg-gray-200 px-2 py-2 rounded-md flex flex-wrap items-center'>
+                                                                        <span>Elemento</span>
+                                                                        <span className='font-bold mx-1'>{log.itemTitle}</span>
+                                                                        <span>se ha movido de</span>
+                                                                        <span
+                                                                            className='p-1 mx-1 rounded-lg font-semibold'
+                                                                            style={{
+                                                                                backgroundColor: `rgb(${ringColors[log.oldRing as RadarRing].background})`,
+                                                                                color: `rgb(${ringColors[log.oldRing as RadarRing].text})`
+                                                                            }}
+                                                                        >{log.oldRing.toUpperCase()}</span>
+                                                                        <span>a</span>
+                                                                        <span
+                                                                            className='p-1 mx-1 rounded-lg font-semibold'
+                                                                            style={{
+                                                                                backgroundColor: `rgb(${ringColors[log.newRing as RadarRing].background})`,
+                                                                                color: `rgb(${ringColors[log.newRing as RadarRing].text})`
+                                                                            }}
+                                                                        >{log.newRing.toUpperCase()}</span>
+                                                                    </p>
+                                                                </div>
+                                                            ))}
+                                                        </>
+                                                    )}
                                                 </div>
                                             ))
                                         )}
@@ -552,42 +633,63 @@ export const ChangeLogSideBar: React.FC<{
 
                             {/* Contenedor scrolleable solo para los mensajes de cambios */}
                             <div className="flex-1 overflow-y-auto px-6 py-4">
-                                {changelogs?.length === 0 ? (
+                                {groupedLogs.length === 0 ? (
                                     <p className="text-md text-muted-foreground text-center py-4">
                                         No hay cambios recientes
                                     </p>
                                 ) : (
-                                    <div className="space-y-3">
-                                        {changelogs?.map((log: ChangeLogEntry, index: number) => (
-                                            <div key={index} className="text-md p-2 rounded w-full">
-                                                <p className='bg-gray-200 px-2 py-2 rounded-md flex flex-wrap items-center'>
-                                                    <span>Elemento</span>
-                                                    <span className='font-bold mx-1'>{log.itemTitle}</span>
-                                                    <span>se ha movido de</span>
-                                                    <span
-                                                        className='p-1 mx-1 rounded-lg font-semibold'
-                                                        style={{
-                                                            backgroundColor: `rgb(${ringColors[log.oldRing as RadarRing].background})`,
-                                                            color: `rgb(${ringColors[log.oldRing as RadarRing].text})`
-                                                        }}
-                                                    >{log.oldRing.toUpperCase()}</span>
-                                                    <span>a</span>
-                                                    <span
-                                                        className='p-1 mx-1 rounded-lg font-semibold'
-                                                        style={{
-                                                            backgroundColor: `rgb(${ringColors[log.newRing as RadarRing].background})`,
-                                                            color: `rgb(${ringColors[log.newRing as RadarRing].text})`
-                                                        }}
-                                                    >{log.newRing.toUpperCase()}</span>
-                                                </p>
+                                    groupedLogs.map(([date, logs]) => (
+                                        <div key={date} className="mb-6">
+                                            {/* Encabezado de fecha clickeable (móvil) */}
+                                            <div
+                                                className="flex items-center gap-2 mb-3 cursor-pointer select-none"
+                                                onClick={() => toggleDate(date)}
+                                            >
+                                                <Calendar className="h-4 w-4 text-blue-600" />
+                                                <span className="text-sm font-semibold text-blue-800 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+                                                    {formatDisplayDate(date)}
+                                                </span>
+                                                <ChevronDown
+                                                    className={`h-4 w-4 text-blue-600 transition-transform duration-200 ${expandedDates.has(date) ? '' : '-rotate-90'
+                                                        }`}
+                                                />
                                             </div>
-                                        ))}
-                                    </div>
+                                            {/* Logs de la fecha (solo si está expandida) */}
+                                            {expandedDates.has(date) && (
+                                                <div className="space-y-3">
+                                                    {logs.map((log, index) => (
+                                                        <div key={index} className="text-md p-2 rounded w-full">
+                                                            <p className='bg-gray-200 px-2 py-2 rounded-md flex flex-wrap items-center'>
+                                                                <span>Elemento</span>
+                                                                <span className='font-bold mx-1'>{log.itemTitle}</span>
+                                                                <span>se ha movido de</span>
+                                                                <span
+                                                                    className='p-1 mx-1 rounded-lg font-semibold'
+                                                                    style={{
+                                                                        backgroundColor: `rgb(${ringColors[log.oldRing as RadarRing].background})`,
+                                                                        color: `rgb(${ringColors[log.oldRing as RadarRing].text})`
+                                                                    }}
+                                                                >{log.oldRing.toUpperCase()}</span>
+                                                                <span>a</span>
+                                                                <span
+                                                                    className='p-1 mx-1 rounded-lg font-semibold'
+                                                                    style={{
+                                                                        backgroundColor: `rgb(${ringColors[log.newRing as RadarRing].background})`,
+                                                                        color: `rgb(${ringColors[log.newRing as RadarRing].text})`
+                                                                    }}
+                                                                >{log.newRing.toUpperCase()}</span>
+                                                            </p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
                                 )}
                             </div>
                         </DialogContent>
                     </Dialog>
                 )}
-            </div >
-        )
+            </div>
+        );
     };
