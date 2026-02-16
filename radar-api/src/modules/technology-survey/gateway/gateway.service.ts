@@ -11,6 +11,7 @@ import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-ite
 import { ItemWithClassification } from '../shared/types/classified-item.type';
 import { InsightsWithCitations } from './types/insights-with-citations.type';
 import { ClassificationChange } from '../shared/types/classification-change.type';
+import { IdBatchDto } from './dto/id-batch.dto';
 
 @Injectable()
 export class ItemsGatewayService {
@@ -221,7 +222,8 @@ export class ItemsGatewayService {
      * @param userId UUID del usuario.
      * @returns Promesa vacía al completar la operación.
      */
-    async subscribeBatch(ids: UUID[], userId: UUID): Promise<void> {
+    async subscribeBatch(batch: IdBatchDto, userId: UUID): Promise<void> {
+        const ids = batch.itemIds;
         this.logger.log(`Executed subscribe of ${ids.length} items`);
 
         await this.prisma.userSubscribedItem.createMany({
@@ -239,7 +241,8 @@ export class ItemsGatewayService {
      * @param userId UUID del usuario.
      * @returns Promesa vacía al completar la operación.
      */
-    async unsubscribeBatch(ids: UUID[], userId: UUID): Promise<void> {
+    async unsubscribeBatch(batch: IdBatchDto, userId: UUID): Promise<void> {
+        const ids = batch.itemIds;
         this.logger.log(`Executed unsubscribeBatch of ${ids.length} items`);
 
         await this.prisma.userSubscribedItem.deleteMany({
@@ -257,7 +260,8 @@ export class ItemsGatewayService {
      * @param userId UUID del usuario que realiza la acción.
      * @returns Promesa vacía al completar la operación.
      */
-    async removeBatch(ids: UUID[], userId: UUID): Promise<void> {
+    async removeBatch(batch: IdBatchDto, userId: UUID): Promise<void> {
+        const ids = batch.itemIds;
         this.logger.log(`Executed remove of ${ids.length} items`);
 
         const itemsToCheck = await this.prisma.item.findMany({
