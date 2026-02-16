@@ -358,7 +358,9 @@ export const RecommendationsFeed: React.FC = () => {
                             });
                         }}
                         onViewDetails={() =>
-                            navigate(`${PathOption.TECHNOLOGY_RADAR_ITEM_DETAILS}/${item.id}`)
+                            navigate(`${PathOption.TECHNOLOGY_RADAR_ITEM_DETAILS}/${item.id}`, {
+                                state: { item }
+                            })
                         }
                         isLoading={{
                             subscribeOne: query.isLoading.subscribeOne,

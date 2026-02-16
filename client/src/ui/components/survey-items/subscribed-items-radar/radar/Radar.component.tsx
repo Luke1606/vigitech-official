@@ -375,8 +375,9 @@ export const Radar: React.FC<{
 
         // Manejadores para las acciones del menú
         const handleViewDetails = (item: SurveyItem) => {
-            console.log('Ver detalles:', item);
-            navigate(`/vigitech/technology-radar/item-details/${item.id}`);
+            navigate(`/vigitech/technology-radar/item-details/${item.id}`, {
+                state: { item }
+            });
             setMenuOpen(false);
         };
 
