@@ -14,7 +14,7 @@ export const RecommendationsFeed: React.FC = () => {
 
     const [selectedItems, setSelectedItems] = useState<SurveyItem[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const [itemsPerPage, setItemsPerPage] = useState<number>(9);
+    const [itemsPerPage, setItemsPerPage] = useState<number>(6);
     const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
     const [isMultipleSelection, setIsMultipleSelection] = useState<boolean>(false);
 
@@ -59,7 +59,7 @@ export const RecommendationsFeed: React.FC = () => {
             if (width < 768) {
                 setItemsPerPage(3);
             } else {
-                setItemsPerPage(9);
+                setItemsPerPage(6);
             }
         };
         handleResize();
