@@ -4,6 +4,7 @@ import { UserSubscribedItem, Item } from '@prisma/client';
 import type { AuthenticatedRequest } from '@/shared/types/authenticated-request.type';
 import { ItemsGatewayService } from './gateway.service';
 import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-item.dto';
+import { IdBatchDto } from './dto/id-batch.dto';
 
 @Controller('tech-survey/survey-items')
 export class ItemsGatewayController {
@@ -73,25 +74,23 @@ export class ItemsGatewayController {
     }
 
     @Patch('subscribe/batch')
-    async subscribeBatch(@Body() itemIds: UUID[], @Req() request: AuthenticatedRequest): Promise<void> {
+    async subscribeBatch(@Body() data: IdBatchDto, @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed subscribeBatch');
-        this.logger.warn(itemIds)
         const userId: UUID = request.userId as UUID;
-        return await this.itemsService.subscribeBatch(itemIds, userId);
+        return await this.itemsService.subscribeBatch(data, userId);
     }
 
     @Patch('unsubscribe/batch')
-    async unsubscribeBatch(@Body() itemIds: UUID[], @Req() request: AuthenticatedRequest): Promise<void> {
+    async unsubscribeBatch(@Body() data: IdBatchDto, @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed unsubscribeBatch');
         const userId: UUID = request.userId as UUID;
-        return await this.itemsService.unsubscribeBatch(itemIds, userId);
+        return await this.itemsService.unsubscribeBatch(data, userId);
     }
 
     @Delete('batch')
-    async removeBatch(@Body() itemIds: UUID[], @Req() request: AuthenticatedRequest): Promise<void> {
+    async removeBatch(@Body() data: IdBatchDto, @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed removeBatch');
-        this.logger.warn(itemIds)
         const userId: UUID = request.userId as UUID;
-        return await this.itemsService.removeBatch(itemIds, userId);
+        return await this.itemsService.removeBatch(data, userId);
     }
 }
