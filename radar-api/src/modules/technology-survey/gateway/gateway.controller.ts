@@ -35,6 +35,34 @@ export class ItemsGatewayController {
         return await this.itemsService.findOne(id, userId);
     }
 
+    @Post('create/batch')
+    async createBatch(@Body() data: CreateUnclassifiedItemDto[], @Req() request: AuthenticatedRequest): Promise<void> {
+        this.logger.log('Executed create');
+        const userId: UUID = request.userId as UUID;
+        return await this.itemsService.createBatch(data, userId);
+    }
+
+    @Patch('subscribe/batch')
+    async subscribeBatch(@Body() data: IdBatchDto, @Req() request: AuthenticatedRequest): Promise<void> {
+        this.logger.log('Executed subscribeBatch');
+        const userId: UUID = request.userId as UUID;
+        return await this.itemsService.subscribeBatch(data, userId);
+    }
+
+    @Patch('unsubscribe/batch')
+    async unsubscribeBatch(@Body() data: IdBatchDto, @Req() request: AuthenticatedRequest): Promise<void> {
+        this.logger.log('Executed unsubscribeBatch');
+        const userId: UUID = request.userId as UUID;
+        return await this.itemsService.unsubscribeBatch(data, userId);
+    }
+
+    @Delete('batch')
+    async removeBatch(@Body() data: IdBatchDto, @Req() request: AuthenticatedRequest): Promise<void> {
+        this.logger.log('Executed removeBatch');
+        const userId: UUID = request.userId as UUID;
+        return await this.itemsService.removeBatch(data, userId);
+    }
+
     @Post('create')
     async create(@Body() data: CreateUnclassifiedItemDto, @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed create');
@@ -64,33 +92,5 @@ export class ItemsGatewayController {
         this.logger.log('Executed remove');
         const userId: UUID = request.userId as UUID;
         return await this.itemsService.removeOne(id, userId);
-    }
-
-    @Post('create/batch')
-    async createBatch(@Body() data: CreateUnclassifiedItemDto[], @Req() request: AuthenticatedRequest): Promise<void> {
-        this.logger.log('Executed create');
-        const userId: UUID = request.userId as UUID;
-        return await this.itemsService.createBatch(data, userId);
-    }
-
-    @Patch('subscribe/batch')
-    async subscribeBatch(@Body() data: IdBatchDto, @Req() request: AuthenticatedRequest): Promise<void> {
-        this.logger.log('Executed subscribeBatch');
-        const userId: UUID = request.userId as UUID;
-        return await this.itemsService.subscribeBatch(data, userId);
-    }
-
-    @Patch('unsubscribe/batch')
-    async unsubscribeBatch(@Body() data: IdBatchDto, @Req() request: AuthenticatedRequest): Promise<void> {
-        this.logger.log('Executed unsubscribeBatch');
-        const userId: UUID = request.userId as UUID;
-        return await this.itemsService.unsubscribeBatch(data, userId);
-    }
-
-    @Delete('batch')
-    async removeBatch(@Body() data: IdBatchDto, @Req() request: AuthenticatedRequest): Promise<void> {
-        this.logger.log('Executed removeBatch');
-        const userId: UUID = request.userId as UUID;
-        return await this.itemsService.removeBatch(data, userId);
     }
 }
