@@ -85,10 +85,16 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
             .delete('survey-items/batch', { data: { itemIds } });
     }
 
-    async runGlobalRecommendations(): Promise<{ message: string, data: any[] }> {
+    async runGlobalRecommendations(): Promise<void> {
         const response = await this.axios.http
             .post('orchestration/run-global-recommendations');
 
+        return response.data;
+    }
+
+    async runAllReclassifications(): Promise<void> {
+        const response = await this.axios.http
+            .post('orchestration/run-all-reclassifications');
         return response.data;
     }
 }

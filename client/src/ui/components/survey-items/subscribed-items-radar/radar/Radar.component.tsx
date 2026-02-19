@@ -23,6 +23,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "../../../../components/shared";
+import { useChangelog } from '../../../../../infrastructure/hooks/use-changelog';
 
 // ============ FUNCIONES DE NORMALIZACIÓN ============
 const mapApiQuadrantToEnum = (apiValue: string): RadarQuadrant => {
@@ -87,6 +88,7 @@ export const Radar: React.FC<{
     onBlipHover
 }) => {
         const query = useSurveyItemsAPI();
+        const { addChangeLog } = useChangelog();
         const navigate = useNavigate();
 
         // Estado local para los items normalizados
@@ -373,8 +375,9 @@ export const Radar: React.FC<{
 
         // Manejadores para las acciones del menú
         const handleViewDetails = (item: SurveyItem) => {
-            console.log('Ver detalles:', item);
-            navigate(`/vigitech/technology-radar/item-details/${item.id}`);
+            navigate(`/vigitech/technology-radar/item-details/${item.id}`, {
+                state: { item }
+            });
             setMenuOpen(false);
         };
 
@@ -426,17 +429,48 @@ export const Radar: React.FC<{
             }
         };
 
-        // Función para buscar cambios (ejecuta query.subscribed)
+        // Función para buscar cambios y añadir al registro de cambios
         const handleSearchChanges = async () => {
-            console.log('Buscando cambios...');
             setMobileMenuOpen(false);
-            setIsLoadingChanges(true);
+
+            // Asegúrate de tener los datos actuales para comparar
+            if (!normalizedEntries || normalizedEntries.length === 0) {
+                console.warn('No hay datos cargados para comparar los cambios');
+                return;
+            }
+
             try {
-                await query.subscribed;
+                // Ejecuta la mutación y espera el resultado
+                const result = await query.runAllReclassifications();
+                console.log(result)
+
+                // result es un array de objetos con { id, newRing }
+                if (Array.isArray(result) && result.length > 0) {
+                    // Crea un mapa para búsqueda rápida por id
+                    const currentItemsMap = new Map(normalizedEntries.map(item => [item.id, item]));
+
+                    result.forEach(change => {
+                        const currentItem = currentItemsMap.get(change.id);
+                        if (currentItem) {
+                            // El anillo anterior es el que tiene actualmente el elemento
+                            const oldRing = currentItem.latestClassification.classification;
+
+                            // El nuevo anillo viene como string; conviértelo a enum
+                            const newRing = mapApiRingToEnum(change.newRing);
+
+                            addChangeLog({
+                                itemTitle: currentItem.title,
+                                oldRing,
+                                newRing,
+                                timestamp: new Date().toISOString(),
+                            });
+                        } else {
+                            console.warn(`Elemento con id ${change.id} no encontrado en la lista actual`);
+                        }
+                    });
+                }
             } catch (error) {
-                console.error('Error buscando cambios:', error);
-            } finally {
-                setIsLoadingChanges(false);
+                console.error('Error al buscar cambios:', error);
             }
         };
 
@@ -589,16 +623,16 @@ export const Radar: React.FC<{
                                 {/* Buscar Cambios */}
                                 <DropdownMenuItem
                                     onClick={handleSearchChanges}
-                                    disabled={isLoadingChanges}
+                                    disabled={query.isLoading.runAllReclassifications}
                                     className="flex items-center cursor-pointer py-3"
                                 >
-                                    {isLoadingChanges ? (
+                                    {query.isLoading.runAllReclassifications ? (
                                         <RefreshCw size={18} className="mr-3 animate-spin" />
                                     ) : (
                                         <RefreshCw size={18} className="mr-3" />
                                     )}
                                     <span className="text-base">
-                                        {isLoadingChanges ? 'Buscando...' : 'Buscar Cambios'}
+                                        {query.isLoading.runAllReclassifications ? 'Buscando...' : 'Buscar Cambios'}
                                     </span>
                                 </DropdownMenuItem>
 

@@ -4,4 +4,5 @@ export type ChangeLogEntry = {
     itemTitle: string;
     oldRing: RadarRing;
     newRing: RadarRing;
+    timestamp: string;
 }

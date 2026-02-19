@@ -16,6 +16,7 @@ import {
 	useCreateBatchSurveyItemsMutationOptions,
 	useRunGlobalRecommendationsMutationOptions,
 } from './mutation-options';
+import { useRunAllReclassificationsMutationOptions } from './mutation-options/runAllReclassifications.mutation';
 
 // ----------------------------------------------------------------------
 // Tipado para las opciones del hook (solo batch por ahora)
@@ -59,6 +60,10 @@ export const useSurveyItemsAPI = (options: SurveyItemsAPIOptions = {}) => {
 		useRunGlobalRecommendationsMutationOptions()
 	);
 
+	const useRunAllReclassificationsMutation = useMutation(
+		useRunAllReclassificationsMutationOptions()
+	);
+
 	// ----------------------------------------------------------------
 	// Mutaciones BATCH - con callbacks de limpieza inyectados
 	// ----------------------------------------------------------------
@@ -88,6 +93,7 @@ export const useSurveyItemsAPI = (options: SurveyItemsAPIOptions = {}) => {
 		create: useCreateSurveyItemMutation.mutate,
 		createBatch: useCreateBatchSurveyItemsMutation.mutate,
 		runGlobalRecommendations: useRunGlobalRecommendationsMutation.mutate,
+		runAllReclassifications: useRunAllReclassificationsMutation.mutateAsync,
 
 		// ----- Objetos completos de mutación (acceso a estados) -----
 		runGlobalRecommendationsMutation: useRunGlobalRecommendationsMutation,
@@ -103,6 +109,7 @@ export const useSurveyItemsAPI = (options: SurveyItemsAPIOptions = {}) => {
 			create: useCreateSurveyItemMutation.isPending,
 			createBatch: useCreateBatchSurveyItemsMutation.isPending,
 			runGlobalRecommendations: useRunGlobalRecommendationsMutation.isPending,
+			runAllReclassifications: useRunAllReclassificationsMutation.isPending,
 		},
 
 		// ----- Estados de error -----
@@ -116,6 +123,7 @@ export const useSurveyItemsAPI = (options: SurveyItemsAPIOptions = {}) => {
 			create: useCreateSurveyItemMutation.isError,
 			createBatch: useCreateBatchSurveyItemsMutation.isError,
 			runGlobalRecommendations: useRunGlobalRecommendationsMutation.isError,
+			runAllReclassifications: useRunAllReclassificationsMutation.isError,
 		},
 	};
 };

@@ -18,7 +18,7 @@ export const useRunGlobalRecommendationsMutationOptions = () => {
             queryClient.invalidateQueries({
                 queryKey: [surveyItemsKey, 'recommended']
             });
-            toast.success(data.message || "Recomendaciones generadas exitosamente.");
+            toast.success("Recomendaciones generadas exitosamente.");
         },
     });
 };
