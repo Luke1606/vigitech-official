@@ -143,24 +143,10 @@ npm run dev   # Iniciar desarrollo | Start development
 
 Información necesaria para la administración del entorno local:
 
-* 
-**PGAdmin:** [http://localhost:8080](http://localhost:8080) 
-
-
-* 
-**Usuario:** `superuser-admin@vigitech.com` 
-
-
-* 
-**Password:** `vigitech-dev-password-DO_NOT_TOUCH_4000` 
-
-
-
-
-* 
-**PostgreSQL:** `localhost:4000` 
-
-
+* **PGAdmin:** [http://localhost:8080](http://localhost:8080) 
+* **Usuario:** `superuser-admin@vigitech.com` 
+* **Password:** `vigitech-dev-password-DO_NOT_TOUCH_4000` 
+* **PostgreSQL:** `localhost:4000` 
 * **API:** `localhost:3000`
 
 ---
