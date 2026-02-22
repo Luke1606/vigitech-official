@@ -85,34 +85,13 @@ Si es la primera vez que ejecuta el proyecto, siga estos pasos desde el menú.
 El archivo `menu.bat` permite ejecutar las siguientes acciones:
 
 * **[1] Desarrollo Completo:** Inicia la infraestructura de base de datos y arranca la API en modo desarrollo.
-* 
-**[2] Solo Base de Datos:** Levanta únicamente los contenedores de PostgreSQL y PGAdmin.
-
-
-* 
-**[3] Desarrollo Rapido:** Inicia la API asumiendo que la base de datos ya está activa.
-
-
-* 
-**[4] Ejecutar Tests:** Levanta una base de datos temporal, aplica migraciones y ejecuta las pruebas de cobertura.
-
-
-* 
-**[5] Siembra de Datos (Seeding):** Permite elegir entre tres niveles de carga de datos (Inicial, Medios, Completos).
-
-
-* 
-**[6] Gestionar Migraciones:** Menú para crear, aplicar o resetear el esquema de la base de datos mediante Prisma.
-
-
-* 
-**[7] Build Produccion:** Prepara el proyecto para despliegue instalando solo dependencias necesarias y creando la imagen Docker.
-
-
-* 
-**[8] Detener Todo:** Apaga los contenedores y libera recursos de memoria.
-
-
+* **[2] Solo Base de Datos:** Levanta únicamente los contenedores de PostgreSQL y PGAdmin.
+* **[3] Desarrollo Rapido:** Inicia la API asumiendo que la base de datos ya está activa.
+* **[4] Ejecutar Tests:** Levanta una base de datos temporal, aplica migraciones y ejecuta las pruebas de cobertura.
+* **[5] Siembra de Datos (Seeding):** Permite elegir entre tres niveles de carga de datos (Inicial, Medios, Completos).
+* **[6] Gestionar Migraciones:** Menú para crear, aplicar o resetear el esquema de la base de datos mediante Prisma.
+* **[7] Build Produccion:** Prepara el proyecto para despliegue instalando solo dependencias necesarias y creando la imagen Docker.
+* **[8] Detener Todo:** Apaga los contenedores y libera recursos de memoria.
 
 ---
 
