@@ -51,6 +51,7 @@ El núcleo del servicio está construido buscando alto rendimiento y escalabilid
 ---
 
 <br id="backend-menu">
+
 ### 1. Acceso al Backend y Menú | Backend Access & Menu
 
 Para administrar el servidor y la infraestructura, acceda a la carpeta del API y ejecute el menú interactivo.
@@ -59,12 +60,12 @@ Para administrar el servidor y la infraestructura, acceda a la carpeta del API y
 ```batch
 cd radar-api
 ./menu
-
 ```
 
 ---
 
 <br id="initial-setup">
+
 ### 2. Configuración Inicial | Initial Setup
 
 Si es la primera vez que ejecuta el proyecto, siga estos pasos desde el menú.
@@ -78,6 +79,7 @@ Si es la primera vez que ejecuta el proyecto, siga estos pasos desde el menú.
 ---
 
 <br id="menu-commands">
+
 ### 3. Referencia de Comandos del Menú | Menu Commands Reference
 
 El archivo `menu.bat` permite ejecutar las siguientes acciones:
@@ -115,6 +117,7 @@ El archivo `menu.bat` permite ejecutar las siguientes acciones:
 ---
 
 <br id="npm-scripts">
+
 ### 4. Scripts de npm (Backend) | npm Scripts (Backend)
 
 Además del menú, puede ejecutar comandos específicos mediante `npm run` dentro de `radar-api/`:
@@ -134,6 +137,7 @@ Además del menú, puede ejecutar comandos específicos mediante `npm run` dentr
 ---
 
 <br id="frontend">
+
 ### 5. Ejecución del Frontend | Frontend Execution
 
 Para el cliente, debe acceder a la carpeta correspondiente desde la raíz del repositorio.
@@ -155,12 +159,13 @@ npm run dev   # Iniciar desarrollo | Start development
 ---
 
 <br id="access">
+
 ### 6. Credenciales y Acceso | Credentials and Access
 
 Información necesaria para la administración del entorno local:
 
 * 
-**PGAdmin:** [http://localhost:8080](https://www.google.com/search?q=http://localhost:8080) 
+**PGAdmin:** [http://localhost:8080](http://localhost:8080) 
 
 
 * 
