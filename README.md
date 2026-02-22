@@ -2,11 +2,11 @@
 
 ## [ES]
 
-Bienvenido al repositorio central de **Vigitech**, una plataforma avanzada de vigilancia tecnológica diseñada para fusionar visión estratégica e inteligencia de datos. Este repositorio alberga el punto de entrada (Portal) y el motor de monitoreo en tiempo real a través de nuestro servicio de Radar. Para ver más, entre [aquí](https://www.cubadigital.ai/soluciones/radar).
+Bienvenido al repositorio central de **Vigitech**, una plataforma avanzada de vigilancia tecnológica diseñada para fusionar visión estratégica e inteligencia de datos. Este repositorio alberga el punto de entrada (Portal) y el motor de monitoreo en tiempo real a través de nuestro servicio de Radar. Para ver más, vea el [video](https://www.cubadigital.ai/soluciones/radar) o lea el [artículo](https://www.juventudtecnica.cu/articulos/presentan-consorcio-de-inteligencia-artificial-en-cuba/) en la sección "Radar".
 
 ## [EN]
 
-*Welcome to the **Vigitech** central repository, an advanced technology surveillance platform designed to merge strategic vision and data intelligence. This repository hosts the entry point (Portal) and the real-time monitoring engine through our Radar service.* For more info, watch [this](https://www.cubadigital.ai/soluciones/radar).
+*Welcome to the **Vigitech** central repository, an advanced technology surveillance platform designed to merge strategic vision and data intelligence. This repository hosts the entry point (Portal) and the real-time monitoring engine through our Radar service.* For more info, watch the [video](https://www.cubadigital.ai/soluciones/radar) or read the [post](https://www.juventudtecnica.cu/articulos/presentan-consorcio-de-inteligencia-artificial-en-cuba/) in the "Radar" section.
 
 > [!IMPORTANT]
 > **Fase del Proyecto | Project Phase:** Actualmente en fase de pruebas (Alpha). El sistema se encuentra en proceso de escalado y modularización continua. / *Currently in testing phase (Alpha). The system is undergoing continuous scaling and modularization.*
