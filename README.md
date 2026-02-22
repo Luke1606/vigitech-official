@@ -2,11 +2,11 @@
 
 ## [ES]
 
-Bienvenido al repositorio central de **Vigitech**, una plataforma avanzada de vigilancia tecnológica diseñada para fusionar visión estratégica e inteligencia de datos. Este repositorio alberga el punto de entrada (Portal) y el motor de monitoreo en tiempo real a través de nuestro servicio de Radar.
+Bienvenido al repositorio central de **Vigitech**, una plataforma avanzada de vigilancia tecnológica diseñada para fusionar visión estratégica e inteligencia de datos. Este repositorio alberga el punto de entrada (Portal) y el motor de monitoreo en tiempo real a través de nuestro servicio de Radar. Para ver más, entre [aquí](https://www.cubadigital.ai/soluciones/radar).
 
 ## [EN]
 
-*Welcome to the **Vigitech** central repository, an advanced technology surveillance platform designed to merge strategic vision and data intelligence. This repository hosts the entry point (Portal) and the real-time monitoring engine through our Radar service.*
+*Welcome to the **Vigitech** central repository, an advanced technology surveillance platform designed to merge strategic vision and data intelligence. This repository hosts the entry point (Portal) and the real-time monitoring engine through our Radar service.* For more info, watch [this](https://www.cubadigital.ai/soluciones/radar).
 
 > [!IMPORTANT]
 > **Fase del Proyecto | Project Phase:** Actualmente en fase de pruebas (Alpha). El sistema se encuentra en proceso de escalado y modularización continua. / *Currently in testing phase (Alpha). The system is undergoing continuous scaling and modularization.*
