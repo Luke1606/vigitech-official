@@ -150,9 +150,6 @@ export const Radar: React.FC<{
         const [isChangesButtonHovered, setIsChangesButtonHovered] = React.useState(false);
         const [isDeselectAllButtonHovered, setIsDeselectAllButtonHovered] = React.useState(false);
 
-        // Estado para el loading de cambios
-        const [isLoadingChanges, setIsLoadingChanges] = React.useState(false);
-
         // Estado para el menú móvil
         const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
@@ -203,8 +200,8 @@ export const Radar: React.FC<{
         const searchButtonStrokeColor = isSearchButtonHovered ? '#1e40af' : '#1d4ed8';
 
         // Colores para el botón de buscar cambios
-        const changesButtonFillColor = isChangesButtonHovered ? '#059669' : (isLoadingChanges ? '#059669' : '#10b981');
-        const changesButtonStrokeColor = isChangesButtonHovered ? '#047857' : (isLoadingChanges ? '#047857' : '#059669');
+        const changesButtonFillColor = isChangesButtonHovered ? '#059669' : (query.isLoading.runAllReclassifications ? '#059669' : '#10b981');
+    const changesButtonStrokeColor = isChangesButtonHovered ? '#047857' : (query.isLoading.runAllReclassifications ? '#047857' : '#059669');
 
         // Colores para el botón de Deseleccionar Todos
         const deselectAllButtonFillColor = isDeselectAllButtonHovered ? '#dc2626' : '#ef4444';
@@ -1120,10 +1117,10 @@ export const Radar: React.FC<{
                                 fontWeight="500"
                                 style={{ userSelect: 'none', pointerEvents: 'none' }}
                             >
-                                {isLoadingChanges ? 'Buscando...' : 'Buscar Cambios'}
+                                {query.isLoading.runAllReclassifications ? 'Buscando...' : 'Buscar Cambios'}
                             </text>
                             <g transform="translate(35, -422)" style={{ pointerEvents: 'none' }}>
-                                {isLoadingChanges ? (
+                                {query.isLoading.runAllReclassifications ? (
                                     <circle
                                         cx="0"
                                         cy="0"
@@ -1256,8 +1253,8 @@ export const Radar: React.FC<{
                         const quadrantBlips = entries.filter((b) =>
                             b.itemField === quadrant.label && visibleQuadrants[quadrant.label]
                         );
-                        const column1 = quadrantBlips.slice(0, 10);
-                        const column2 = quadrantBlips.slice(10);
+                        const column1 = quadrantBlips.slice(0, 15);
+                        const column2 = quadrantBlips.slice(15);
 
                         const titleX = quadrant.label === RadarQuadrant.BUSSINESS_INTEL
                             ? quadrant.x + 60
