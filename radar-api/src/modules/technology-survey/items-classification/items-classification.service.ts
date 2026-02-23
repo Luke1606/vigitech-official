@@ -100,7 +100,7 @@ export class ItemsClassificationService {
         const currentClassification = item.latestClassification?.classification;
 
         const prompt: string = `
-            Eres un Analista de Radar de Tecnología. Tu tarea es evaluar si la tecnología especificada debe cambiar de anillo (clasificación) basándote ESTRICTAMENTE en la evidencia proporcionada en el contexto RAG.
+            Eres un Analista de Radar de Tecnología. Tu tarea es evaluar si la tecnología especificada en un campo especificado debe cambiar de anillo (clasificación) basándote ESTRICTAMENTE en la evidencia proporcionada en el contexto RAG.
 
             --- REGLAS DEL RADAR ---
             ANILLOS: ADOPT, TEST, SUSTAIN, HOLD.
@@ -112,8 +112,8 @@ export class ItemsClassificationService {
             Anillo Actual: ${currentClassification || 'TEST'}
 
             --- INSTRUCCIÓN DE RECLASIFICACIÓN ---
-            Analiza el contexto RAG para encontrar evidencia que justifique un *cambio de anillo*. Si la evidencia es insuficiente, la clasificación debe permanecer igual. Justifica la decisión.
-
+            Analiza el contexto RAG para encontrar evidencia que justifique un *cambio de anillo*. Justifica la decisión en cualquier caso.
+            
             --- CONTEXTO RAG (EVIDENCIA) ---
             ${contextText}
 
@@ -126,6 +126,9 @@ export class ItemsClassificationService {
                 insightsValues: { 
                     insight: string; 
                     reasoningMetrics: { [key: string]: number | string }; 
+                    // Nota: En 'reasoningMetrics', no uses números estáticos. Usa este esquema:
+                    // "delta_type": "EVOLUTIONARY" | "DISRUPTIVE" | "STAGNANT",
+                    // "justification_weight": "Breve frase explicando la fuerza de la nueva evidencia frente a la anterior"
                     citedFragmentIds: string[]; 
                 };
                 item: { id: string }; // Devuelve solo el ID o el objeto Item original para referencia.

@@ -118,5 +118,125 @@
   {
     "textSnippet": "El desafío de la calidad de los datos en los data lakes no estructurados está llevando a la aparición de herramientas de data quality automatizadas basadas en IA.",
     "associatedKPIs": { "data_quality_issue_rate": 0.18, "ai_data_quality_tooling_adoption": 0.15 }
-  }
+  },
+  { 
+    "textSnippet": "Z-Stream anuncia integración con Cloudflare. Los benchmarks confirman la reducción del 40% en latencia prometida. Adopción creciente en apps de video.", 
+    "associatedKPIs": { "maturity": "BETA", "adoption_growth": 0.40 } 
+  },
+  { 
+    "textSnippet": "LuminaDB v1.2 resuelve la consistencia pero el uso de memoria RAM es un 80% superior a Redis. Se cuestiona su viabilidad en producción económica.", 
+    "associatedKPIs": { "stability": "HIGH", "memory_overhead": 0.80 } 
+  },
+  { 
+    "textSnippet": "CarbonUI es adoptado por una multinacional de retail. Reportan que la curva de aprendizaje es muy alta y falta documentación de componentes complejos.", 
+    "associatedKPIs": { "enterprise_adoption": 1, "learning_curve_days": 15 } 
+  },
+  { 
+    "textSnippet": "Orion-Mesh lanza soporte para gRPC y protocolos legacy. Se posiciona como alternativa real a Istio para casos de uso de alto rendimiento.", 
+    "associatedKPIs": { "protocol_support": "FULL", "cpu_overhead": 0.05 } 
+  },
+  { 
+    "textSnippet": "DeepTrace mejora su modelo de grafos. Los falsos positivos bajan al 15%, permitiendo su uso en dashboards de monitoreo no crítico.", 
+    "associatedKPIs": { "false_positive_rate": 0.15, "confidence_score": 0.85 } 
+  },
+  { 
+    "textSnippet": "Hydro-Compute recibe soporte oficial de Chrome y Firefox móvil. Se detectan problemas de sobrecalentamiento en dispositivos gama media.", 
+    "associatedKPIs": { "device_compatibility": 0.75, "thermal_impact": "HIGH" } 
+  },
+  { 
+    "textSnippet": "SecureNode v0.5 introduce compatibilidad con el ecosistema NPM casi al 100%. Las auditorías de seguridad son muy favorables.", 
+    "associatedKPIs": { "npm_compat": 0.98, "vulnerabilities_detected": 0 } 
+  },
+  { 
+    "textSnippet": "QuantumAuth: Se publica la implementación en C++. La latencia baja a 40ms, haciéndolo viable para servicios de identidad modernos.", 
+    "associatedKPIs": { "latency_ms": 40, "production_ready": true } 
+  },
+  { 
+    "textSnippet": "Vortex-Query optimiza sus índices. La búsqueda encriptada ahora es solo 5 veces más lenta que la normal. Interés de sectores financieros.", 
+    "associatedKPIs": { "encryption_overhead": 5.0, "financial_sector_interest": 0.90 } 
+  },
+  { 
+    "textSnippet": "BioLink-ID: Microsoft y Google se unen al grupo de trabajo de la W3C. Primeras implementaciones de referencia disponibles.", 
+    "associatedKPIs": { "standardization_status": "CANDIDATE", "industry_backing": ["MSFT", "GOOG"] } 
+  },
+  { 
+    "textSnippet": "Neo-Saga lanza SDKs para Java y .NET. Se utiliza con éxito en el sistema de pagos de una startup Unicornio.", 
+    "associatedKPIs": { "language_support": ["GO", "JAVA", "DOTNET"], "failure_recovery_rate": 0.99 } 
+  },
+  { 
+    "textSnippet": "Flex-Cache v2.0 demuestra estabilidad en entornos de 100 nodos. Se integra nativamente con Kubernetes via Sidecar.", 
+    "associatedKPIs": { "scaling_nodes": 100, "k8s_integration": "NATIVE" } 
+  },
+  { 
+    "textSnippet": "Meta-Logic introduce un depurador visual. La adopción entre analistas de negocio crece un 200%.", 
+    "associatedKPIs": { "user_growth": 2.0, "debuggability": 0.80 } 
+  },
+  { 
+    "textSnippet": "Nova-Storage: Se valida en hardware estándar con una pérdida de rendimiento de solo el 15%. Ya no requiere SSDs propietarios.", 
+    "associatedKPIs": { "hardware_dependency": 0.20, "read_speed": "1.5GB/s" } 
+  },
+  { 
+    "textSnippet": "Sync-Wave es adoptado por tres motores de juegos indie. Los reportes de jitter en conexiones transcontinentales son excelentes.", 
+    "associatedKPIs": { "jitter_ms_avg": 2, "community_sentiment": 0.90 } 
+  },
+  { 
+    "textSnippet": "Titan-Compiler soporta ahora arquitecturas ARM de 32 bits. Se utiliza en el firmware de nuevos smartwatches económicos.", 
+    "associatedKPIs": { "target_support": "ARM-32-SUPPORT", "power_efficiency_gain": 0.22 } 
+  },
+  { 
+    "textSnippet": "Aether-OS recibe la certificación de seguridad industrial IEC 61508. Primeras ventas a empresas de automoción.", 
+    "associatedKPIs": { "certification_status": "CERTIFIED", "commercial_deployments": 5 } 
+  },
+  { 
+    "textSnippet": "Fluid-API añade soporte para MySQL y SQL Server. El generador ahora permite lógica personalizada en JavaScript.", 
+    "associatedKPIs": { "db_compatibility": ["POSTGRES", "MYSQL", "SQLSERVER"], "custom_logic_support": true } 
+  },
+  { 
+    "textSnippet": "Zenith-ML optimiza el entrenamiento en iPhone. El consumo de batería durante el entrenamiento baja un 50%.", 
+    "associatedKPIs": { "battery_impact": 0.10, "training_time_h": 4 } 
+  },
+  { 
+    "textSnippet": "Kube-Light añade soporte para CRDs. Se utiliza masivamente en instalaciones de Edge Computing con Raspberry Pi.", 
+    "associatedKPIs": { "crd_support": true, "edge_deployments": 1500 } 
+  },
+  { 
+    "textSnippet": "Green-Compute: El primer gran proveedor de Cloud integra sus APIs como opción beta para desarrolladores.", 
+    "associatedKPIs": { "cloud_provider_support": 1, "carbon_reduction_verified": 0.28 } 
+  },
+  { 
+    "textSnippet": "Swift-Bus añade persistencia opcional mediante almacenamiento en memoria volátil mapeada a disco. Latencia estable.", 
+    "associatedKPIs": { "persistence": "OPTIONAL", "latency_ms": 0.05 } 
+  },
+  { 
+    "textSnippet": "Logic-Gate-CSS: Se descubre que causa problemas de accesibilidad severos en lectores de pantalla. Interés en declive.", 
+    "associatedKPIs": { "accessibility_score": 0.15, "developer_interest": -0.40 } 
+  },
+  { 
+    "textSnippet": "Auto-Doc-IA ahora soporta C# y Java. La precisión de los diagramas sube al 85% gracias a un nuevo modelo de lenguaje.", 
+    "associatedKPIs": { "accuracy_rate": 0.85, "language_support": ["JS", "PY", "CS", "JAVA"] } 
+  },
+  { 
+    "textSnippet": "Pixel-Vault: Los tiempos de recuperación bajan a 100ms. Se asocia con una plataforma de streaming de música.", 
+    "associatedKPIs": { "retrieval_speed_ms": 100, "partner_platforms": 1 } 
+  },
+  { 
+    "textSnippet": "Trace-Zero añade un buffer de seguridad que reduce la pérdida de datos al 0.01% manteniendo la carga en disco en cero.", 
+    "associatedKPIs": { "data_loss_risk": 0.0001, "disk_i_o": 0.0 } 
+  },
+  { 
+    "textSnippet": "Giga-Registry demuestra una reducción del 70% en el tiempo de pulling de imágenes grandes en regiones remotas.", 
+    "associatedKPIs": { "pull_time_reduction": 0.70, "global_availability": true } 
+  },
+  { 
+    "textSnippet": "Nano-Worker v1.0 estable. Soporte para librerías nativas comunes mediante un nuevo sistema de bindings.", 
+    "associatedKPIs": { "native_lib_support": 0.75, "stability": "HIGH" } 
+  },
+  { 
+    "textSnippet": "Ender-Auth: Se distribuyen las primeras 10.000 llaves de hardware. Cero incidentes de phishing reportados en los usuarios.", 
+    "associatedKPIs": { "phishing_incidents": 0, "keys_in_use": 10000 } 
+  },
+  { 
+    "textSnippet": "Dora-Metrics-Bot añade soporte para GitLab y Azure DevOps. Se convierte en la herramienta preferida de equipos DevOps.", 
+    "associatedKPIs": { "platform_support": "ALL-MAJOR", "user_satisfaction": 0.95 }
+   }
 ]

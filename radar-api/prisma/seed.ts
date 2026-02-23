@@ -82,7 +82,7 @@ const DATA_TYPES: RawDataType[] = [
     'DATASET',
 ] as RawDataType[];
 
-const NUM_RAW_DATA = 30;
+const NUM_RAW_DATA = 60;
 const RAW_DATA_IDS: string[] = [];
 
 /**
@@ -156,7 +156,7 @@ async function main() {
                 associatedKPIs: fragment.associatedKPIs,
                 embedding: embeddings[index],
 
-                // Asigna un ID de RawData ciclicamente entre los 30 disponibles
+                // Asigna un ID de RawData ciclicamente entre los disponibles
                 sourceRawDataId: RAW_DATA_IDS[index % RAW_DATA_IDS.length],
             };
         },

@@ -118,5 +118,124 @@
   {
     "textSnippet": "La resistencia al cambio cultural es el principal factor que frena la adopción de metodologías como DevSecOps en grandes organizaciones, a pesar de las herramientas disponibles.",
     "associatedKPIs": { "devsecops_cultural_block_rate": 0.70, "security_scan_frequency_daily": 1 }
+  },
+  { 
+    "textSnippet": "Protocolo Z-Stream: Nueva arquitectura de streaming que promete reducir la latencia en un 40% mediante compresión en el borde. Actualmente en fase beta cerrada.", 
+    "associatedKPIs": { "maturity": "ALPHA", "latency_reduction": 0.40 } },
+  { 
+    "textSnippet": "LuminaDB: Motor de base de datos vectorial nativo para LLMs locales. Reporta problemas de consistencia en escrituras concurrentes masivas.", 
+    "associatedKPIs": { "consistency_score": 0.65, "concurrency_limit": 100 } 
+  },
+  { 
+    "textSnippet": "CarbonUI: Framework de componentes para interfaces de bajo consumo energético. Comunidad incipiente con solo 1200 estrellas en GitHub.", 
+    "associatedKPIs": { "power_saving": 0.15, "ecosystem_index": 0.1 } 
+  },
+  { 
+    "textSnippet": "Orion-Mesh: Service mesh basado en eBPF para entornos multi-cloud. Documentación incompleta y falta de soporte para protocolos legacy.", 
+    "associatedKPIs": { "setup_friction": 0.85, "protocol_support": "HTTP/2-ONLY" } 
+  },
+  { 
+    "textSnippet": "DeepTrace: Herramienta de observabilidad que usa grafos causales para predecir fallos. Muy experimental, alto índice de falsos positivos.", 
+    "associatedKPIs": { "false_positive_rate": 0.45, "prediction_accuracy": 0.55 } 
+  },
+  { 
+    "textSnippet": "Hydro-Compute: Librería de computación paralela en navegadores vía WebGPU. Soporte limitado en navegadores móviles.", 
+    "associatedKPIs": { "browser_compatibility": 0.30, "perf_boost": 5.0 } 
+  },
+  { 
+    "textSnippet": "SecureNode v0.1: Entorno de ejecución para TypeScript con sandboxing granular por librería. Fase de diseño arquitectónico.", 
+    "associatedKPIs": { "security_isolation": 0.90, "runtime_overhead": 0.25 } 
+  },
+  { 
+    "textSnippet": "QuantumAuth: Algoritmo de post-quantum cryptography para JWTs. Actualmente solo existe como implementación en Python sin optimizar.", 
+    "associatedKPIs": { "quantum_resistance": 1.0, "latency_ms": 1200 } 
+  },
+  { 
+    "textSnippet": "Vortex-Query: Motor de búsqueda sobre datos encriptados (FHE). Velocidad 100 veces inferior a búsquedas en texto plano.", 
+    "associatedKPIs": { "encryption_overhead": 100.0, "search_precision": 0.99 } 
+  },
+  { 
+    "textSnippet": "BioLink-ID: Protocolo de identidad descentralizada basado en biométricos locales. Discusión inicial en la W3C.", 
+    "associatedKPIs": { "standardization_status": "DRAFT", "privacy_score": 0.95 } 
+  },
+  { 
+    "textSnippet": "Neo-Saga: Patrón de transacciones distribuidas para arquitecturas sin estado. Implementaciones de referencia solo en Go.", 
+    "associatedKPIs": { "complexity_score": 0.80, "language_support": ["GO"] } 
+  },
+  { 
+    "textSnippet": "Flex-Cache: Caché distribuida que ajusta su topología dinámicamente según el tráfico. Pruebas iniciales en laboratorios de red.", 
+    "associatedKPIs": { "dynamic_scaling_latency": "500ms", "stability_index": 0.40 } 
+  },
+  { 
+    "textSnippet": "Meta-Logic: Engine de reglas de negocio que compila a WebAssembly para ejecución en el edge. Falta de tooling de depuración.", 
+    "associatedKPIs": { "debuggability": 0.10, "execution_speed_ms": 2 } 
+  },
+  { 
+    "textSnippet": "Nova-Storage: Sistema de archivos inmutable para logs masivos de auditoría. Requiere hardware específico para rendimiento óptimo.", 
+    "associatedKPIs": { "hardware_dependency": 0.90, "write_throughput": "2GB/s" } 
+  },
+  { 
+    "textSnippet": "Sync-Wave: Protocolo de sincronización de estado para juegos multijugador masivos. Promete 0% de jitter bajo carga.", 
+    "associatedKPIs": { "jitter_reduction": 1.0, "max_concurrence": 1000 } 
+  },
+  { 
+    "textSnippet": "Titan-Compiler: Compilador de Rust orientado a microcontroladores de 8 bits. Altamente experimental.", 
+    "associatedKPIs": { "binary_size_reduction": 0.60, "target_support": "AVR-ONLY" } 
+  },
+  { 
+    "textSnippet": "Aether-OS: Microkernel escrito en lenguaje formalmente verificado para IoT crítico. Prototipo funcional.", 
+    "associatedKPIs": { "verification_coverage": 0.85, "boot_time_ms": 150 } 
+  },
+  { 
+    "textSnippet": "Fluid-API: Generador de APIs reactivas a partir de esquemas SQL. Soporte solo para PostgreSQL inicial.", 
+    "associatedKPIs": { "db_compatibility": ["POSTGRES"], "dev_speed_increase": 0.50 } 
+  },
+  { 
+    "textSnippet": "Zenith-ML: Framework para federated learning en dispositivos móviles con foco en privacidad. Alta latencia en el entrenamiento.", 
+    "associatedKPIs": { "privacy_loss": 0.01, "training_time_h": 24 } 
+  },
+  { 
+    "textSnippet": "Kube-Light: Distribución de Kubernetes que consume menos de 100MB de RAM. No soporta CRDs complejos.", 
+    "associatedKPIs": { "ram_usage_mb": 95, "crd_support": false } 
+  },
+  { 
+    "textSnippet": "Green-Compute: Programador de tareas en nube que prioriza horas de baja huella de carbono. Fase conceptual.", 
+    "associatedKPIs": { "carbon_reduction_est": 0.35, "scheduling_delay": "4h" } 
+  },
+  { 
+    "textSnippet": "Swift-Bus: Message broker ultra ligero para sistemas embebidos. Sin persistencia de datos.", 
+    "associatedKPIs": { "persistence": false, "throughput_msg_s": 1000000 } 
+  },
+  { 
+    "textSnippet": "Logic-Gate-CSS: Metodología para lógica de UI usando solo selectores CSS. Curiosidad técnica en blogs de diseño.", 
+    "associatedKPIs": { "maintainability": 0.20, "browser_support": 0.99 } 
+  },
+  { 
+    "textSnippet": "Auto-Doc-IA: Plugin que genera diagramas de arquitectura leyendo código en tiempo real. Soporta pocos lenguajes.", 
+    "associatedKPIs": { "accuracy_rate": 0.60, "language_support": ["JS", "PY"] } 
+  },
+  { 
+    "textSnippet": "Pixel-Vault: Almacenamiento descentralizado para assets multimedia con DRM integrado. Beta por invitación.", 
+    "associatedKPIs": { "retrieval_speed_ms": 450, "drm_strength": 0.80 } 
+  },
+  { 
+    "textSnippet": "Trace-Zero: Sistema de logging que no escribe en disco, enviando datos vía UDP directamente. Riesgo de pérdida de datos.", 
+    "associatedKPIs": { "data_loss_risk": 0.30, "disk_i_o_usage": 0.0 } 
+  },
+  { 
+    "textSnippet": "Giga-Registry: Registro de contenedores optimizado para capas duplicadas a nivel global. En desarrollo.", 
+    "associatedKPIs": { "bandwidth_saving": 0.50, "replication_lag": "10m" } 
+  },
+  { 
+    "textSnippet": "Nano-Worker: Runtime para scripts aislados que inician en menos de 1ms. Problemas con librerías nativas.", 
+    "associatedKPIs": { "cold_start_ms": 0.8, "native_lib_support": 0.1 } 
+  },
+  { 
+    "textSnippet": "Ender-Auth: Sistema de autenticación sin tokens basado en hardware keys de bajo costo. Prototipo de hardware disponible.", 
+    "associatedKPIs": { "hardware_cost_usd": 5, "auth_speed_ms": 200 } 
+  },
+  { 
+    "textSnippet": "Dora-Metrics-Bot: Automatización total de métricas DORA mediante análisis de git y tickets. Solo para Jira y GitHub.", 
+    "associatedKPIs": { "setup_time_min": 15, "data_accuracy": 0.85 } 
   }
 ]

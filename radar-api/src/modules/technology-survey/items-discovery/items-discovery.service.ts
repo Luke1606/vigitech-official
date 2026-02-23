@@ -6,8 +6,8 @@ import { ItemsGatewayService } from '../gateway/gateway.service';
 import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-item.dto';
 
 @Injectable()
-export class ItemsIdentifyingService {
-    private readonly logger: Logger = new Logger(ItemsIdentifyingService.name);
+export class ItemsDiscoveryService {
+    private readonly logger: Logger = new Logger(ItemsDiscoveryService.name);
 
     constructor(
         private readonly dataFetchService: DataFetchService,
@@ -58,7 +58,7 @@ export class ItemsIdentifyingService {
             }
         `;
 
-        const newItems = (await this.aiAgentsService.generateResponse(prompt, context)) as CreateUnclassifiedItemDto[];
+        const newItems = await this.aiAgentsService.generateResponse<CreateUnclassifiedItemDto[]>(prompt, context);
 
         if (newItems.length > 0) {
             this.logger.log(`Identified ${newItems.length} potential new items. Creating and classifying them...`);

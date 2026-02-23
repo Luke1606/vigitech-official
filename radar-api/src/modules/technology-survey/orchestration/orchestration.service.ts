@@ -4,7 +4,7 @@ import { Item } from '@prisma/client';
 import { SurveyOrchestratorUserPreferences } from '@/shared/types/survey-orquestrator-user-preferences.type';
 import { UserPreferencesService } from '../../user-data/user-preferences/user-preferences.service';
 import { ItemsGatewayService } from '../gateway/gateway.service';
-import { ItemsIdentifyingService } from '../items-identifying/items-identifying.service';
+import { ItemsDiscoveryService } from '../items-discovery/items-discovery.service';
 import { ClassificationChange } from '../shared/types/classification-change.type';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class OrchestrationService {
     private readonly logger = new Logger(OrchestrationService.name);
 
     constructor(
-        private readonly itemsIdentifyingService: ItemsIdentifyingService,
+        private readonly itemsIdentifyingService: ItemsDiscoveryService,
         private readonly itemsGatewayService: ItemsGatewayService,
         private readonly userPreferencesService: UserPreferencesService,
     ) {
