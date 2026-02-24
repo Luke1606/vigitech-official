@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ItemsIdentifyingService } from '../items-identifying.service';
+import { ItemsDiscoveryService } from '../items-discovery.service';
 import { DataFetchService } from '../../data-fetch/data-fetch.service';
 import { ItemsGatewayService } from '../../gateway/gateway.service';
 import { AiAgentsService } from '../../../ai-agents/ai-agents.service';
 import { Logger } from '@nestjs/common';
 
-describe('ItemsIdentifyingService', () => {
-    let service: ItemsIdentifyingService;
+describe('ItemsDiscoveryService', () => {
+    let service: ItemsDiscoveryService;
     let dataFetchService: DataFetchService;
     let itemsGatewayService: ItemsGatewayService;
     let aiAgentsService: AiAgentsService;
@@ -14,7 +14,7 @@ describe('ItemsIdentifyingService', () => {
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
-                ItemsIdentifyingService,
+                ItemsDiscoveryService,
                 {
                     provide: DataFetchService,
                     // IMPORTANTE: Devolver [] por defecto para evitar ".length" de undefined
@@ -32,7 +32,7 @@ describe('ItemsIdentifyingService', () => {
             ],
         }).compile();
 
-        service = module.get<ItemsIdentifyingService>(ItemsIdentifyingService);
+        service = module.get<ItemsDiscoveryService>(ItemsDiscoveryService);
         dataFetchService = module.get<DataFetchService>(DataFetchService);
         itemsGatewayService = module.get<ItemsGatewayService>(ItemsGatewayService);
         aiAgentsService = module.get<AiAgentsService>(AiAgentsService);
@@ -45,7 +45,7 @@ describe('ItemsIdentifyingService', () => {
         expect(service).toBeDefined();
     });
 
-    describe('identifyNewItems', () => {
+    describe('discoverNewItems', () => {
         it('debe identificar y crear nuevos items si la IA devuelve resultados (Camino Feliz)', async () => {
             // GIVEN
             const mockExistingTitles = ['React', 'NestJS'];

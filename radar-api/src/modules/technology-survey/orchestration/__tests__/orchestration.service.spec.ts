@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrchestrationService } from '../orchestration.service';
-import { ItemsIdentifyingService } from '../../items-identifying/items-identifying.service';
+import { ItemsDiscoveryService } from '../../items-discovery/items-discovery.service';
 import { ItemsGatewayService } from '../../gateway/gateway.service';
 import { UserPreferencesService } from '../../../user-data/user-preferences/user-preferences.service';
 
 describe('OrchestrationService', () => {
     let service: OrchestrationService;
-    let identifyingService: ItemsIdentifyingService;
+    let identifyingService: ItemsDiscoveryService;
     let gatewayService: ItemsGatewayService;
     let userPrefsService: UserPreferencesService;
 
@@ -15,7 +15,7 @@ describe('OrchestrationService', () => {
             providers: [
                 OrchestrationService,
                 {
-                    provide: ItemsIdentifyingService,
+                    provide: ItemsDiscoveryService,
                     useValue: { identifyNewItems: jest.fn() },
                 },
                 {
@@ -30,7 +30,7 @@ describe('OrchestrationService', () => {
         }).compile();
 
         service = module.get<OrchestrationService>(OrchestrationService);
-        identifyingService = module.get<ItemsIdentifyingService>(ItemsIdentifyingService);
+        identifyingService = module.get<ItemsDiscoveryService>(ItemsDiscoveryService);
         gatewayService = module.get<ItemsGatewayService>(ItemsGatewayService);
         userPrefsService = module.get<UserPreferencesService>(UserPreferencesService);
     });
