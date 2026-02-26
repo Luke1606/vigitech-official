@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { EyeIcon, EyeOff, Loader2, Plus, List } from 'lucide-react';
 import {
-    Blip,
     getQuadrantColor,
     getQuadrantLightColor,
     getRingColor,
     getRingLightColor,
     type UserItemList,
     RadarQuadrant,
-    RadarRing
+    RadarRing,
+    SurveyItem
 } from '../../../../../infrastructure';
 import {
     Button,
@@ -67,7 +67,7 @@ const mapApiRingToEnum = (apiValue: string): RadarRing => {
     }
 };
 
-const transformApiData = (apiData: any[]): Blip[] => {
+const transformApiData = (apiData: any[]): SurveyItem[] => {
     if (!apiData || !Array.isArray(apiData)) {
         return [];
     }
@@ -91,7 +91,7 @@ export const ItemListsSideBar: React.FC<{
 }) => {
         // ----- OBTENCIÓN DE DATOS DESDE LA API (sin Redux) -----
         const surveyItemsAPI = useSurveyItemsAPI();
-        const [normalizedBlips, setNormalizedBlips] = useState<Blip[]>([]);
+        const [normalizedBlips, setNormalizedBlips] = useState<SurveyItem[]>([]);
 
         useEffect(() => {
             const { data } = surveyItemsAPI.subscribed;
@@ -120,7 +120,7 @@ export const ItemListsSideBar: React.FC<{
             itemIds: UUID[]
         } | null>(null);
 
-        const [elements, setElements] = useState<Blip[]>(blips);
+        const [elements, setElements] = useState<SurveyItem[]>(blips);
         const [selectedItems, setSelectedItems] = useState<UUID[]>([]);
         const [isMobile, setIsMobile] = useState(false);
         const [mobileDialogOpen, setMobileDialogOpen] = useState(false);
@@ -167,7 +167,7 @@ export const ItemListsSideBar: React.FC<{
         };
 
         // Función para obtener elementos disponibles para una lista
-        const getAvailableItemsForTarget = useCallback((target: UserItemList): Blip[] => {
+        const getAvailableItemsForTarget = useCallback((target: UserItemList): SurveyItem[] => {
             const usedIds = new Set(target.items.map(item => item.id));
             return blips.filter(item => !usedIds.has(item.id));
         }, [blips]);
@@ -383,7 +383,7 @@ export const ItemListsSideBar: React.FC<{
                                     No hay elementos disponibles para agregar
                                 </li>
                             ) : (
-                                elements.map((item: Blip) => (
+                                elements.map((item: SurveyItem) => (
                                     <li
                                         key={item.id}
                                         className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">

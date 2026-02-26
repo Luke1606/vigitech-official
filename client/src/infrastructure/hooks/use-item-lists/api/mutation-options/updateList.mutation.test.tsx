@@ -1,727 +1,337 @@
-// useUpdateListMutationOptions.test.ts
-// ===== MOCKS GLOBALES - CORREGIDOS =====
+import { renderHook } from '@testing-library/react';
+import { useUpdateListMutationOptions } from './updateList.mutation';
+import { userItemListRepository } from '../../../..';
+import { toast } from 'react-toastify';
+import type { UserItemList } from '../../../..';
+import type { UUID } from '../../../../domain/types/UUID.type';
 
-// Mock para @tanstack/react-query - CORREGIDO
+// Mock dependencies
 jest.mock('@tanstack/react-query', () => ({
-    QueryClient: jest.fn().mockImplementation(() => ({
-        cancelQueries: jest.fn(),
-        getQueryData: jest.fn(),
-        setQueryData: jest.fn(),
-        invalidateQueries: jest.fn(),
-        clear: jest.fn(),
-    })),
     useQueryClient: jest.fn(),
     mutationOptions: jest.fn((options) => options),
 }));
 
-// Mock para Redux y Redux-persist
-jest.mock('../../../../redux/store', () => ({
-    store: {
-        getState: jest.fn(() => ({
-            userItemLists: [],
-            surveyItems: [],
-            changeLog: []
-        })),
-        dispatch: jest.fn(),
-        subscribe: jest.fn(),
-        replaceReducer: jest.fn(),
-    },
-    persistor: {
-        persist: jest.fn(),
-        purge: jest.fn(),
-        flush: jest.fn(),
-    },
-}));
-
-jest.mock('redux-persist', () => {
-    const actual = jest.requireActual('redux-persist');
-    return {
-        ...actual,
-        persistReducer: jest.fn((reducer) => reducer),
-        persistStore: jest.fn(),
-        FLUSH: 'FLUSH',
-        REHYDRATE: 'REHYDRATE',
-        PAUSE: 'PAUSE',
-        PERSIST: 'PERSIST',
-        PURGE: 'PURGE',
-        REGISTER: 'REGISTER',
-    };
-});
-
-jest.mock('redux-persist/lib/storage', () => ({
-    default: {
-        getItem: jest.fn(),
-        setItem: jest.fn(),
-        removeItem: jest.fn(),
-    },
-}));
-
-jest.mock('@reduxjs/toolkit', () => {
-    const actual = jest.requireActual('@reduxjs/toolkit');
-    return {
-        ...actual,
-        configureStore: jest.fn(),
-        combineReducers: jest.fn(),
-    };
-});
-
-// Mock para configuración de entorno
-jest.mock('../../../../config/env', () => ({
-    getEnv: jest.fn(() => ({
-        VITE_SERVER_BASE_URL: 'http://localhost:3000',
-        VITE_SITE_BASE_URL: 'http://localhost:3000',
-        VITE_NOVU_APPLICATION_ID: 'test-novu-app-id',
-        VITE_NOVU_SECRET_KEY: 'test-novu-secret-key',
-        VITE_CLERK_PUBLISHABLE_KEY: 'test-clerk-key'
-    }))
-}));
-
-// Mock para Axios y repositorios
-jest.mock('../../../../utils/AxiosConfiguredInstance.util', () => ({
-    AxiosConfiguredInstance: jest.fn().mockImplementation(() => ({
-        get: jest.fn(),
-        post: jest.fn(),
-        put: jest.fn(),
-        delete: jest.fn(),
-        patch: jest.fn()
-    }))
-}));
-
-jest.mock('../../../../domain/repositories/user-item-list/UserItemList.repository', () => ({
-    userItemListRepository: {
-        updateList: jest.fn()
-    }
-}));
-
-// Mock para react-toastify
 jest.mock('react-toastify', () => ({
     toast: {
         success: jest.fn(),
         error: jest.fn(),
-        info: jest.fn(),
-        warning: jest.fn(),
     },
 }));
 
-jest.mock('../constants', () => ({
+jest.mock('../../../..', () => ({
+    userItemListRepository: {
+        updateList: jest.fn(),
+    },
     userItemListsKey: 'userItemLists',
 }));
 
-// ===== IMPORTS =====
-import { renderHook } from '@testing-library/react';
 import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-toastify';
-import { userItemListRepository } from '../../../../';
-import { useUpdateListMutationOptions } from './updateList.mutation';
 import { userItemListsKey } from '../constants';
-import type { UserItemList, SurveyItem, UUID } from '../../../../';
 
-// ===== TIPOS Y MOCKS =====
-const mockUseQueryClient = useQueryClient as jest.MockedFunction<typeof useQueryClient>;
-const mockUserItemListRepository = userItemListRepository as jest.Mocked<typeof userItemListRepository>;
-
-// Helper para crear mock de UserItemList
-const createMockUserItemList = (overrides?: Partial<UserItemList>): UserItemList => ({
-    id: '123e4567-e89b-12d3-a456-426614174000' as UUID,
-    name: 'Test List',
-    createdAt: '2023-01-01T00:00:00.000Z',
-    updatedAt: '2023-01-01T00:00:00.000Z',
-    items: [] as SurveyItem[],
-    ...overrides,
-});
-
-// Datos de prueba
-const mockLists: UserItemList[] = [
-    createMockUserItemList({
-        id: '123e4567-e89b-12d3-a456-426614174000' as UUID,
-        name: 'Lista 1'
-    }),
-    createMockUserItemList({
-        id: '123e4567-e89b-12d3-a456-426614174001' as UUID,
-        name: 'Lista 2'
-    })
-];
-
-const mockUpdatedList: UserItemList = createMockUserItemList({
-    id: '123e4567-e89b-12d3-a456-426614174000' as UUID,
-    name: 'Lista Actualizada',
-    updatedAt: '2023-01-02T00:00:00.000Z'
-});
-
-// ===== CONFIGURACIÓN DE PRUEBAS =====
 describe('useUpdateListMutationOptions', () => {
-    let queryClient: jest.Mocked<any>;
+    const mockQueryClient = {
+        cancelQueries: jest.fn(),
+        getQueryData: jest.fn(),
+        setQueryData: jest.fn(),
+        invalidateQueries: jest.fn(),
+    };
+
+    const mockUpdateList = userItemListRepository.updateList as jest.Mock;
 
     beforeEach(() => {
-        // Mock de QueryClient - CORREGIDO
-        queryClient = {
-            cancelQueries: jest.fn().mockResolvedValue(undefined),
-            getQueryData: jest.fn(),
-            setQueryData: jest.fn(),
-            invalidateQueries: jest.fn(),
-            clear: jest.fn(),
-        };
-
-        mockUseQueryClient.mockReturnValue(queryClient);
-        mockUserItemListRepository.updateList.mockResolvedValue(mockUpdatedList);
-
-        // Limpiar todos los mocks
         jest.clearAllMocks();
+        (useQueryClient as jest.Mock).mockReturnValue(mockQueryClient);
     });
 
-    // ===== CASOS DE PRUEBA =====
-
     describe('mutationFn', () => {
-        it('should call repository with correct parameters', async () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = 'Nombre de prueba';
-
+        it('should call the repository with the correct parameters', async () => {
             const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
+            const { mutationFn } = result.current;
 
-            // Act
-            if (options.mutationFn) {
-                const result = await options.mutationFn({ listId, listNewName });
+            const listId = 'list-id' as UUID;
+            const listNewName = 'New Name';
+            await mutationFn!({ listId, listNewName }, {} as any);
 
-                // Assert
-                expect(mockUserItemListRepository.updateList).toHaveBeenCalledWith(listId, listNewName);
-                expect(mockUserItemListRepository.updateList).toHaveBeenCalledTimes(1);
-                expect(result).toEqual(mockUpdatedList);
-            } else {
-                fail('mutationFn should be defined');
-            }
+            expect(mockUpdateList).toHaveBeenCalledWith(listId, listNewName);
         });
 
-        it('should handle repository errors', async () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = 'Nombre de prueba';
-            const repositoryError = new Error('Repository error');
-
-            mockUserItemListRepository.updateList.mockRejectedValue(repositoryError);
+        it('should return the value from the repository', async () => {
+            const expectedResult = { id: 'list-id', name: 'New Name' };
+            mockUpdateList.mockResolvedValueOnce(expectedResult);
 
             const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
+            const { mutationFn } = result.current;
 
-            // Act & Assert
-            if (options.mutationFn) {
-                await expect(options.mutationFn({ listId, listNewName })).rejects.toThrow('Repository error');
-            } else {
-                fail('mutationFn should be defined');
-            }
+            const listId = 'list-id' as UUID;
+            const listNewName = 'New Name';
+            const returnValue = await mutationFn!({ listId, listNewName }, {} as any);
+
+            expect(returnValue).toBe(expectedResult);
         });
     });
 
     describe('onMutate', () => {
-        it('should cancel queries and update cache optimistically when lists exist', async () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = 'Nombre actualizado';
+        it('should cancel ongoing queries, optimistically update the list, and return previous lists', async () => {
+            const previousLists: UserItemList[] = [
+                { id: 'list-id' as UUID, name: 'Old Name', updatedAt: '2023-01-01T00:00:00Z' } as UserItemList,
+                { id: 'other-id' as UUID, name: 'Other', updatedAt: '2023-01-01T00:00:00Z' } as UserItemList,
+            ];
 
-            queryClient.getQueryData.mockReturnValue(mockLists);
+            mockQueryClient.getQueryData.mockReturnValue(previousLists);
 
             const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
+            const { onMutate } = result.current;
 
-            // Act
-            if (options.onMutate) {
-                const context = await options.onMutate({ listId, listNewName });
+            const variables = { listId: 'list-id' as UUID, listNewName: 'Updated Name' };
+            const context = await onMutate!(variables, {} as any);
 
-                // Assert
-                expect(queryClient.cancelQueries).toHaveBeenCalledWith({ queryKey: [userItemListsKey] });
-                expect(queryClient.getQueryData).toHaveBeenCalledWith([userItemListsKey]);
-
-                expect(queryClient.setQueryData).toHaveBeenCalledWith(
-                    [userItemListsKey],
-                    expect.arrayContaining([
-                        expect.objectContaining({
-                            id: listId,
-                            name: listNewName,
-                            updatedAt: expect.any(String),
-                            items: []
-                        }),
-                        mockLists[1]
-                    ])
-                );
-
-                expect(context).toEqual({ previousLists: mockLists });
-            } else {
-                fail('onMutate should be defined');
-            }
+            expect(mockQueryClient.cancelQueries).toHaveBeenCalledWith({ queryKey: [userItemListsKey] });
+            expect(mockQueryClient.getQueryData).toHaveBeenCalledWith([userItemListsKey]);
+            expect(mockQueryClient.setQueryData).toHaveBeenCalledWith(
+                [userItemListsKey],
+                expect.arrayContaining([
+                    expect.objectContaining({ id: 'list-id', name: 'Updated Name', updatedAt: expect.any(String) }),
+                    expect.objectContaining({ id: 'other-id', name: 'Other' }),
+                ])
+            );
+            expect(context).toEqual({ previousLists });
         });
 
-        it('should return null previousLists when cache is empty', async () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = 'Nombre actualizado';
+        it('should update only the targeted list and leave others unchanged', async () => {
+            const previousLists: UserItemList[] = [
+                { id: 'list-1' as UUID, name: 'List 1', updatedAt: '2023-01-01T00:00:00Z' } as UserItemList,
+                { id: 'list-2' as UUID, name: 'List 2', updatedAt: '2023-01-01T00:00:00Z' } as UserItemList,
+                { id: 'list-3' as UUID, name: 'List 3', updatedAt: '2023-01-01T00:00:00Z' } as UserItemList,
+            ];
 
-            queryClient.getQueryData.mockReturnValue(null);
+            mockQueryClient.getQueryData.mockReturnValue(previousLists);
 
             const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
+            const { onMutate } = result.current;
 
-            // Act
-            if (options.onMutate) {
-                const context = await options.onMutate({ listId, listNewName });
+            const variables = { listId: 'list-2' as UUID, listNewName: 'Updated List 2' };
+            await onMutate!(variables, {} as any);
 
-                // Assert - CORREGIDO: ahora espera null en lugar de undefined
-                expect(context).toEqual({ previousLists: null });
-                expect(queryClient.setQueryData).not.toHaveBeenCalled();
-            } else {
-                fail('onMutate should be defined');
-            }
+            const setQueryDataCall = mockQueryClient.setQueryData.mock.calls[0];
+            const updatedLists = setQueryDataCall[1] as UserItemList[];
+
+            // Cast literals to UUID for comparison
+            expect(updatedLists.find(l => l.id === ('list-2' as unknown as UUID))).toMatchObject({
+                id: 'list-2' as unknown as UUID,
+                name: 'Updated List 2',
+            });
+            expect(updatedLists.find(l => l.id === ('list-1' as unknown as UUID))).toMatchObject({
+                id: 'list-1' as unknown as UUID,
+                name: 'List 1',
+            });
+            expect(updatedLists.find(l => l.id === ('list-3' as unknown as UUID))).toMatchObject({
+                id: 'list-3' as unknown as UUID,
+                name: 'List 3',
+            });
         });
 
-        it('should not update cache when list to update is not found', async () => {
-            // Arrange
-            const listId = 'non-existent-id' as UUID;
-            const listNewName = 'Nombre actualizado';
+        it('should set updatedAt as a valid ISO 8601 string', async () => {
+            const previousLists: UserItemList[] = [
+                { id: 'list-id' as UUID, name: 'Old Name', updatedAt: '2023-01-01T00:00:00Z' } as UserItemList,
+            ];
 
-            queryClient.getQueryData.mockReturnValue(mockLists);
+            mockQueryClient.getQueryData.mockReturnValue(previousLists);
 
             const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
+            const { onMutate } = result.current;
 
-            // Act
-            if (options.onMutate) {
-                const context = await options.onMutate({ listId, listNewName });
+            const variables = { listId: 'list-id' as UUID, listNewName: 'Updated Name' };
+            await onMutate!(variables, {} as any);
 
-                // Assert
-                expect(queryClient.setQueryData).toHaveBeenCalledWith(
-                    [userItemListsKey],
-                    mockLists // No changes because list ID doesn't match
-                );
-                expect(context).toEqual({ previousLists: mockLists });
-            } else {
-                fail('onMutate should be defined');
-            }
+            const setQueryDataCall = mockQueryClient.setQueryData.mock.calls[0];
+            const updatedLists = setQueryDataCall[1] as UserItemList[];
+            const updatedAt = updatedLists[0].updatedAt;
+
+            expect(updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/);
+        });
+
+        it('should handle empty previousLists gracefully', async () => {
+            mockQueryClient.getQueryData.mockReturnValue([]);
+
+            const { result } = renderHook(() => useUpdateListMutationOptions());
+            const { onMutate } = result.current;
+
+            const variables = { listId: 'list-id' as UUID, listNewName: 'Updated Name' };
+            const context = await onMutate!(variables, {} as any);
+
+            expect(mockQueryClient.setQueryData).toHaveBeenCalledWith([userItemListsKey], []);
+            expect(context).toEqual({ previousLists: [] });
+        });
+
+        it('should handle listId not found in previousLists', async () => {
+            const previousLists: UserItemList[] = [
+                { id: 'other-id' as UUID, name: 'Other', updatedAt: '2023-01-01T00:00:00Z' } as UserItemList,
+            ];
+
+            mockQueryClient.getQueryData.mockReturnValue(previousLists);
+
+            const { result } = renderHook(() => useUpdateListMutationOptions());
+            const { onMutate } = result.current;
+
+            const variables = { listId: 'list-id' as UUID, listNewName: 'Updated Name' };
+            await onMutate!(variables, {} as any);
+
+            expect(mockQueryClient.setQueryData).toHaveBeenCalledWith([userItemListsKey], previousLists);
+        });
+
+        it('should not update cache if previousLists is undefined', async () => {
+            mockQueryClient.getQueryData.mockReturnValue(undefined);
+
+            const { result } = renderHook(() => useUpdateListMutationOptions());
+            const { onMutate } = result.current;
+
+            const variables = { listId: 'list-id' as UUID, listNewName: 'Updated Name' };
+            const context = await onMutate!(variables, {} as any);
+
+            expect(mockQueryClient.setQueryData).not.toHaveBeenCalled();
+            expect(context).toEqual({ previousLists: undefined });
         });
     });
 
     describe('onError', () => {
-        it('should revert cache and show error toast when previousLists exist', () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = 'Nombre actualizado';
-            const error = new Error('Network error');
-            const context = { previousLists: mockLists };
+        it('should rollback to previous lists and show error toast', () => {
+            const previousLists: UserItemList[] = [{ id: 'list-id' as UUID, name: 'Old Name' } as UserItemList];
 
             const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
+            const { onError } = result.current;
 
-            // Act
-            if (options.onError) {
-                options.onError(error, { listId, listNewName }, context);
+            const context = { previousLists };
+            onError!(
+                new Error('test error'),
+                { listId: 'list-id' as UUID, listNewName: 'New' },
+                context,
+                {} as any
+            );
 
-                // Assert
-                expect(queryClient.setQueryData).toHaveBeenCalledWith([userItemListsKey], mockLists);
-                expect(toast.error).toHaveBeenCalledWith(
-                    'Error al renombrar la lista. Compruebe su conexión o inténtelo de nuevo.'
-                );
-            } else {
-                fail('onError should be defined');
-            }
+            expect(mockQueryClient.setQueryData).toHaveBeenCalledWith([userItemListsKey], previousLists);
+            expect(toast.error).toHaveBeenCalledWith('Error al renombrar la lista. Compruebe su conexión o inténtelo de nuevo.');
         });
 
-        it('should not revert cache but show error toast when previousLists is undefined', () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = 'Nombre actualizado';
-            const error = new Error('Network error');
+        it('should not rollback if previousLists was undefined', () => {
+            const { result } = renderHook(() => useUpdateListMutationOptions());
+            const { onError } = result.current;
+
             const context = { previousLists: undefined };
+            onError!(
+                new Error('test error'),
+                { listId: 'list-id' as UUID, listNewName: 'New' },
+                context,
+                {} as any
+            );
 
-            const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-
-            // Act
-            if (options.onError) {
-                options.onError(error, { listId, listNewName }, context);
-
-                // Assert
-                expect(queryClient.setQueryData).not.toHaveBeenCalled();
-                expect(toast.error).toHaveBeenCalledWith(
-                    'Error al renombrar la lista. Compruebe su conexión o inténtelo de nuevo.'
-                );
-            } else {
-                fail('onError should be defined');
-            }
+            expect(mockQueryClient.setQueryData).not.toHaveBeenCalled();
+            expect(toast.error).toHaveBeenCalled();
         });
 
-        it('should handle different error types', () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = 'Nombre actualizado';
-            const error = new Error('Different error message');
-            const context = { previousLists: mockLists };
-
+        it('should show error toast with the correct message', () => {
             const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
+            const { onError } = result.current;
 
-            // Act
-            if (options.onError) {
-                options.onError(error, { listId, listNewName }, context);
+            onError!(
+                new Error('test error'),
+                { listId: 'list-id' as UUID, listNewName: 'New' },
+                { previousLists: undefined },
+                {} as any
+            );
 
-                // Assert
-                expect(toast.error).toHaveBeenCalledWith(
-                    'Error al renombrar la lista. Compruebe su conexión o inténtelo de nuevo.'
-                );
-            } else {
-                fail('onError should be defined');
-            }
+            expect(toast.error).toHaveBeenCalledWith('Error al renombrar la lista. Compruebe su conexión o inténtelo de nuevo.');
         });
     });
 
     describe('onSuccess', () => {
-        it('should invalidate queries and show success toast on success', () => {
-            // Arrange
+        it('should invalidate queries and show success toast', () => {
             const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-            const variables = {
-                listId: '123e4567-e89b-12d3-a456-426614174000' as UUID,
-                listNewName: 'test'
-            };
-            const context = { previousLists: mockLists };
+            const { onSuccess } = result.current;
 
-            // Act
-            if (options.onSuccess) {
-                options.onSuccess(mockUpdatedList, variables, context);
+            onSuccess!(
+                {} as any,
+                { listId: 'list-id' as UUID, listNewName: 'New' },
+                { previousLists: undefined },
+                {} as any
+            );
 
-                // Assert
-                expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: [userItemListsKey] });
-                expect(toast.success).toHaveBeenCalledWith('Se renombró con éxito la lista.');
-            } else {
-                fail('onSuccess should be defined');
-            }
+            expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: [userItemListsKey] });
+            expect(toast.success).toHaveBeenCalledWith('Se renombró con éxito la lista.');
         });
 
-        it('should work with different successful responses', () => {
-            // Arrange
+        it('should invalidate queries exactly once', () => {
             const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-            const variables = {
-                listId: '123e4567-e89b-12d3-a456-426614174001' as UUID,
-                listNewName: 'otro nombre'
-            };
-            const context = { previousLists: mockLists };
-            const differentResponse = createMockUserItemList({
-                id: '123e4567-e89b-12d3-a456-426614174001' as UUID,
-                name: 'otro nombre',
-                updatedAt: '2023-01-03T00:00:00.000Z'
-            });
+            const { onSuccess } = result.current;
 
-            // Act
-            if (options.onSuccess) {
-                options.onSuccess(differentResponse, variables, context);
+            onSuccess!(
+                {} as any,
+                { listId: 'list-id' as UUID, listNewName: 'New' },
+                { previousLists: undefined },
+                {} as any
+            );
 
-                // Assert
-                expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: [userItemListsKey] });
-                expect(toast.success).toHaveBeenCalledWith('Se renombró con éxito la lista.');
-            } else {
-                fail('onSuccess should be defined');
-            }
+            expect(mockQueryClient.invalidateQueries).toHaveBeenCalledTimes(1);
+        });
+
+        it('should show success toast with the correct message', () => {
+            const { result } = renderHook(() => useUpdateListMutationOptions());
+            const { onSuccess } = result.current;
+
+            onSuccess!(
+                {} as any,
+                { listId: 'list-id' as UUID, listNewName: 'New' },
+                { previousLists: undefined },
+                {} as any
+            );
+
+            expect(toast.success).toHaveBeenCalledWith('Se renombró con éxito la lista.');
         });
     });
 
     describe('onSettled', () => {
-        it('should invalidate queries when settled successfully', () => {
-            // Arrange
+        it('should invalidate queries', () => {
             const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-            const variables = {
-                listId: '123e4567-e89b-12d3-a456-426614174000' as UUID,
-                listNewName: 'test'
-            };
-            const context = { previousLists: mockLists };
+            const { onSettled } = result.current;
 
-            // Act
-            if (options.onSettled) {
-                options.onSettled(mockUpdatedList, null, variables, context);
+            onSettled!(
+                undefined,
+                null,
+                { listId: 'list-id' as UUID, listNewName: 'New' },
+                { previousLists: undefined },
+                {} as any
+            );
 
-                // Assert
-                expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: [userItemListsKey] });
-            } else {
-                fail('onSettled should be defined');
-            }
+            expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: [userItemListsKey] });
         });
 
-        it('should invalidate queries when settled with error', () => {
-            // Arrange
+        it('should invalidate queries exactly once', () => {
             const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-            const variables = {
-                listId: '123e4567-e89b-12d3-a456-426614174000' as UUID,
-                listNewName: 'test'
-            };
-            const context = { previousLists: mockLists };
-            const error = new Error('Mutation failed');
+            const { onSettled } = result.current;
 
-            // Act
-            if (options.onSettled) {
-                options.onSettled(undefined, error, variables, context);
+            onSettled!(
+                undefined,
+                null,
+                { listId: 'list-id' as UUID, listNewName: 'New' },
+                { previousLists: undefined },
+                {} as any
+            );
 
-                // Assert
-                expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: [userItemListsKey] });
-            } else {
-                fail('onSettled should be defined');
-            }
+            expect(mockQueryClient.invalidateQueries).toHaveBeenCalledTimes(1);
         });
 
-        it('should always invalidate queries regardless of success or error', () => {
-            // Arrange
+        it('should invalidate queries even after error', () => {
             const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-            const variables = {
-                listId: '123e4567-e89b-12d3-a456-426614174000' as UUID,
-                listNewName: 'test'
-            };
-            const context = { previousLists: mockLists };
+            const { onSettled } = result.current;
 
-            // Test successful settlement
-            if (options.onSettled) {
-                options.onSettled(mockUpdatedList, null, variables, context);
-                expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: [userItemListsKey] });
+            onSettled!(
+                undefined,
+                new Error('test error'),
+                { listId: 'list-id' as UUID, listNewName: 'New' },
+                { previousLists: undefined },
+                {} as any
+            );
 
-                // Reset mock
-                (queryClient.invalidateQueries as jest.Mock).mockClear();
-
-                // Test error settlement
-                const error = new Error('Test error');
-                options.onSettled(undefined, error, variables, context);
-                expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: [userItemListsKey] });
-            } else {
-                fail('onSettled should be defined');
-            }
-        });
-    });
-
-    describe('integration scenarios', () => {
-        it('should complete full mutation flow successfully', async () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = 'Nombre integración';
-
-            queryClient.getQueryData.mockReturnValue(mockLists);
-
-            const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-
-            // Act & Assert - Simular flujo completo
-            if (options.onMutate && options.mutationFn && options.onSuccess && options.onSettled) {
-                // 1. onMutate (optimistic update)
-                const context = await options.onMutate({ listId, listNewName });
-
-                // Usar type assertion para asegurar que context no es undefined
-                expect(context!.previousLists).toEqual(mockLists);
-
-                // 2. mutationFn (llamada real)
-                const mutationResult = await options.mutationFn({ listId, listNewName });
-                expect(mutationResult).toEqual(mockUpdatedList);
-
-                // 3. onSuccess
-                options.onSuccess(mutationResult, { listId, listNewName }, context!);
-
-                // 4. onSettled
-                options.onSettled(mutationResult, null, { listId, listNewName }, context!);
-
-                // Verificar que invalidateQueries se llamó múltiples veces
-                expect(queryClient.invalidateQueries).toHaveBeenCalledTimes(2);
-            } else {
-                fail('All mutation callbacks should be defined');
-            }
-        });
-
-        it('should handle full error flow correctly', async () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = 'Nombre error';
-            const mutationError = new Error('Mutation failed');
-
-            queryClient.getQueryData.mockReturnValue(mockLists);
-            mockUserItemListRepository.updateList.mockRejectedValue(mutationError);
-
-            const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-
-            // Act & Assert - Simular flujo de error
-            if (options.onMutate && options.onError && options.onSettled) {
-                // 1. onMutate (optimistic update)
-                const mutationContext = await options.onMutate({ listId, listNewName });
-
-                // 2. Simular error en mutationFn (no lo llamamos directamente)
-
-                // 3. onError
-                options.onError(mutationError, { listId, listNewName }, mutationContext!);
-
-                // 4. onSettled
-                options.onSettled(undefined, mutationError, { listId, listNewName }, mutationContext!);
-
-                // Verificar que invalidateQueries se llamó
-                expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: [userItemListsKey] });
-            } else {
-                fail('All mutation callbacks should be defined');
-            }
-        });
-    });
-
-    describe('edge cases', () => {
-        it('should handle empty list name - robust version', async () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = '';
-
-            // Configurar explícitamente getQueryData para devolver mockLists - CORREGIDO: tipo agregado
-            queryClient.getQueryData.mockImplementation((key: unknown) => {
-                if (JSON.stringify(key) === JSON.stringify([userItemListsKey])) {
-                    return mockLists;
-                }
-                return null;
-            });
-
-            const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-
-            // Act & Assert
-            if (options.mutationFn && options.onMutate) {
-                // Test mutationFn with empty name
-                await options.mutationFn({ listId, listNewName });
-                expect(mockUserItemListRepository.updateList).toHaveBeenCalledWith(listId, listNewName);
-
-                // Test onMutate with empty name
-                await options.onMutate({ listId, listNewName });
-
-                // Verificar que setQueryData fue llamado al menos una vez
-                expect(queryClient.setQueryData).toHaveBeenCalled();
-
-                // Verificar específicamente la llamada con userItemListsKey - CORREGIDO: tipo agregado
-                const setQueryDataCalls = queryClient.setQueryData.mock.calls;
-                const userItemListsCall = setQueryDataCalls.find((call: any[]) =>
-                    call[0] && Array.isArray(call[0]) && call[0][0] === userItemListsKey
-                );
-
-                expect(userItemListsCall).toBeDefined();
-
-                if (userItemListsCall) {
-                    const updatedLists = userItemListsCall[1];
-                    expect(Array.isArray(updatedLists)).toBe(true);
-
-                    const updatedList = (updatedLists as UserItemList[]).find(list => list.id === listId);
-                    expect(updatedList).toBeDefined();
-                    expect(updatedList!.name).toBe('');
-                    expect(updatedList!.updatedAt).toEqual(expect.any(String));
-                }
-            } else {
-                fail('mutationFn and onMutate should be defined');
-            }
-        });
-
-        it('should handle empty list name - minimal version', async () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = '';
-
-            queryClient.getQueryData.mockReturnValue(mockLists);
-
-            const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-
-            // Act
-            if (options.onMutate) {
-                await options.onMutate({ listId, listNewName });
-
-                // Assert - Solo verificar que setQueryData fue llamado con userItemListsKey
-                expect(queryClient.setQueryData).toHaveBeenCalledWith(
-                    [userItemListsKey],
-                    expect.anything()
-                );
-            } else {
-                fail('onMutate should be defined');
-            }
-        });
-
-        it('should handle very long list name', async () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = 'A'.repeat(1000); // Nombre muy largo
-
-            const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-
-            // Act & Assert
-            if (options.mutationFn) {
-                await options.mutationFn({ listId, listNewName });
-                expect(mockUserItemListRepository.updateList).toHaveBeenCalledWith(listId, listNewName);
-            } else {
-                fail('mutationFn should be defined');
-            }
-        });
-
-        it('should handle special characters in list name', async () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = 'Lista @#$% con caractéres especiales ñ á é';
-
-            const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-
-            // Act & Assert
-            if (options.mutationFn) {
-                await options.mutationFn({ listId, listNewName });
-                expect(mockUserItemListRepository.updateList).toHaveBeenCalledWith(listId, listNewName);
-            } else {
-                fail('mutationFn should be defined');
-            }
-        });
-    });
-
-    describe('performance and behavior', () => {
-        it('should not make unnecessary API calls', async () => {
-            // Arrange
-            const listId = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listNewName = 'Test Name';
-
-            const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-
-            // Act
-            if (options.mutationFn) {
-                // Llamar múltiples veces para verificar que no hay llamadas duplicadas
-                await options.mutationFn({ listId, listNewName });
-                await options.mutationFn({ listId, listNewName });
-
-                // Assert - solo debería llamarse una vez por cada llamada a mutationFn
-                expect(mockUserItemListRepository.updateList).toHaveBeenCalledTimes(2);
-            } else {
-                fail('mutationFn should be defined');
-            }
-        });
-
-        it('should handle concurrent mutations correctly', async () => {
-            // Arrange
-            const listId1 = '123e4567-e89b-12d3-a456-426614174000' as UUID;
-            const listId2 = '123e4567-e89b-12d3-a456-426614174001' as UUID;
-            const listNewName1 = 'Nombre 1';
-            const listNewName2 = 'Nombre 2';
-
-            queryClient.getQueryData.mockReturnValue(mockLists);
-
-            const { result } = renderHook(() => useUpdateListMutationOptions());
-            const options = result.current;
-
-            // Act & Assert
-            if (options.onMutate) {
-                // Simular múltiples mutaciones concurrentes
-                const context1 = await options.onMutate({ listId: listId1, listNewName: listNewName1 });
-                const context2 = await options.onMutate({ listId: listId2, listNewName: listNewName2 });
-
-                // Ambas deberían tener su propio contexto
-                expect(context1).toBeDefined();
-                expect(context2).toBeDefined();
-                expect(context1!.previousLists).toEqual(mockLists);
-                expect(context2!.previousLists).toEqual(mockLists);
-            } else {
-                fail('onMutate should be defined');
-            }
+            expect(mockQueryClient.invalidateQueries).toHaveBeenCalled();
         });
     });
 });

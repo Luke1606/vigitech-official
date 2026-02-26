@@ -1,6 +1,4 @@
 import type React from 'react';
-import error from '/error.png'
-
 interface ErrorProps {
     errorTitle: string, 
     errorDescription: string
@@ -21,7 +19,7 @@ export const Error: React.FC<ErrorProps> = ({
 
             <img
                 className='error-icon' 
-                src={error} 
+                src="/error.png" 
                 alt='ícono de error'
                 />
             

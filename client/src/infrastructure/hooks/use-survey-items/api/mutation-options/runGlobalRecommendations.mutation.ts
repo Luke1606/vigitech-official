@@ -13,7 +13,7 @@ export const useRunGlobalRecommendationsMutationOptions = () => {
             toast.error(`Error: ${error.message}`);
         },
 
-        onSuccess: (data) => {
+        onSuccess: (_) => {
             // Invalida la query de recomendaciones para forzar un refetch
             queryClient.invalidateQueries({
                 queryKey: [surveyItemsKey, 'recommended']

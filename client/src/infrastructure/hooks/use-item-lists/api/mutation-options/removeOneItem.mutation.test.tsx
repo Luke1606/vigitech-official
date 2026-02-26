@@ -25,26 +25,19 @@ jest.mock('react-toastify', () => ({
 const mockedUserItemListRepository = jest.mocked(userItemListRepository);
 const mockedToast = jest.mocked(toast);
 
-// Crear wrapper con QueryClient
-const createWrapper = () => {
-    const queryClient = new QueryClient({
-        defaultOptions: {
-            queries: { retry: false },
-            mutations: { retry: false },
-        },
-    });
-
-    return ({ children }: { children: React.ReactNode }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-};
+// Helper to create a complete MutationFunctionContext
+const createMutationContext = (queryClient: QueryClient) => ({
+    signal: new AbortController().signal,
+    client: queryClient,
+    meta: undefined,
+});
 
 describe('useRemoveOneItemMutationOptions', () => {
     const mockListId: UUID = '123e4567-e89b-12d3-a456-426614174000' as UUID;
     const mockItemId: UUID = '123e4567-e89b-12d3-a456-426614174001' as UUID;
     const mockOtherItemId: UUID = '123e4567-e89b-12d3-a456-426614174002' as UUID;
 
-    const mockPreviousList: UserItemList = {
+    const mockList: UserItemList = {
         id: mockListId,
         name: 'Test List',
         items: [
@@ -53,27 +46,48 @@ describe('useRemoveOneItemMutationOptions', () => {
         ],
     } as UserItemList;
 
+    // The cache stores an array of lists under [userItemListsKey]
+    const mockLists: UserItemList[] = [mockList];
+
+    // The filtered list after optimistic removal
     const mockFilteredList: UserItemList = {
-        ...mockPreviousList,
-        items: [
-            { id: mockOtherItemId } as SurveyItem,
-        ],
+        ...mockList,
+        items: [{ id: mockOtherItemId } as SurveyItem],
     };
 
-    const mockResult: UserItemList = {
-        ...mockFilteredList,
-    };
+    // The updated array after optimistic removal
+    const mockFilteredLists: UserItemList[] = [mockFilteredList];
 
-    const mockContext = { previousList: mockPreviousList };
-    const mockEmptyContext = { previousList: undefined };
+    // The result returned from the API after successful mutation
+    const mockResult: UserItemList = mockFilteredList;
+
+    // The value returned by onMutate (used in error/success/settled)
+    const mockOnMutateResultWithPrevious = { previousLists: mockLists };
+    const mockOnMutateResultEmpty = { previousLists: undefined };
 
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
+    const createTestQueryClient = () => {
+        return new QueryClient({
+            defaultOptions: {
+                queries: { retry: false },
+                mutations: { retry: false },
+            },
+        });
+    };
+
+    const createWrapper = (queryClient: QueryClient) => {
+        return ({ children }: { children: React.ReactNode }) => (
+            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        );
+    };
+
     it('should return mutation options with correct structure', () => {
+        const queryClient = createTestQueryClient();
         const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-            wrapper: createWrapper(),
+            wrapper: createWrapper(queryClient),
         });
 
         const options = result.current;
@@ -89,17 +103,21 @@ describe('useRemoveOneItemMutationOptions', () => {
         it('should call repository with correct parameters', async () => {
             mockedUserItemListRepository.removeOneItem.mockResolvedValue(mockResult);
 
+            const queryClient = createTestQueryClient();
             const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-                wrapper: createWrapper(),
+                wrapper: createWrapper(queryClient),
             });
 
-            const resultData = await result.current.mutationFn!({
-                listId: mockListId,
-                itemId: mockItemId
-            });
+            // mutationFn expects two arguments: variables and context
+            const resultData = await result.current.mutationFn!(
+                { listId: mockListId, itemId: mockItemId },
+                createMutationContext(queryClient)
+            );
 
-            expect(mockedUserItemListRepository.removeOneItem)
-                .toHaveBeenCalledWith(mockListId, mockItemId);
+            expect(mockedUserItemListRepository.removeOneItem).toHaveBeenCalledWith(
+                mockListId,
+                mockItemId
+            );
             expect(resultData).toBe(mockResult);
         });
 
@@ -107,91 +125,101 @@ describe('useRemoveOneItemMutationOptions', () => {
             const mockError = new Error('Repository error');
             mockedUserItemListRepository.removeOneItem.mockRejectedValue(mockError);
 
+            const queryClient = createTestQueryClient();
             const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-                wrapper: createWrapper(),
+                wrapper: createWrapper(queryClient),
             });
 
             await expect(
-                result.current.mutationFn!({ listId: mockListId, itemId: mockItemId })
+                result.current.mutationFn!(
+                    { listId: mockListId, itemId: mockItemId },
+                    createMutationContext(queryClient)
+                )
             ).rejects.toThrow('Repository error');
         });
     });
 
     describe('onMutate', () => {
-        it('should perform optimistic update when previous list exists', async () => {
-            const queryClient = new QueryClient();
-            queryClient.setQueryData([userItemListsKey, mockListId], mockPreviousList);
+        it('should perform optimistic update when previous lists exist', async () => {
+            const queryClient = createTestQueryClient();
+            // Set initial cache data as array of lists
+            queryClient.setQueryData([userItemListsKey], mockLists);
 
             const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
-            const onMutateResult = await result.current.onMutate!({
-                listId: mockListId,
-                itemId: mockItemId
-            });
+            // onMutate expects two arguments: variables and context
+            const onMutateResult = await result.current.onMutate!(
+                { listId: mockListId, itemId: mockItemId },
+                createMutationContext(queryClient)
+            );
 
-            const updatedData = queryClient.getQueryData([userItemListsKey, mockListId]);
-            expect(updatedData).toEqual(mockFilteredList);
+            // Verify optimistic update on the array key
+            const updatedLists = queryClient.getQueryData<UserItemList[]>([userItemListsKey]);
+            expect(updatedLists).toBeDefined();
+            expect(updatedLists!.length).toBe(1);
+            expect(updatedLists![0].items.length).toBe(1); // Only remaining item
+            expect(updatedLists![0].items[0].id).toBe(mockOtherItemId);
 
-            expect(onMutateResult).toEqual({ previousList: mockPreviousList });
+            // onMutate should return the previous state
+            expect(onMutateResult).toEqual({ previousLists: mockLists });
         });
 
-        it('should not update cache when no previous list exists', async () => {
-            const queryClient = new QueryClient();
+        it('should not update cache when no previous lists exist', async () => {
+            const queryClient = createTestQueryClient();
 
             const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
-            const onMutateResult = await result.current.onMutate!({
-                listId: mockListId,
-                itemId: mockItemId
-            });
+            const onMutateResult = await result.current.onMutate!(
+                { listId: mockListId, itemId: mockItemId },
+                createMutationContext(queryClient)
+            );
 
-            const currentData = queryClient.getQueryData([userItemListsKey, mockListId]);
+            const currentData = queryClient.getQueryData([userItemListsKey]);
             expect(currentData).toBeUndefined();
-            expect(onMutateResult).toEqual({ previousList: undefined });
+            expect(onMutateResult).toEqual({ previousLists: undefined });
         });
     });
 
     describe('onError', () => {
         it('should restore previous data and show error toast', () => {
-            const queryClient = new QueryClient();
+            const queryClient = createTestQueryClient();
+            // Simulate current cache with filtered data (e.g., after optimistic update)
+            queryClient.setQueryData([userItemListsKey], mockFilteredLists);
 
             const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
             const mockError = new Error('Mutation failed');
 
+            // onError expects four arguments:
+            // error, variables, onMutateResult, context
             result.current.onError!(
                 mockError,
                 { listId: mockListId, itemId: mockItemId },
-                mockContext
+                mockOnMutateResultWithPrevious,
+                createMutationContext(queryClient)
             );
 
-            const currentData = queryClient.getQueryData([userItemListsKey, mockListId]);
-            expect(currentData).toEqual(mockPreviousList);
+            // Verify cache is restored to previousLists
+            const restoredLists = queryClient.getQueryData([userItemListsKey]);
+            expect(restoredLists).toEqual(mockLists);
 
             expect(mockedToast.error).toHaveBeenCalledWith(
                 'Error al remover el elemento de la lista. Compruebe su conexión o inténtelo de nuevo.'
             );
         });
 
-        it('should not restore data when context has undefined previousList', () => {
-            const queryClient = new QueryClient();
+        it('should not restore data when onMutateResult has undefined previousLists', () => {
+            const queryClient = createTestQueryClient();
+            queryClient.setQueryData([userItemListsKey], mockLists);
 
             const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
             const mockError = new Error('Mutation failed');
@@ -199,92 +227,99 @@ describe('useRemoveOneItemMutationOptions', () => {
             result.current.onError!(
                 mockError,
                 { listId: mockListId, itemId: mockItemId },
-                mockEmptyContext
+                mockOnMutateResultEmpty,
+                createMutationContext(queryClient)
             );
 
             expect(mockedToast.error).toHaveBeenCalled();
+            // Cache should remain unchanged (still mockLists)
         });
     });
 
     describe('onSuccess', () => {
         it('should invalidate queries and show success toast', () => {
-            const queryClient = new QueryClient();
+            const queryClient = createTestQueryClient();
             const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
             const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
+            // onSuccess expects four arguments:
+            // data, variables, onMutateResult, context
             result.current.onSuccess!(
                 mockResult,
                 { listId: mockListId, itemId: mockItemId },
-                mockContext
+                mockOnMutateResultWithPrevious,
+                createMutationContext(queryClient)
             );
 
+            // Should invalidate both keys
             expect(invalidateQueriesSpy).toHaveBeenCalledWith({
                 queryKey: [userItemListsKey, mockListId],
             });
+            expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+                queryKey: [userItemListsKey],
+            });
+
             expect(mockedToast.success).toHaveBeenCalledWith(
                 'Se quitó con éxito el elemento de la lista.'
             );
         });
 
-        it('should handle success with empty context', () => {
-            const queryClient = new QueryClient();
+        it('should handle success with empty onMutateResult', () => {
+            const queryClient = createTestQueryClient();
             const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
             const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
             result.current.onSuccess!(
                 mockResult,
                 { listId: mockListId, itemId: mockItemId },
-                mockEmptyContext
+                mockOnMutateResultEmpty,
+                createMutationContext(queryClient)
             );
 
-            expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-                queryKey: [userItemListsKey, mockListId],
-            });
+            expect(invalidateQueriesSpy).toHaveBeenCalledTimes(2);
             expect(mockedToast.success).toHaveBeenCalled();
         });
     });
 
     describe('onSettled', () => {
-        it('should invalidate queries for the list', () => {
-            const queryClient = new QueryClient();
+        it('should invalidate queries for both keys', () => {
+            const queryClient = createTestQueryClient();
             const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
             const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
+            // onSettled expects five arguments:
+            // data, error, variables, onMutateResult, context
             result.current.onSettled!(
                 mockResult,
                 null,
                 { listId: mockListId, itemId: mockItemId },
-                mockContext
+                mockOnMutateResultWithPrevious,
+                createMutationContext(queryClient)
             );
 
             expect(invalidateQueriesSpy).toHaveBeenCalledWith({
                 queryKey: [userItemListsKey, mockListId],
             });
+            expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+                queryKey: [userItemListsKey],
+            });
         });
 
-        it('should invalidate queries for the list on error', () => {
-            const queryClient = new QueryClient();
+        it('should invalidate queries on error', () => {
+            const queryClient = createTestQueryClient();
             const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
             const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
             const mockError = new Error('Mutation failed');
@@ -293,99 +328,115 @@ describe('useRemoveOneItemMutationOptions', () => {
                 undefined,
                 mockError,
                 { listId: mockListId, itemId: mockItemId },
-                mockEmptyContext
+                mockOnMutateResultEmpty,
+                createMutationContext(queryClient)
             );
 
             expect(invalidateQueriesSpy).toHaveBeenCalledWith({
                 queryKey: [userItemListsKey, mockListId],
+            });
+            expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+                queryKey: [userItemListsKey],
             });
         });
     });
 
     describe('integration', () => {
         it('should complete full optimistic update flow successfully', async () => {
-            const queryClient = new QueryClient();
-            queryClient.setQueryData([userItemListsKey, mockListId], mockPreviousList);
+            const queryClient = createTestQueryClient();
+            queryClient.setQueryData([userItemListsKey], mockLists);
             mockedUserItemListRepository.removeOneItem.mockResolvedValue(mockResult);
 
             const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
-            // Execute onMutate
-            const context = await result.current.onMutate!({ listId: mockListId, itemId: mockItemId });
+            // onMutate
+            const onMutateResult = await result.current.onMutate!(
+                { listId: mockListId, itemId: mockItemId },
+                createMutationContext(queryClient)
+            );
 
-            // Verify optimistic update
-            const optimisticData = queryClient.getQueryData([userItemListsKey, mockListId]);
-            expect(optimisticData).toEqual(mockFilteredList);
+            // Verify optimistic update on array key
+            const optimisticLists = queryClient.getQueryData<UserItemList[]>([userItemListsKey]);
+            expect(optimisticLists).toEqual(mockFilteredLists);
 
-            // Execute mutationFn
-            const mutationResult = await result.current.mutationFn!({ listId: mockListId, itemId: mockItemId });
+            // mutationFn
+            const mutationResult = await result.current.mutationFn!(
+                { listId: mockListId, itemId: mockItemId },
+                createMutationContext(queryClient)
+            );
             expect(mutationResult).toBe(mockResult);
 
-            // Execute onSuccess
+            // onSuccess
             result.current.onSuccess!(
                 mutationResult,
                 { listId: mockListId, itemId: mockItemId },
-                context!
+                onMutateResult,
+                createMutationContext(queryClient)
             );
 
             expect(mockedToast.success).toHaveBeenCalled();
 
-            // Execute onSettled
+            // onSettled
             result.current.onSettled!(
                 mutationResult,
                 null,
                 { listId: mockListId, itemId: mockItemId },
-                context!
+                onMutateResult,
+                createMutationContext(queryClient)
             );
         });
 
         it('should handle full error flow with rollback', async () => {
-            const queryClient = new QueryClient();
-            queryClient.setQueryData([userItemListsKey, mockListId], mockPreviousList);
+            const queryClient = createTestQueryClient();
+            queryClient.setQueryData([userItemListsKey], mockLists);
             const mockError = new Error('Mutation failed');
             mockedUserItemListRepository.removeOneItem.mockRejectedValue(mockError);
 
             const { result } = renderHook(() => useRemoveOneItemMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
-            // Execute onMutate
-            const context = await result.current.onMutate!({ listId: mockListId, itemId: mockItemId });
+            // onMutate
+            const onMutateResult = await result.current.onMutate!(
+                { listId: mockListId, itemId: mockItemId },
+                createMutationContext(queryClient)
+            );
 
             // Verify optimistic update
-            const optimisticData = queryClient.getQueryData([userItemListsKey, mockListId]);
-            expect(optimisticData).toEqual(mockFilteredList);
+            const optimisticLists = queryClient.getQueryData<UserItemList[]>([userItemListsKey]);
+            expect(optimisticLists).toEqual(mockFilteredLists);
 
-            // Execute mutationFn (fails)
+            // mutationFn (fails)
             await expect(
-                result.current.mutationFn!({ listId: mockListId, itemId: mockItemId })
+                result.current.mutationFn!(
+                    { listId: mockListId, itemId: mockItemId },
+                    createMutationContext(queryClient)
+                )
             ).rejects.toThrow('Mutation failed');
 
-            // Execute onError
+            // onError
             result.current.onError!(
                 mockError,
                 { listId: mockListId, itemId: mockItemId },
-                context!
+                onMutateResult,
+                createMutationContext(queryClient)
             );
 
             expect(mockedToast.error).toHaveBeenCalled();
 
             // Verify rollback
-            const rolledBackData = queryClient.getQueryData([userItemListsKey, mockListId]);
-            expect(rolledBackData).toEqual(mockPreviousList);
+            const rolledBackLists = queryClient.getQueryData([userItemListsKey]);
+            expect(rolledBackLists).toEqual(mockLists);
 
-            // Execute onSettled
+            // onSettled
             result.current.onSettled!(
                 undefined,
                 mockError,
                 { listId: mockListId, itemId: mockItemId },
-                context!
+                onMutateResult,
+                createMutationContext(queryClient)
             );
         });
     });
