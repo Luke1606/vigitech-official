@@ -33,7 +33,7 @@ Encargado de la limpieza, estandarización y vectorización de datos.
 
 Utiliza el conocimiento vectorial para tomar decisiones de clasificación.
 
-* **`Items-Identifying`:** Usa la **búsqueda vectorial (RAG)** para agrupar *Knowledge Fragments* relacionados y consolidarlos en un **`Item`** tecnológico único.
+* **`Items-Discovery`:** Usa la **búsqueda vectorial (RAG)** para agrupar *Knowledge Fragments* relacionados y consolidarlos en un **`Item`** tecnológico único.
 * **`Items-Classification`:** Asigna la clasificación del radar (`ADOPT`, `TEST`, etc.) utilizando la **generación aumentada por caché (CAG)** y los *insights* extraídos de los *fragments*.
 
 ### 3\. **`Centralized-AI-Agent` (Servicio Compartido) 🤖**

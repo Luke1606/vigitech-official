@@ -12,7 +12,7 @@ export class OrchestrationService {
     private readonly logger = new Logger(OrchestrationService.name);
 
     constructor(
-        private readonly itemsIdentifyingService: ItemsDiscoveryService,
+        private readonly itemsDiscoveryService: ItemsDiscoveryService,
         private readonly itemsGatewayService: ItemsGatewayService,
         private readonly userPreferencesService: UserPreferencesService,
     ) {
@@ -32,7 +32,7 @@ export class OrchestrationService {
         this.logger.log('--- MANUAL TRIGGER: Starting Global Recommendation Identification (Identify New Items) ---');
 
         // 1. Identificar y crear nuevos ítems (con su clasificación inicial)
-        await this.itemsIdentifyingService.identifyNewItems();
+        await this.itemsDiscoveryService.discoverNewItems();
 
         this.logger.log('--- MANUAL TRIGGER: Global Recommendation Identification Finished. Fetching all items. ---');
 

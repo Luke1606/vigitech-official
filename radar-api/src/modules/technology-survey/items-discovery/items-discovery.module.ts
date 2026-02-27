@@ -9,4 +9,4 @@ import { AiAgentsModule } from '../../ai-agents/ai-agents.module';
     providers: [ItemsDiscoveryService],
     exports: [ItemsDiscoveryService],
 })
-export class ItemsIdentifyingModule {}
+export class ItemsDiscoveryModule {}

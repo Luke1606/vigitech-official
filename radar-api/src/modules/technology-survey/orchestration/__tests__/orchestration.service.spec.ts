@@ -3,10 +3,11 @@ import { OrchestrationService } from '../orchestration.service';
 import { ItemsDiscoveryService } from '../../items-discovery/items-discovery.service';
 import { ItemsGatewayService } from '../../gateway/gateway.service';
 import { UserPreferencesService } from '../../../user-data/user-preferences/user-preferences.service';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 describe('OrchestrationService', () => {
     let service: OrchestrationService;
-    let identifyingService: ItemsDiscoveryService;
+    let discoveryService: ItemsDiscoveryService;
     let gatewayService: ItemsGatewayService;
     let userPrefsService: UserPreferencesService;
 
@@ -30,7 +31,7 @@ describe('OrchestrationService', () => {
         }).compile();
 
         service = module.get<OrchestrationService>(OrchestrationService);
-        identifyingService = module.get<ItemsDiscoveryService>(ItemsDiscoveryService);
+        discoveryService = module.get<ItemsDiscoveryService>(ItemsDiscoveryService);
         gatewayService = module.get<ItemsGatewayService>(ItemsGatewayService);
         userPrefsService = module.get<UserPreferencesService>(UserPreferencesService);
     });
@@ -40,12 +41,12 @@ describe('OrchestrationService', () => {
             const userId = 'user-uuid' as any;
             const mockItems = [{ id: '1' }];
 
-            identifyingService.identifyNewItems = jest.fn().mockResolvedValue(undefined);
+            discoveryService.discoverNewItems = jest.fn().mockResolvedValue(undefined);
             gatewayService.findAllRecommended = jest.fn().mockResolvedValue(mockItems);
 
             const result = await service.runGlobalRecommendationJob(userId);
 
-            expect(identifyingService.identifyNewItems).toHaveBeenCalled();
+            expect(discoveryService.discoverNewItems).toHaveBeenCalled();
             expect(gatewayService.findAllRecommended).toHaveBeenCalledWith(userId);
             expect(result).toEqual(mockItems);
         });
