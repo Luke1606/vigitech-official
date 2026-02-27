@@ -406,7 +406,7 @@ export const Header: React.FC = () => {
             )}
 
             {/* Settings Modal - siempre visible */}
-            <SettingsModal />
+            {/* <SettingsModal /> */}
         </header>
     )
 }
