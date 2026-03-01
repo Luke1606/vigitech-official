@@ -17,7 +17,7 @@ describe('OrchestrationService', () => {
                 OrchestrationService,
                 {
                     provide: ItemsDiscoveryService,
-                    useValue: { identifyNewItems: jest.fn() },
+                    useValue: { discoverNewItems: jest.fn() },
                 },
                 {
                     provide: ItemsGatewayService,

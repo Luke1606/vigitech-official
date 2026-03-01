@@ -3,9 +3,9 @@ services:
     image: ankane/pgvector:latest
     container_name: radar-test-db
     environment:
-      POSTGRES_DB: radar-test-db
-      POSTGRES_USER: test-user
-      POSTGRES_PASSWORD: test-password
+      POSTGRES_DB: "${TEST_DB_NAME}"
+      POSTGRES_USER: "${TEST_DB_USER}"
+      POSTGRES_PASSWORD: "${TEST_DB_PASSWORD}"
     ports:
       - "5433:5432"
     volumes:

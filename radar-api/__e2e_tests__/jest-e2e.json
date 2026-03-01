@@ -6,7 +6,12 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
+  "transformIgnorePatterns": [
+    "node_modules/(?!uuid)"
+  ],
+  "modulePathIgnorePatterns": ["<rootDir>/dist/"],
   "moduleNameMapper": {
     "^@/(.*)$": "<rootDir>/src/$1"
-  }
+  },
+  "setupFiles": ["dotenv/config"]
 }

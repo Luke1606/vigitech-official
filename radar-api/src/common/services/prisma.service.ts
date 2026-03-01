@@ -16,7 +16,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     private readonly logger: Logger = new Logger('PrismaService');
 
     constructor() {
-        const connectionString = process.env.DATABASE_URL;
+        const isTesting = process.env.NODE_ENV === 'test';
+        const connectionString = isTesting ? process.env.TEST_DATABASE_URL : process.env.DATABASE_URL;
+
         const pool = new Pool({ connectionString });
         const adapter = new PrismaPg(pool);
 

@@ -57,7 +57,7 @@ describe('ItemsDiscoveryService', () => {
             jest.spyOn(aiAgentsService, 'generateResponse').mockResolvedValue(mockAiResponse);
 
             // WHEN
-            await service.identifyNewItems();
+            await service.discoverNewItems();
 
             // THEN
             expect(itemsGatewayService.findAllItemTitles).toHaveBeenCalled();
@@ -76,7 +76,7 @@ describe('ItemsDiscoveryService', () => {
             jest.spyOn(aiAgentsService, 'generateResponse').mockResolvedValue([]);
 
             // WHEN
-            await service.identifyNewItems();
+            await service.discoverNewItems();
 
             // THEN
             expect(itemsGatewayService.createBatch).not.toHaveBeenCalled();
@@ -90,7 +90,7 @@ describe('ItemsDiscoveryService', () => {
             jest.spyOn(aiAgentsService, 'generateResponse').mockResolvedValue([{ title: 'New Tech' }]);
 
             // WHEN
-            await service.identifyNewItems();
+            await service.discoverNewItems();
 
             // THEN
             // Verificamos que el prompt se construya aunque la lista de títulos esté vacía

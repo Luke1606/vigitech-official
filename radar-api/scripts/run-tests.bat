@@ -1,44 +1,73 @@
 @echo off
+setlocal enabledelayedexpansion
+:menu
+cls
 echo ===============================================
-echo    EJECUTANDO TESTS CON BASE DE DATOS
+echo         TESTING LAB
 echo ===============================================
 echo.
+echo  1. Tests Unitarios (Rapidos, sin DB)
+echo  2. Tests E2E API (Con DB, Docker y Jest)
+echo  3. Cobertura de Codigo (Unitarios)
+echo  4. Limpiar Infraestructura de Tests
+echo  5. Salir
+echo.
+echo ===============================================
+set /p "opcion=Selecciona una opcion [1-5]: "
 
-echo [1/5] Levantando base de datos de test...
-call npm run test:db:up
-if errorlevel 1 (
-    echo ERROR: No se pudo levantar BD de test
-    pause
-    exit /b 1
-)
+if "%opcion%"=="1" goto unitarios
+if "%opcion%"=="2" goto e2e
+if "%opcion%"=="3" goto coverage
+if "%opcion%"=="4" goto limpiar
+if "%opcion%"=="5" goto salir
 
-echo [2/5] Esperando inicializacion de BD...
-timeout /t 5 /nobreak >nul
+goto menu
 
-echo [3/5] Aplicando migraciones...
-call npm run db:migrate:deploy
-if errorlevel 1 (
-    echo ERROR: Fallo en migraciones
-    npm run test:db:down
-    pause
-    exit /b 1
-)
+:unitarios
+echo.
+echo [EXE] Ejecutando tests unitarios (Jest)...
+call npm test
+pause
+goto menu
 
-echo [4/5] Ejecutando tests...
-call npm run test:cov
+:e2e
+echo.
+echo ===============================================
+echo     INICIANDO FLUJO E2E API CON BASE DE DATOS
+echo ===============================================
+echo.
+echo [EXE] Ejecutando tests E2E y gestionando DB...
+:: Llama al script unificado en package.json
+call npm run test:e2e:run
 set TEST_RESULT=%errorlevel%
 
-echo [5/5] Deteniendo base de datos de test...
+echo.
+echo [EXE] Limpiando infraestructura...
 call npm run test:db:down
 
 if %TEST_RESULT% equ 0 (
-    echo ===============================================
-    echo    TESTS EXITOSOS!
-    echo ===============================================
+    echo [OK] TESTS E2E API EXITOSOS!
 ) else (
-    echo ===============================================
-    echo    TESTS FALLIDOS! Codigo de error: %TEST_RESULT%
-    echo ===============================================
+    echo [FAIL] TESTS E2E API FALLIDOS! Codigo: %TEST_RESULT%
 )
-
 pause
+goto menu
+
+:coverage
+echo.
+echo [EXE] Generando reporte de cobertura (Unitarios)...
+call npm run test:cov
+pause
+goto menu
+
+:limpiar
+echo.
+echo [EXE] Bajando contenedores de test (radar-test-db)...
+call npm run test:db:down
+echo Limpieza completada.
+pause
+goto menu
+
+:salir
+echo Saliendo...
+exit /b 0
