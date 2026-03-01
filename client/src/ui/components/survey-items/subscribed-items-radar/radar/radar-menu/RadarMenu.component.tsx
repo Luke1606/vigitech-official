@@ -1,5 +1,5 @@
 import { Maximize, Trash2, Minus, CheckCircle } from 'lucide-react';
-import type { SurveyItem, UUID } from '../../../../../../infrastructure';
+import type { SurveyItem } from '../../../../../../infrastructure';
 import {
 	DropdownMenu,
 	DropdownMenuContent,

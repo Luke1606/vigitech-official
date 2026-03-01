@@ -15,7 +15,7 @@ export const RecommendationsFeed: React.FC = () => {
     const [selectedItems, setSelectedItems] = useState<SurveyItem[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [itemsPerPage, setItemsPerPage] = useState<number>(6);
-    const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
+    const [_, setWindowWidth] = useState<number>(window.innerWidth);
     const [isMultipleSelection, setIsMultipleSelection] = useState<boolean>(false);
 
     // ----------------------------------------------------------------------
