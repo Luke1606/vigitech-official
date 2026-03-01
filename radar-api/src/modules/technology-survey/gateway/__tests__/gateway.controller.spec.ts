@@ -5,6 +5,7 @@ import { AuthenticatedRequest } from '@/shared/types/authenticated-request.type'
 import { CreateUnclassifiedItemDto } from '@/modules/technology-survey/shared/dto/create-unclassified-item.dto';
 import { ItemsGatewayController } from '../gateway.controller';
 import { ItemsGatewayService } from '../gateway.service';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 const MOCK_USER_ID: UUID = 'user-id-123' as UUID;
 const MOCK_ITEM_ID: UUID = 'item-id-456' as UUID;
@@ -182,12 +183,13 @@ describe('ItemsGatewayController', () => {
     describe('DELETE /batch (removeBatch)', () => {
         it('should call removeBatch with the array of IDs and the userId', async () => {
             const itemIds = [MOCK_ITEM_ID];
+            const batchDto = { itemIds };
             service.removeBatch.mockResolvedValue(undefined);
 
-            const result = await controller.removeBatch(itemIds, mockAuthenticatedRequest);
+            const result = await controller.removeBatch(batchDto, mockAuthenticatedRequest);
 
             expect(result).toBeUndefined();
-            expect(service.removeBatch).toHaveBeenCalledWith(itemIds, MOCK_USER_ID);
+            expect(service.removeBatch).toHaveBeenCalledWith(batchDto, MOCK_USER_ID);
         });
     });
 });

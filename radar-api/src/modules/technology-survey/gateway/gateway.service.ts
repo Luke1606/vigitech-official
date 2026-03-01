@@ -376,7 +376,7 @@ export class ItemsGatewayService {
 
     /**
      * Busca todos los títulos de ítems existentes en la base de datos.
-     * Utilizado por ItemsIdentifyingService para el filtro negativo RAG.
+     * Utilizado por ItemsDiscoveryService para el filtro negativo RAG.
      * @returns Promesa que resuelve con un array de strings (títulos).
      */
     async findAllItemTitles(): Promise<string[]> {

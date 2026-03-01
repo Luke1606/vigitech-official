@@ -6,8 +6,8 @@ import { ItemsGatewayService } from '../gateway/gateway.service';
 import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-item.dto';
 
 @Injectable()
-export class ItemsIdentifyingService {
-    private readonly logger: Logger = new Logger(ItemsIdentifyingService.name);
+export class ItemsDiscoveryService {
+    private readonly logger: Logger = new Logger(ItemsDiscoveryService.name);
 
     constructor(
         private readonly dataFetchService: DataFetchService,
@@ -20,8 +20,8 @@ export class ItemsIdentifyingService {
      * Utiliza RAG Negativo (lista de ítems existentes) y RAG Positivo (fragmentos de conocimiento).
      * @returns Promesa vacía al completar la identificación y la creación de lotes.
      */
-    async identifyNewItems(): Promise<void> {
-        this.logger.log('Identifying new items from various data sources...');
+    async discoverNewItems(): Promise<void> {
+        this.logger.log('Discovering new items from various data sources...');
 
         const existingTitles: string[] = await this.itemsGatewayService.findAllItemTitles();
         const existingTitlesList = existingTitles.map((title) => `"${title}"`).join(', '); // 2. Obtener contexto RAG (Evidencia Positiva)
@@ -58,7 +58,7 @@ export class ItemsIdentifyingService {
             }
         `;
 
-        const newItems = (await this.aiAgentsService.generateResponse(prompt, context)) as CreateUnclassifiedItemDto[];
+        const newItems = await this.aiAgentsService.generateResponse<CreateUnclassifiedItemDto[]>(prompt, context);
 
         if (newItems.length > 0) {
             this.logger.log(`Identified ${newItems.length} potential new items. Creating and classifying them...`);

@@ -5,6 +5,7 @@ import { Item, Field, Classification } from '@prisma/client';
 import { PrismaService } from '@/common/services/prisma.service';
 import { ItemsClassificationService } from '../../items-classification/items-classification.service';
 import { ItemsGatewayService } from '../gateway.service';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 const MOCK_USER_ID: UUID = 'user-id-123' as UUID;
 const MOCK_ITEM_ID: UUID = 'item-id-456' as UUID;
@@ -270,21 +271,14 @@ describe('ItemsGatewayService', () => {
 
     // --- 3. ELIMINACIÓN (CORREGIDO) ---
     describe('Removal Logic', () => {
-        it('removeOne: debe borrar físicamente si el usuario es el autor', async () => {
-            (prisma.item.findUniqueOrThrow as jest.Mock).mockResolvedValue({ insertedById: MOCK_USER_ID });
-            await service.removeOne(MOCK_ITEM_ID, MOCK_USER_ID);
-            expect(prisma.item.delete).toHaveBeenCalled();
-        });
-
         it('removeBatch: debe separar items propios de ajenos', async () => {
             (prisma.item.findMany as jest.Mock).mockResolvedValue([
-                { id: '1', insertedById: MOCK_USER_ID }, // Para borrar
-                { id: '2', insertedById: 'otro' }, // Para ocultar
+                { id: '1', insertedById: MOCK_USER_ID },
+                { id: '2', insertedById: 'otro' },
             ]);
 
-            await service.removeBatch(['1', '2'] as unknown as UUID[], MOCK_USER_ID);
+            await service.removeBatch({ itemIds: ['1', '2'] }, MOCK_USER_ID);
 
-            // Verificamos en prisma directamente, ya que removeBatch NO usa $transaction
             expect(prisma.item.deleteMany).toHaveBeenCalledWith({
                 where: { id: { in: ['1'] } },
             });

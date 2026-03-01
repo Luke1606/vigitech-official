@@ -118,5 +118,125 @@
   {
     "textSnippet": "El riesgo de bit rot (corrupción silenciosa de datos) en almacenamiento a largo plazo está llevando a la adopción de sistemas de archivos con sumas de comprobación avanzadas (ZFS/Btrfs) en la infraestructura on-premise.",
     "associatedKPIs": { "bit_rot_incident_rate": 0.01, "data_integrity_score": 0.99 }
-  }
+  },
+  { 
+    "textSnippet": "Z-Stream se convierte en el estándar de facto para gaming en la nube. AWS lanza servicio gestionado basado en este protocolo.", 
+    "associatedKPIs": { "market_share": 0.65, "aws_managed": true } 
+  },
+  { 
+    "textSnippet": "LuminaDB es abandonado por sus creadores tras la aparición de NexusQuery. Se recomienda migración inmediata por falta de parches.", 
+    "associatedKPIs": { "active_maintenance": false, "security_risk": "CRITICAL" } 
+  },
+  { 
+    "textSnippet": "CarbonUI lanza v2.0. Documentación completa y soporte para todos los frameworks principales. Adopción masiva en sector público.", 
+    "associatedKPIs": { "ecosystem_index": 0.95, "framework_support": ["REACT", "VUE", "ANGULAR"] } 
+  },
+  { 
+    "textSnippet": "Orion-Mesh: Se descubre un fallo arquitectónico que degrada el rendimiento en un 50% tras 48h de uptime. Istio recupera el mercado.", 
+    "associatedKPIs": { "bug_severity": "CRITICAL", "market_sentiment": -0.80 } 
+  },
+  { 
+    "textSnippet": "DeepTrace es adquirido por Datadog. Se integra como la funcionalidad 'Predictive Analytics' estándar de la plataforma.", 
+    "associatedKPIs": { "acquisition_status": "DONE", "standard_feature": true } 
+  },
+  { 
+    "textSnippet": "Hydro-Compute: El W3C detiene la estandarización por problemas de seguridad de hardware insalvables. Mover a HOLD.", 
+    "associatedKPIs": { "security_risk": "UNSOLVABLE", "standard_status": "ABANDONED" } 
+  },
+  { 
+    "textSnippet": "SecureNode se integra como el motor por defecto en la nube de Vercel. Sustituye al runtime estándar por su seguridad superior.", 
+    "associatedKPIs": { "default_runtime": true, "market_penetration": 0.30 } 
+  },
+  { 
+    "textSnippet": "QuantumAuth: El NIST lo selecciona como estándar para identidades digitales seguras. Todas las librerías de Auth lo integran.", 
+    "associatedKPIs": { "nist_standard": true, "auth_library_adoption": 0.90 } 
+  },
+  { 
+    "textSnippet": "Vortex-Query: El rendimiento alcanza niveles de texto plano. Se vuelve obligatorio por ley en el manejo de datos médicos en la UE.", 
+    "associatedKPIs": { "regulatory_compliance": "MANDATORY", "perf_parity": 0.95 } 
+  },
+  { 
+    "textSnippet": "BioLink-ID: El estándar final es publicado. Apple lo integra en FaceID para login web sin fricción. Despliegue global.", 
+    "associatedKPIs": { "standard_published": true, "global_users": "2B" } 
+  },
+  { 
+    "textSnippet": "Neo-Saga sufre de 'complejidad insostenible'. Los equipos reportan que mantener el código es más caro que el beneficio que aporta.", 
+    "associatedKPIs": { "maintenance_cost": 0.95, "dev_burnout_rate": 0.70 } 
+  },
+  { 
+    "textSnippet": "Flex-Cache: Se descubre que el escalado dinámico causa micro-cortes de red aleatorios. Los ingenieros vuelven a Redis estable.", 
+    "associatedKPIs": { "incident_rate": 0.15, "user_retention": -0.60 } 
+  },
+  { 
+    "textSnippet": "Meta-Logic: El proyecto es abandonado. Los analistas prefieren usar copilotos de IA que generan código real directamente.", 
+    "associatedKPIs": { "tool_obsolescence": true, "reason": "GEN-AI-REPLACEMENT" } 
+  },
+  { 
+    "textSnippet": "Nova-Storage: Se convierte en la base de la infraestructura de almacenamiento frío de Google Cloud. Madurez total.", 
+    "associatedKPIs": { "maturity": "GA", "reliability_nines": 11 } 
+  },
+  { 
+    "textSnippet": "Sync-Wave: Un bug en el protocolo permite trampas (cheats) indetectables. El ecosistema de juegos competitivos lo prohíbe.", 
+    "associatedKPIs": { "security_vulnerability": "EXPLOITED", "blacklist_status": true } 
+  },
+  { 
+    "textSnippet": "Titan-Compiler: El core team se disuelve. No hay actualizaciones para nuevas versiones de Rust. Riesgo de estancamiento.", 
+    "associatedKPIs": { "bus_factor": 1, "update_frequency_days": 365 } 
+  },
+  { 
+    "textSnippet": "Aether-OS: Se convierte en el SO estándar para misiones espaciales de la NASA por su verificación formal. Éxito total.", 
+    "associatedKPIs": { "mission_critical_use": true, "zero_failure_record": true } 
+  },
+  { 
+    "textSnippet": "Fluid-API: La startup es cerrada. El código es open source pero nadie lo mantiene. Mover a SUSTAIN para usuarios existentes.", 
+    "associatedKPIs": { "company_status": "CLOSED", "community_maintenance": 0.1 } 
+  },
+  { 
+    "textSnippet": "Zenith-ML: Integrado nativamente en Android y iOS como servicio de sistema. Privacidad total por defecto en apps.", 
+    "associatedKPIs": { "os_integration": true, "privacy_compliance": 1.0 } 
+  },
+  { 
+    "textSnippet": "Kube-Light: Superado por arquitecturas de WebAssembly (Wasm) aún más ligeras. Se considera tecnología de transición.", 
+    "associatedKPIs": { "market_relevance": 0.20, "successor_tech": "WASM-CLOUD" } 
+  },
+  { 
+    "textSnippet": "Green-Compute: Se convierte en estándar ISO. Las empresas deben reportar ahorro de carbono usando este tipo de schedulers.", 
+    "associatedKPIs": { "iso_standard": "ISO-50001-EXT", "global_adoption": 0.40 } 
+  },
+  { 
+    "textSnippet": "Swift-Bus: Se reportan pérdidas de mensajes críticas bajo alta presión de red. No apto para sistemas financieros.", 
+    "associatedKPIs": { "reliability_score": 0.75, "use_case_restriction": "NON-CRITICAL-ONLY" } 
+  },
+  { 
+    "textSnippet": "Logic-Gate-CSS: Declarado oficialmente como 'antipatrón' por las principales comunidades de desarrollo web.", 
+    "associatedKPIs": { "antipattern_status": true, "usage_rate": 0.001 } 
+  },
+  { 
+    "textSnippet": "Auto-Doc-IA: Ahora genera código de infraestructura (Terraform) a partir de los diagramas que ella misma crea. Innovación.", 
+    "associatedKPIs": { "iac_generation": true, "feature_expansion": 0.50 } 
+  },
+  { 
+    "textSnippet": "Pixel-Vault: Hackeado masivamente debido a un error en el DRM. La confianza de los partners cae a cero.", 
+    "associatedKPIs": { "breach_impact_usd": "50M", "partner_churn": 0.90 } 
+  },
+  { 
+    "textSnippet": "Trace-Zero: Se estandariza en arquitecturas de High Frequency Trading donde cada microsegundo cuenta.", 
+    "associatedKPIs": { "industry_niche": "HFT", "adoption_in_niche": 0.80 } 
+  },
+  { 
+    "textSnippet": "Giga-Registry: Adquirido por Docker. Se convierte en la tecnología 'Docker Turbo' para usuarios Enterprise.", 
+    "associatedKPIs": { "exit_status": "ACQUIRED", "new_brand": "DOCKER-TURBO" } 
+  },
+  { 
+    "textSnippet": "Nano-Worker: Superado por soluciones que corren directamente en el hardware sin runtime. Obsolescencia rápida.", 
+    "associatedKPIs": { "obsolescence_risk": 0.85, "new_tech_competition": "BARE-METAL-WASM" } 
+  },
+  { 
+    "textSnippet": "Ender-Auth: Adoptado por el gobierno de Estonia como método de identidad nacional. Éxito de escala masiva.", 
+    "associatedKPIs": { "government_adoption": true, "active_users": "1.3M" } 
+  },
+  { 
+    "textSnippet": "Dora-Metrics-Bot: Integrado como parte de las métricas 'Native Insights' de GitHub Enterprise.", 
+    "associatedKPIs": { "integrated_in_github": true, "standalone_support": "DISCONTINUED" }
+   }
 ]

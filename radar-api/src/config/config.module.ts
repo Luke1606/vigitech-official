@@ -1,16 +1,19 @@
 import { Global, Module } from '@nestjs/common';
-import { ConfigModule as cfgModule, ConfigService } from '@nestjs/config';
+import { ConfigModule as NestConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 
+/**
+ * Módulo global de configuración que carga las variables de entorno
+ * y configura el módulo de limitación de peticiones (Throttler).
+ */
 @Global()
 @Module({
     imports: [
-        cfgModule.forRoot({
+        NestConfigModule.forRoot({
             isGlobal: true,
             envFilePath: process.env.NODE_ENV === 'production' ? undefined : '.env',
         }),
         ThrottlerModule.forRootAsync({
-            imports: [ConfigModule],
             inject: [ConfigService],
             useFactory: (config: ConfigService) => ({
                 throttlers: [

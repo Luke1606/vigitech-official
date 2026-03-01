@@ -4,7 +4,7 @@ import { Item } from '@prisma/client';
 import { SurveyOrchestratorUserPreferences } from '@/shared/types/survey-orquestrator-user-preferences.type';
 import { UserPreferencesService } from '../../user-data/user-preferences/user-preferences.service';
 import { ItemsGatewayService } from '../gateway/gateway.service';
-import { ItemsIdentifyingService } from '../items-identifying/items-identifying.service';
+import { ItemsDiscoveryService } from '../items-discovery/items-discovery.service';
 import { ClassificationChange } from '../shared/types/classification-change.type';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class OrchestrationService {
     private readonly logger = new Logger(OrchestrationService.name);
 
     constructor(
-        private readonly itemsIdentifyingService: ItemsIdentifyingService,
+        private readonly itemsDiscoveryService: ItemsDiscoveryService,
         private readonly itemsGatewayService: ItemsGatewayService,
         private readonly userPreferencesService: UserPreferencesService,
     ) {
@@ -29,10 +29,10 @@ export class OrchestrationService {
      * @returns Promesa que resuelve con un array de todos los ítems de la encuesta.
      */
     async runGlobalRecommendationJob(userId: UUID): Promise<Item[]> {
-        this.logger.log('--- MANUAL TRIGGER: Starting Global Recommendation Identification (Identify New Items) ---');
+        this.logger.log('--- MANUAL TRIGGER: Starting Global Recommendation Identification (Discover New Items) ---');
 
         // 1. Identificar y crear nuevos ítems (con su clasificación inicial)
-        await this.itemsIdentifyingService.identifyNewItems();
+        await this.itemsDiscoveryService.discoverNewItems();
 
         this.logger.log('--- MANUAL TRIGGER: Global Recommendation Identification Finished. Fetching all items. ---');
 
