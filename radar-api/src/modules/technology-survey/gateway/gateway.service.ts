@@ -1,6 +1,6 @@
 import type { UUID } from 'crypto';
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
-import { UserSubscribedItem, Item } from '@prisma/client';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { UserSubscribedItem, Item, Prisma } from '@prisma/client';
 import { PrismaService } from '@/common/services/prisma.service';
 import { ItemsClassificationService } from '../items-classification/items-classification.service';
 import {
@@ -24,7 +24,8 @@ export class ItemsGatewayService {
 
     /**
      * Busca todos los Items que son recomendados para el usuario actual.
-     * Excluye aquellos que el usuario ha suscrito o ha marcado como ocultos.
+     * Excluye aquellos que el usuario ha suscrito o ha marcado como ocultos,
+     * además de los insertados por otros usuarios.
      * @param userId UUID del usuario.
      * @returns Promesa que resuelve con un array de Items.
      */
@@ -33,12 +34,9 @@ export class ItemsGatewayService {
 
         return this.prisma.item.findMany({
             where: {
-                subscribedBy: {
-                    none: { userId },
-                },
-                hiddenBy: {
-                    none: { userId },
-                },
+                hiddenBy: { none: { userId: userId } },
+                subscribedBy: { none: { userId: userId } },
+                OR: [{ insertedById: null }, { insertedById: userId }],
             },
             include: {
                 latestClassification: true,
@@ -51,14 +49,14 @@ export class ItemsGatewayService {
      * @param userId UUID del usuario.
      * @returns Promesa que resuelve con un array de Items suscritos.
      */
-    async findAllSubscribed(userId: string): Promise<Item[]> {
+    async findAllSubscribed(userId: UUID): Promise<Item[]> {
         this.logger.log('Executed findAllSubscribed');
 
         return this.prisma.item.findMany({
             where: {
-                subscribedBy: {
-                    some: { userId },
-                },
+                hiddenBy: { none: { userId: userId } },
+                subscribedBy: { some: { userId: userId } },
+                OR: [{ insertedById: null }, { insertedById: userId }],
             },
             include: {
                 latestClassification: true,
@@ -67,34 +65,43 @@ export class ItemsGatewayService {
     }
 
     /**
-     * Busca un Item específico por ID.
+     * Busca un Item específico por ID, no tiene en cuenta los creados personalmente a menos que pertenezcan al usuario actual.
      * Lanza una ForbiddenException si el Item está marcado como oculto por el usuario.
      * @param id UUID del Item.
      * @param userId UUID del usuario que realiza la consulta.
      * @returns Promesa que resuelve con el Item encontrado.
      * @throws ForbiddenException si el Item está oculto.
      */
-    async findOne(id: UUID, userId: UUID): Promise<Item> {
+    async findOne(id: UUID, userId: UUID): Promise<Item | null> {
         this.logger.log(`Executed findOne of ${id}`);
 
-        const item: Item = await this.prisma.item.findUniqueOrThrow({
-            where: { id },
-        });
-
-        const isHidden = await this.prisma.userHiddenItem.findUnique({
-            where: {
-                userId_itemId: {
-                    userId,
-                    itemId: id,
+        try {
+            const item: Item = await this.prisma.item.findUniqueOrThrow({
+                where: {
+                    id,
+                    OR: [{ insertedById: userId }, { insertedById: null }],
                 },
-            },
-        });
+                include: {
+                    latestClassification: true,
+                },
+            });
 
-        if (isHidden) {
-            throw new ForbiddenException(`El item de id ${id} no está disponible para este usuario`);
+            const hiddenItem = await this.prisma.userHiddenItem.findUnique({
+                where: { userId_itemId: { userId, itemId: id } },
+            });
+
+            if (hiddenItem) throw new ForbiddenException(`El item de id ${id} no está disponible para este usuario`);
+
+            return item;
+        } catch (error) {
+            this.logger.error(error);
+
+            if (error instanceof ForbiddenException) throw error;
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025')
+                throw new NotFoundException('Item no encontrado');
+
+            return null;
         }
-
-        return item;
     }
 
     /**
@@ -104,14 +111,20 @@ export class ItemsGatewayService {
      * @param data DTO del Item sin clasificar.
      * @param insertedById UUID del usuario que inserta el Item.
      * @returns Promesa vacía al completar la creación.
+     * @throws Error si ocurre algun error por falta de internet u otra razón.
      */
     async create(data: CreateUnclassifiedItemDto, insertedById: UUID): Promise<void> {
         this.logger.log('Executed create');
 
-        const classificationInfo: CreateNewItemClassification =
-            await this.itemsClassificationService.classifyNewItem(data);
+        try {
+            const classificationInfo: CreateNewItemClassification =
+                await this.itemsClassificationService.classifyNewItem(data);
 
-        await this._saveNewItem(classificationInfo, insertedById);
+            await this._saveNewItem(classificationInfo, insertedById);
+        } catch (error) {
+            this.logger.error(error);
+            throw new Error('Ha ocurrido un error durante la creación');
+        }
     }
 
     /**
@@ -122,13 +135,9 @@ export class ItemsGatewayService {
      * @returns Promesa que resuelve con el registro de UserSubscribedItem creado/actualizado.
      */
     async subscribeOne(id: UUID, userId: UUID): Promise<UserSubscribedItem> {
-        this.logger.log(`Executed subscribe of ${id}`);
+        this.logger.log(`Executed subscribe of ${id} for ${userId}`);
 
-        await this.prisma.item.findUniqueOrThrow({ where: { id } });
-
-        await this.prisma.userHiddenItem.deleteMany({
-            where: { userId, itemId: id },
-        });
+        await this.findOne(id, userId);
 
         return this.prisma.userSubscribedItem.upsert({
             where: { userId_itemId: { userId, itemId: id } },
@@ -144,14 +153,26 @@ export class ItemsGatewayService {
      * @returns Promesa vacía al completar la operación.
      */
     async unsubscribeOne(id: UUID, userId: UUID): Promise<void> {
-        this.logger.log(`Executed unsubscribe of ${id}`);
+        this.logger.log(`Executed unsubscribe of ${id} for ${userId}`);
 
-        await this.prisma.userSubscribedItem.deleteMany({
-            where: {
-                userId,
-                itemId: id,
-            },
-        });
+        await this.findOne(id, userId);
+
+        try {
+            const itemSuscription = await this.prisma.userSubscribedItem.findFirstOrThrow({
+                where: { userId, itemId: id },
+            });
+
+            if (itemSuscription)
+                await this.prisma.userSubscribedItem.delete({
+                    where: { userId_itemId: { userId, itemId: id } },
+                });
+        } catch (error) {
+            this.logger.error(error);
+
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025')
+                throw new NotFoundException('Item no encontrado');
+            return;
+        }
     }
 
     /**
@@ -163,33 +184,50 @@ export class ItemsGatewayService {
      * @returns Promesa vacía al completar la operación.
      */
     async removeOne(id: UUID, userId: UUID): Promise<void> {
-        this.logger.log(`Executed remove of ${id}`);
+        this.logger.log(`Executed remove of ${id} for ${userId}`);
 
-        const item = await this.prisma.item.findUniqueOrThrow({
-            where: { id },
-            select: { insertedById: true },
+        try {
+            const item = await this.prisma.item.findUniqueOrThrow({
+                where: {
+                    id,
+                    OR: [{ insertedById: userId }, { insertedById: null }],
+                },
+                select: { insertedById: true },
+            });
+
+            if ((item.insertedById as UUID) === userId) {
+                // Item created by user. Deleting permanently.
+                await this.prisma.item.delete({
+                    where: { id },
+                });
+            } else {
+                // Item is orphan. Hiding.
+                await this.hideOne(id, userId);
+            }
+        } catch (error: any) {
+            this.logger.error(error);
+            if (error.code === 'P2025') throw new NotFoundException('Item no encontrado');
+        }
+    }
+
+    /**
+     * Procesa el ocultamiento de un solo Item.
+     * @param id UUID del Item.
+     * @param userId UUID del usuario que realiza la acción.
+     * @returns Promesa vacía al completar la operación.
+     */
+    private async hideOne(id: UUID, userId: UUID): Promise<void> {
+        this.logger.log('Executed hideOne of ${id} for ${userId}');
+
+        await this.prisma.userSubscribedItem.delete({
+            where: { userId_itemId: { userId, itemId: id } },
         });
 
-        if ((item.insertedById as UUID) === userId) {
-            this.logger.log(`Item ${id} created by user. Deleting permanently.`);
-
-            await this.prisma.item.delete({
-                where: { id },
-            });
-        } else {
-            this.logger.log(`Item ${id} is a recommendation. Hiding.`);
-
-            await this.prisma.userSubscribedItem.deleteMany({
-                where: {
-                    itemId: id,
-                    userId,
-                },
-            });
-
-            await this.prisma.userHiddenItem.create({
-                data: { itemId: id, userId },
-            });
-        }
+        await this.prisma.userHiddenItem.upsert({
+            where: { userId_itemId: { userId, itemId: id } },
+            create: { userId, itemId: id },
+            update: {},
+        });
     }
 
     /**
@@ -200,20 +238,28 @@ export class ItemsGatewayService {
      * @param data Array de DTOs de Items sin clasificar.
      * @param insertedById ID del usuario que insertó el lote (opcional para inserción de sistema).
      * @returns Promesa vacía al completar la creación de todo el lote.
+     * @throws Error si ocurre algun error por falta de internet u otra razón.
      */
     async createBatch(data: CreateUnclassifiedItemDto[], insertedById?: UUID): Promise<void> {
         const mode = insertedById ? 'MANUAL (User)' : 'AUTOMATIC (System)';
         this.logger.log(`Executed createBatch [${mode}] of ${data.length} items`);
 
-        const classifiedItems: CreateNewItemClassification[] =
-            await this.itemsClassificationService.classifyNewBatch(data);
+        if (data.length === 0) return;
 
-        const savePromises = classifiedItems.map((classificationInfo) => {
-            return this._saveNewItem(classificationInfo, insertedById);
-        });
+        try {
+            const classifiedItems: CreateNewItemClassification[] =
+                await this.itemsClassificationService.classifyNewBatch(data);
 
-        // Ejecutamos todas las promesas de guardado concurrentemente.
-        await Promise.all(savePromises);
+            const savePromises = classifiedItems.map((classificationInfo) => {
+                return this._saveNewItem(classificationInfo, insertedById);
+            });
+
+            // Ejecutamos todas las promesas de guardado concurrentemente.
+            await Promise.all(savePromises);
+        } catch (error) {
+            this.logger.error(error);
+            throw new Error('Ha ocurrido un error durante la creación.');
+        }
     }
 
     /**
@@ -262,10 +308,13 @@ export class ItemsGatewayService {
      */
     async removeBatch(batch: IdBatchDto, userId: UUID): Promise<void> {
         const ids = batch.itemIds;
-        this.logger.log(`Executed remove of ${ids.length} items`);
+        this.logger.log(`Executed remove of ${ids.length} items for ${userId}`);
 
         const itemsToCheck = await this.prisma.item.findMany({
-            where: { id: { in: ids } },
+            where: {
+                id: { in: ids },
+                OR: [{ insertedById: userId }, { insertedById: null }],
+            },
             select: { id: true, insertedById: true },
         });
 
@@ -273,7 +322,7 @@ export class ItemsGatewayService {
         const idsToHide: string[] = [];
 
         for (const item of itemsToCheck) {
-            if (item.insertedById === userId) {
+            if ((item.insertedById as UUID) === userId) {
                 idsToDelete.push(item.id);
             } else {
                 idsToHide.push(item.id);
@@ -290,21 +339,33 @@ export class ItemsGatewayService {
         if (idsToHide.length > 0) {
             this.logger.log(`Hiding ${idsToHide.length} recommended items`);
 
-            await this.prisma.userSubscribedItem.deleteMany({
-                where: {
-                    userId: userId,
-                    itemId: { in: idsToHide },
-                },
-            });
-
-            await this.prisma.userHiddenItem.createMany({
-                data: idsToHide.map((itemId) => ({
-                    userId: userId,
-                    itemId,
-                })),
-                skipDuplicates: true,
-            });
+            await this.hideBatch(idsToHide as UUID[], userId);
         }
+    }
+
+    /**
+     * Procesa el ocultamiento de un lote de Items.
+     * @param ids Array de UUIDs de Items.
+     * @param userId UUID del usuario que realiza la acción.
+     * @returns Promesa vacía al completar la operación.
+     */
+    private async hideBatch(idsToHide: UUID[], userId: UUID): Promise<void> {
+        this.logger.log(`Executed hideBatch of ${idsToHide.length} items for ${userId}`);
+
+        await this.prisma.userSubscribedItem.deleteMany({
+            where: {
+                userId: userId,
+                itemId: { in: idsToHide },
+            },
+        });
+
+        await this.prisma.userHiddenItem.createMany({
+            data: idsToHide.map((itemId) => ({
+                userId: userId,
+                itemId,
+            })),
+            skipDuplicates: true,
+        });
     }
 
     /**

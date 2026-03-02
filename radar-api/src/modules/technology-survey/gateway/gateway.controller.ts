@@ -29,7 +29,10 @@ export class ItemsGatewayController {
     }
 
     @Get(':id')
-    async findOne(@Param('id', new ParseUUIDPipe()) id: UUID, @Req() request: AuthenticatedRequest): Promise<Item> {
+    async findOne(
+        @Param('id', new ParseUUIDPipe()) id: UUID,
+        @Req() request: AuthenticatedRequest,
+    ): Promise<Item | null> {
         this.logger.log('Executed findOne');
         const userId: UUID = request.userId as UUID;
         return await this.itemsService.findOne(id, userId);

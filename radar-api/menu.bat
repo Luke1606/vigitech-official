@@ -1,7 +1,6 @@
 @echo off
 title RADAR-API - MENU PRINCIPAL
 :menu
-color 0A
 cls
 echo.
 echo ===============================================

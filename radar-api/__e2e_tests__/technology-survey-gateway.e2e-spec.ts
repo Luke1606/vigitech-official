@@ -1,43 +1,38 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jest/globals';
-import { ExecutionContext, INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import cookieParser from 'cookie-parser';
 import { v4 as uuidv4 } from 'uuid';
 import request from 'supertest';
+import { UUID } from 'crypto';
 import { AppModule } from '../src/app.module';
 import { Field, Classification, Item } from '@prisma/client';
 import { PrismaService } from '../src/common/services/prisma.service';
-import { ClerkAuthGuard } from '@/modules/auth/guards/clerk-auth.guard';
 
-describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () => {
+describe('Radar API Integration E2E Tests', () => {
     let app: INestApplication;
     let prisma: PrismaService;
 
     // Constantes para pruebas
-    const MOCK_USER_ID = uuidv4();
-    const OTHER_USER_ID = uuidv4();
-    const BASE_PATH_ITEMS = '/tech-survey/survey-items';
-    const BASE_PATH_ORCH = '/tech-survey/orchestration';
+    const MOCK_USER_ID: UUID = uuidv4() as UUID;
+    const OTHER_USER_ID: UUID = uuidv4() as UUID;
+    const BASE_PATH_ITEMS: string = '/tech-survey/survey-items';
+    const BASE_PATH_ORCH: string = '/tech-survey/orchestration';
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [AppModule],
-        })
-            .overrideGuard(ClerkAuthGuard)
-            .useValue({
-                canActivate: (context: ExecutionContext) => {
-                    const req = context.switchToHttp().getRequest();
-
-                    req.userId = MOCK_USER_ID;
-
-                    if (!req.cookies) req.cookies = {};
-
-                    return true;
-                },
-            })
-            .compile();
+        }).compile();
 
         app = moduleFixture.createNestApplication();
-        app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+        app.use(cookieParser());
+        app.useGlobalPipes(
+            new ValidationPipe({
+                whitelist: true,
+                forbidNonWhitelisted: true,
+                transform: true,
+            }),
+        );
         prisma = moduleFixture.get<PrismaService>(PrismaService);
 
         await app.init();
@@ -67,48 +62,65 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
     });
 
     // --- Helpers de Base de Datos ---
-    const seedItem = async (
-        title: string,
-        userId: string, // Asegúrate de que este userId exista en la tabla User de tu DB
-        field: Field = Field.LANGUAGES_AND_FRAMEWORKS,
-    ) => {
-        // Definimos un resumen por defecto para cumplir con el esquema
+    const seedItem = async (title: string, userId?: string): Promise<Item> => {
         const defaultSummary = `Summary for ${title}`;
 
+        const data = {
+            title,
+            summary: defaultSummary,
+            itemField: Field.SCIENTIFIC_STAGE,
+            insertedBy: userId
+                ? {
+                      connect: { id: userId },
+                  }
+                : undefined,
+        };
+
         return prisma.item.create({
+            data,
+            include: {
+                insertedBy: true,
+            },
+        });
+    };
+
+    /**
+     * Crea un item con su lastestClassification en HOLD
+     */
+    const seedItemWithClassification = async (title: string, userId?: string): Promise<Item> => {
+        const defaultSummary = `Summary for ${title}`;
+
+        const itemData = {
+            title,
+            summary: defaultSummary,
+            itemField: Field.SCIENTIFIC_STAGE,
+            insertedBy: userId
+                ? {
+                      connect: { id: userId },
+                  }
+                : undefined,
+        };
+
+        const classification = await prisma.itemClassification.create({
             data: {
-                title,
-                summary: defaultSummary,
-                itemField: field,
-                // Relación con el usuario que inserta
-                insertedBy: {
-                    connect: { id: userId },
-                },
-                // Relación con la primera clasificación
-                latestClassification: {
-                    create: {
-                        classification: Classification.TEST,
-                        insightsValues: {
-                            reason: 'E2E setup',
-                            note: 'Created by seedItem helper',
-                        },
-                        item: {
-                            connectOrCreate: {
-                                where: { id: 'temp-id' },
-                                create: {
-                                    title: title,
-                                    summary: defaultSummary,
-                                    itemField: field,
-                                    insertedById: userId,
-                                },
-                            },
-                        },
-                    },
+                classification: Classification.HOLD,
+                insightsValues: { reason: 'xd' },
+                item: {
+                    create: itemData,
                 },
             },
             include: {
+                item: true,
+            },
+        });
+
+        return await prisma.item.update({
+            where: { id: classification.item.id },
+            data: {
+                latestClassificationId: classification.id,
+            },
+            include: {
                 latestClassification: true,
-                insertedBy: true,
             },
         });
     };
@@ -140,15 +152,6 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
                 expect(res.status).toBeGreaterThanOrEqual(400);
             },
         );
-
-        it.each(endpoints)(
-            'Debe rechazar x-user-id malformado (no UUID) en $method $path',
-            async ({ method, path }) => {
-                const req = request(app.getHttpServer())[method](path);
-                const res = await req.set('x-user-id', 'invalid-user-id').send({});
-                expect(res.status).toBeGreaterThanOrEqual(400);
-            },
-        );
     });
 
     // =========================================================================
@@ -161,33 +164,82 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
                 .set('x-user-id', MOCK_USER_ID)
                 .set('Cookie', ['__session=dummy-token'])
                 .expect(200, []);
+
+            await request(app.getHttpServer())
+                .get(`${BASE_PATH_ITEMS}/subscribed`)
+                .set('x-user-id', MOCK_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(200, []);
         });
 
         it('Debe listar items creados como recomendados para un usuario que no ha interactuado', async () => {
-            const item = await seedItem('Tech A', OTHER_USER_ID);
+            const item = await seedItem('Tech A');
+
+            const res = await request(app.getHttpServer())
+                .get(`${BASE_PATH_ITEMS}/recommended`)
+                .set('Cookie', ['__session=dummy-token'])
+                .set('x-user-id', MOCK_USER_ID)
+                .expect(200);
+            expect(res.body).toHaveLength(1);
+            expect(res.body[0].id).toBe(item.id);
+        });
+
+        it('NO debe listar un item en recomendados si el usuario actual ya está suscrito o si esta oculto o no es dueño de items creados personalmente', async () => {
+            const recommendedItem = await seedItem('Tech A');
+            const suscribedItem = await seedItem('Tech B');
+            const hiddenItem = await seedItem('Tech C');
+
+            await seedItem('Personal But Not Own Item', OTHER_USER_ID);
+
+            await prisma.userSubscribedItem.create({ data: { userId: MOCK_USER_ID, itemId: suscribedItem.id } });
+            await prisma.userHiddenItem.create({ data: { userId: MOCK_USER_ID, itemId: hiddenItem.id } });
+
             const res = await request(app.getHttpServer())
                 .get(`${BASE_PATH_ITEMS}/recommended`)
                 .set('x-user-id', MOCK_USER_ID)
                 .set('Cookie', ['__session=dummy-token'])
                 .expect(200);
             expect(res.body).toHaveLength(1);
-            expect(res.body[0].id).toBe(item.id);
+            expect(res.body.some((i: Item) => i.id === recommendedItem.id)).toBe(true);
         });
 
-        it('NO debe listar un item en recomendados si el usuario actual ya está suscrito', async () => {
-            const item = await seedItem('Tech B', OTHER_USER_ID);
-            await prisma.userSubscribedItem.create({ data: { userId: MOCK_USER_ID, itemId: item.id } });
-            const res = await request(app.getHttpServer())
+        it('Al crear un item no debe mostrarse para ningun otro user, debe mostrarse solamente en los recomendados del user creador', async () => {
+            await seedItem('Tech C', MOCK_USER_ID);
+
+            const userRecommended = await request(app.getHttpServer())
                 .get(`${BASE_PATH_ITEMS}/recommended`)
                 .set('x-user-id', MOCK_USER_ID)
                 .set('Cookie', ['__session=dummy-token'])
                 .expect(200);
-            expect(res.body).toHaveLength(0);
+            expect(userRecommended.body).toHaveLength(1);
+
+            const userSuscribed = await request(app.getHttpServer())
+                .get(`${BASE_PATH_ITEMS}/subscribed`)
+                .set('x-user-id', MOCK_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(200);
+            expect(userSuscribed.body).toHaveLength(0);
+
+            const otherUserRecommended = await request(app.getHttpServer())
+                .get(`${BASE_PATH_ITEMS}/recommended`)
+                .set('x-user-id', OTHER_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(200);
+            expect(otherUserRecommended.body).toHaveLength(0);
+
+            const otherUserSuscribed = await request(app.getHttpServer())
+                .get(`${BASE_PATH_ITEMS}/subscribed`)
+                .set('x-user-id', OTHER_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(200);
+            expect(otherUserSuscribed.body).toHaveLength(0);
         });
 
         it('SÍ debe listar el item en recomendados para OTRO usuario, incluso si MOCK_USER_ID se suscribió', async () => {
-            const item = await seedItem('Tech C', OTHER_USER_ID);
+            const item = await seedItem('Tech C');
+
             await prisma.userSubscribedItem.create({ data: { userId: MOCK_USER_ID, itemId: item.id } });
+
             const res = await request(app.getHttpServer())
                 .get(`${BASE_PATH_ITEMS}/recommended`)
                 .set('x-user-id', OTHER_USER_ID)
@@ -197,8 +249,10 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
         });
 
         it('NO debe listar un item en recomendados si el usuario lo ha ocultado (Borrado lógico para el usuario)', async () => {
-            const item = await seedItem('Tech D', OTHER_USER_ID);
+            const item = await seedItem('Tech D');
+
             await prisma.userHiddenItem.create({ data: { userId: MOCK_USER_ID, itemId: item.id } });
+
             const res = await request(app.getHttpServer())
                 .get(`${BASE_PATH_ITEMS}/recommended`)
                 .set('x-user-id', MOCK_USER_ID)
@@ -207,24 +261,60 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
             expect(res.body).toHaveLength(0);
         });
 
-        it('Debe devolver la clasificación más reciente al consultar un item específico', async () => {
-            const item = await seedItem('Tech Detail', OTHER_USER_ID);
-            const res = await request(app.getHttpServer())
+        it('Debe devolver la clasificación más reciente al consultar un item específico o al obtenerlo dentro de las listas', async () => {
+            const item = await seedItemWithClassification('Tech Detail');
+
+            const specificRes = await request(app.getHttpServer())
                 .get(`${BASE_PATH_ITEMS}/${item.id}`)
                 .set('x-user-id', MOCK_USER_ID)
                 .set('Cookie', ['__session=dummy-token'])
                 .expect(200);
-            expect(res.body.latestClassification.classification).toBe(Classification.TEST);
+            expect(specificRes.body.latestClassification).toBeDefined();
+            expect(specificRes.body.latestClassification.classification).toBe(Classification.HOLD);
+
+            const recommendedRes = await request(app.getHttpServer())
+                .get(`${BASE_PATH_ITEMS}/recommended`)
+                .set('x-user-id', MOCK_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(200);
+            expect(recommendedRes.body[0].latestClassification).toBeDefined();
+            expect(recommendedRes.body[0].latestClassification.classification).toBe(Classification.HOLD);
+
+            // Se suscribe al item para probar que suscrito tambien muestre la clasificacion
+            await request(app.getHttpServer())
+                .patch(`${BASE_PATH_ITEMS}/subscribe/${item.id}`)
+                .set('x-user-id', MOCK_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(200);
+
+            const suscribedRes = await request(app.getHttpServer())
+                .get(`${BASE_PATH_ITEMS}/subscribed`)
+                .set('x-user-id', MOCK_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(200);
+            expect(suscribedRes.body[0].latestClassification).toBeDefined();
+            expect(suscribedRes.body[0].latestClassification.classification).toBe(Classification.HOLD);
         });
 
-        it('Debe arrojar 404/403 al intentar consultar por ID un item que el usuario ocultó', async () => {
-            const item = await seedItem('Hidden Detail', OTHER_USER_ID);
+        it('Debe arrojar 403 al intentar consultar por ID un item que el usuario ocultó', async () => {
+            const item = await seedItem('Hidden Detail');
             await prisma.userHiddenItem.create({ data: { userId: MOCK_USER_ID, itemId: item.id } });
+
             await request(app.getHttpServer())
                 .get(`${BASE_PATH_ITEMS}/${item.id}`)
                 .set('x-user-id', MOCK_USER_ID)
                 .set('Cookie', ['__session=dummy-token'])
                 .expect(403);
+        });
+
+        it('Debe arrojar 404 al intentar consultar por ID un item que otro usuario creó', async () => {
+            const item = await seedItem('Tech Detail', OTHER_USER_ID);
+
+            await request(app.getHttpServer())
+                .get(`${BASE_PATH_ITEMS}/${item.id}`)
+                .set('x-user-id', MOCK_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(404);
         });
     });
 
@@ -233,7 +323,7 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
     // =========================================================================
     describe('G3: Item Creation, Constraints & Classification integration', () => {
         it('Debe crear un item único, clasificándolo y persistiendo autoría', async () => {
-            const payload = { title: 'NestJS Pro', itemField: Field.LANGUAGES_AND_FRAMEWORKS, summary: 'Backend' };
+            const payload = { title: 'NestJS Pro' };
             const res = await request(app.getHttpServer())
                 .post(`${BASE_PATH_ITEMS}/create`)
                 .set('x-user-id', MOCK_USER_ID)
@@ -249,41 +339,30 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
             expect(dbItem?.latestClassification).toBeDefined();
         });
 
-        it('Debe ignorar propiedades adicionales en el DTO gracias a ValidationPipe(whitelist)', async () => {
-            const payload = { title: 'React 19', admin: true, fakeField: 'hack' };
-            const res = await request(app.getHttpServer())
-                .post(`${BASE_PATH_ITEMS}/create`)
-                .set('x-user-id', MOCK_USER_ID)
-                .send(payload)
-                .set('Cookie', ['__session=dummy-token'])
-                .expect(201);
-            expect(res.body.admin).toBeUndefined();
-        });
-
         it('Batch Create: Debe crear múltiples items en una sola transacción', async () => {
-            const payload = [
-                { title: 'Batch 1', itemField: Field.SCIENTIFIC_STAGE },
-                { title: 'Batch 2', itemField: Field.LANGUAGES_AND_FRAMEWORKS },
-            ];
+            const payload = [{ title: 'Batch 1' }, { title: 'Batch 2' }];
+
             await request(app.getHttpServer())
-                .patch(`${BASE_PATH_ITEMS}/create/batch`)
+                .post(`${BASE_PATH_ITEMS}/create/batch`)
                 .set('x-user-id', MOCK_USER_ID)
                 .send(payload)
                 .set('Cookie', ['__session=dummy-token'])
                 .expect(200);
+
             const count = await prisma.item.count({ where: { title: { startsWith: 'Batch' } } });
             expect(count).toBe(2);
         });
 
-        it('Batch Create: Debe fallar limpiamente si se envía un array vacío o malformado', async () => {
+        it('Batch Create: Debe funcionar aun con un array vacio pero fallar limpiamente si se envían datos malformados', async () => {
             await request(app.getHttpServer())
-                .patch(`${BASE_PATH_ITEMS}/create/batch`)
+                .post(`${BASE_PATH_ITEMS}/create/batch`)
                 .set('x-user-id', MOCK_USER_ID)
                 .send([])
                 .set('Cookie', ['__session=dummy-token'])
-                .expect(400);
+                .expect(201);
+
             await request(app.getHttpServer())
-                .patch(`${BASE_PATH_ITEMS}/create/batch`)
+                .post(`${BASE_PATH_ITEMS}/create/batch`)
                 .set('x-user-id', MOCK_USER_ID)
                 .send({ notAnArray: true })
                 .set('Cookie', ['__session=dummy-token'])
@@ -296,7 +375,7 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
     // =========================================================================
     describe('G4: Subscription Lifecycle', () => {
         it('Debe permitir suscribirse a un item y moverlo de Recomendados a Suscritos', async () => {
-            const item = await seedItem('Target Sub', OTHER_USER_ID);
+            const item = await seedItem('Target Sub');
 
             // Suscribir
             await request(app.getHttpServer())
@@ -305,7 +384,7 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
                 .set('Cookie', ['__session=dummy-token'])
                 .expect(200);
 
-            // Verificar listas
+            // Verificar suscritos
             const subRes = await request(app.getHttpServer())
                 .get(`${BASE_PATH_ITEMS}/subscribed`)
                 .set('x-user-id', MOCK_USER_ID)
@@ -322,24 +401,53 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
         });
 
         it('Suscribirse doblemente al mismo item debe ser una operación idempotente (no arrojar error ni duplicar DB)', async () => {
-            const item = await seedItem('Idempotent Sub', OTHER_USER_ID);
+            const item = await seedItem('Idempotent Sub');
+
             await request(app.getHttpServer())
                 .patch(`${BASE_PATH_ITEMS}/subscribe/${item.id}`)
                 .set('x-user-id', MOCK_USER_ID)
                 .set('Cookie', ['__session=dummy-token'])
                 .expect(200);
+
             await request(app.getHttpServer())
                 .patch(`${BASE_PATH_ITEMS}/subscribe/${item.id}`)
+                .set('x-user-id', MOCK_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(200);
+
+            const subsByHTTP = await request(app.getHttpServer())
+                .patch(`${BASE_PATH_ITEMS}/subscribed`)
                 .set('x-user-id', MOCK_USER_ID)
                 .set('Cookie', ['__session=dummy-token'])
                 .expect(200);
 
             const subs = await prisma.userSubscribedItem.count({ where: { userId: MOCK_USER_ID, itemId: item.id } });
+            expect(subs).toEqual(subsByHTTP.body.length);
             expect(subs).toBe(1);
         });
 
+        it('Intentar suscribirse o dessuscribirse a un item creado por otro user no debe poderse hacer desde la API', async () => {
+            const item = await seedItem('Not subscribable item', OTHER_USER_ID);
+
+            await request(app.getHttpServer())
+                .patch(`${BASE_PATH_ITEMS}/subscribe/${item.id}`)
+                .set('x-user-id', MOCK_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(404);
+
+            // ESTO ES SOLO PARA PRUEBAS, NUNCA DEBERIA HABER USERS SUSCRITOS A ITEMS
+            // CREADOS PERSONALMENTE POR OTROS USERS
+            await prisma.userSubscribedItem.create({ data: { userId: MOCK_USER_ID, itemId: item.id } });
+
+            await request(app.getHttpServer())
+                .patch(`${BASE_PATH_ITEMS}/unsubscribe/${item.id}`)
+                .set('x-user-id', MOCK_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(404);
+        });
+
         it('Debe desuscribirse correctamente y regresar el item a Recomendados', async () => {
-            const item = await seedItem('Unsub Flow', OTHER_USER_ID);
+            const item = await seedItem('Unsub Flow');
             await prisma.userSubscribedItem.create({ data: { userId: MOCK_USER_ID, itemId: item.id } });
 
             await request(app.getHttpServer())
@@ -357,25 +465,28 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
         });
 
         it('Desuscribirse de un item no suscrito no debe romper el servidor', async () => {
-            const item = await seedItem('Never Subbed', OTHER_USER_ID);
+            const item = await seedItem('Never Subbed');
+
             await request(app.getHttpServer())
                 .patch(`${BASE_PATH_ITEMS}/unsubscribe/${item.id}`)
                 .set('x-user-id', MOCK_USER_ID)
                 .set('Cookie', ['__session=dummy-token'])
-                .expect(200);
+                .expect(404);
         });
 
         it('Batch Subscribe y Unsubscribe deben procesar arreglos completos correctamente', async () => {
-            const item1 = await seedItem('B1', OTHER_USER_ID);
-            const item2 = await seedItem('B2', OTHER_USER_ID);
+            const item1 = await seedItem('B1');
+            const item2 = await seedItem('B2');
+            const itemsBatch = { itemIds: [item1.id, item2.id] };
 
             // Subscribe
             await request(app.getHttpServer())
                 .patch(`${BASE_PATH_ITEMS}/subscribe/batch`)
                 .set('x-user-id', MOCK_USER_ID)
-                .send([item1.id, item2.id])
+                .send(itemsBatch)
                 .set('Cookie', ['__session=dummy-token'])
                 .expect(200);
+
             let subs = await prisma.userSubscribedItem.count({ where: { userId: MOCK_USER_ID } });
             expect(subs).toBe(2);
 
@@ -383,9 +494,10 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
             await request(app.getHttpServer())
                 .patch(`${BASE_PATH_ITEMS}/unsubscribe/batch`)
                 .set('x-user-id', MOCK_USER_ID)
-                .send([item1.id, item2.id])
+                .send(itemsBatch)
                 .set('Cookie', ['__session=dummy-token'])
                 .expect(200);
+
             subs = await prisma.userSubscribedItem.count({ where: { userId: MOCK_USER_ID } });
             expect(subs).toBe(0);
         });
@@ -397,6 +509,7 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
     describe('G5: Deletion & Hiding Strategies', () => {
         it('Debe hacer HARD DELETE si el usuario intenta borrar un item del cual ES creador', async () => {
             const item = await seedItem('My Item', MOCK_USER_ID);
+
             await request(app.getHttpServer())
                 .delete(`${BASE_PATH_ITEMS}/${item.id}`)
                 .set('x-user-id', MOCK_USER_ID)
@@ -407,8 +520,9 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
             expect(dbItem).toBeNull(); // Borrado físicamente
         });
 
-        it('Debe hacer SOFT DELETE (Ocultar) si el usuario intenta borrar un item del cual NO ES creador', async () => {
-            const item = await seedItem('Their Item', OTHER_USER_ID);
+        it('Debe hacer SOFT DELETE (Ocultar) si el usuario intenta borrar un item del cual NO ES creador (huerfano)', async () => {
+            const item = await seedItem('Orphan Item');
+
             await request(app.getHttpServer())
                 .delete(`${BASE_PATH_ITEMS}/${item.id}`)
                 .set('x-user-id', MOCK_USER_ID)
@@ -422,9 +536,51 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
             expect(hidden).toBeDefined(); // Pero está oculto para MOCK_USER_ID
         });
 
+        it('Debe devolver 404 si el usuario intenta borrar un item creado por otro usuario (esto nunca deberia poder pasar, pero si pasa, deberia manejarse bien)', async () => {
+            const item = await seedItem('Orphan Item', OTHER_USER_ID);
+            await request(app.getHttpServer())
+                .delete(`${BASE_PATH_ITEMS}/${item.id}`)
+                .set('x-user-id', MOCK_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(404);
+        });
+
         it('Batch Remove debe separar inteligentemente items propios y ajenos', async () => {
             const myItem = await seedItem('Me', MOCK_USER_ID);
             const theirItem = await seedItem('Them', OTHER_USER_ID);
+            const orphanItem = await seedItem('Orphan');
+
+            // Ambos usuarios se suscriben al huerfano (al insertar uno propio se guarda ya suscrito)
+            await prisma.userSubscribedItem.createMany({
+                data: [
+                    {
+                        userId: MOCK_USER_ID,
+                        itemId: orphanItem.id,
+                    },
+                    {
+                        userId: OTHER_USER_ID,
+                        itemId: orphanItem.id,
+                    },
+                ],
+            });
+
+            // Deberia mostrar 2 elementos, el propio y el huerfano
+            const mySuscribedItemsRes = await request(app.getHttpServer())
+                .get(`${BASE_PATH_ITEMS}/subscribed`)
+                .set('x-user-id', MOCK_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(200);
+
+            expect(mySuscribedItemsRes.body).toHaveLength(2);
+
+            // Deberia mostrar 2 elementos, el propio y el huerfano
+            const theirSuscribedItemsRes = await request(app.getHttpServer())
+                .get(`${BASE_PATH_ITEMS}/subscribed`)
+                .set('x-user-id', OTHER_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(200);
+
+            expect(theirSuscribedItemsRes.body).toHaveLength(2);
 
             await request(app.getHttpServer())
                 .delete(`${BASE_PATH_ITEMS}/batch`)
@@ -440,8 +596,12 @@ describe('Radar API Integration E2E Tests (Real Database) - Comprehensive', () =
             // theirItem debería existir, pero estar oculto para MOCK_USER_ID
             const theirDbItem = await prisma.item.findUnique({ where: { id: theirItem.id } });
             expect(theirDbItem).not.toBeNull();
-            const hidden = await prisma.userHiddenItem.count({ where: { userId: MOCK_USER_ID, itemId: theirItem.id } });
-            expect(hidden).toBe(1);
+
+            await request(app.getHttpServer())
+                .get(`${BASE_PATH_ITEMS}/${theirItem.id}`)
+                .set('x-user-id', MOCK_USER_ID)
+                .set('Cookie', ['__session=dummy-token'])
+                .expect(404);
         });
     });
 

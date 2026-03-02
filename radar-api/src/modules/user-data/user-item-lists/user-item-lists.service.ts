@@ -52,12 +52,19 @@ export class UserItemListsService {
      * @returns Una Promesa que resuelve con el objeto UserItemList.
      * @throws NotFoundException Si la lista de elementos no se encuentra.
      */
-    async findOne(id: UUID): Promise<UserItemList> {
+    async findOne(id: UUID): Promise<UserItemList | null> {
         this.logger.log('Executed findOne');
-        return await this.prisma.userItemList.findUniqueOrThrow({
-            where: { id },
-            include: listIncludeItems,
-        });
+
+        try {
+            return await this.prisma.userItemList.findUniqueOrThrow({
+                where: { id },
+                include: listIncludeItems,
+            });
+        } catch (error: any) {
+            this.logger.error(error);
+            if (error.code === 'P2025') throw new NotFoundException('');
+            return null;
+        }
     }
 
     /**

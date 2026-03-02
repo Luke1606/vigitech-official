@@ -1,17 +1,19 @@
 import { UUID } from 'crypto';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Item, Field, Classification } from '@prisma/client';
 import { PrismaService } from '@/common/services/prisma.service';
 import { ItemsClassificationService } from '../../items-classification/items-classification.service';
 import { ItemsGatewayService } from '../gateway.service';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { CreateUnclassifiedItemDto } from '../../shared/dto/create-unclassified-item.dto';
 
 const MOCK_USER_ID: UUID = 'user-id-123' as UUID;
+const MOCK_OTHER_USER_ID: UUID = 'user-id-987' as UUID;
 const MOCK_ITEM_ID: UUID = 'item-id-456' as UUID;
 const MOCK_CLASSIFICATION_ID: UUID = 'classification-id-789' as UUID;
 
-const mockItem: Item = {
+const mockUserOwnedItem: Item = {
     id: MOCK_ITEM_ID,
     title: 'Test Item',
     summary: 'Summary',
@@ -20,6 +22,27 @@ const mockItem: Item = {
     updatedAt: new Date(),
     latestClassificationId: MOCK_CLASSIFICATION_ID,
     insertedById: MOCK_USER_ID,
+} as Item;
+
+const orphanItem: Item = {
+    id: MOCK_ITEM_ID,
+    title: 'Test Item',
+    summary: 'Summary',
+    itemField: Field.BUSSINESS_INTEL,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    latestClassificationId: MOCK_CLASSIFICATION_ID,
+} as Item;
+
+const otherUserItem: Item = {
+    id: MOCK_ITEM_ID,
+    title: 'Test Item',
+    summary: 'Summary',
+    itemField: Field.BUSSINESS_INTEL,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    latestClassificationId: MOCK_CLASSIFICATION_ID,
+    insertedById: MOCK_OTHER_USER_ID,
 } as Item;
 
 describe('ItemsGatewayService', () => {
@@ -31,9 +54,9 @@ describe('ItemsGatewayService', () => {
     beforeEach(async () => {
         mockPrismaTransaction = {
             item: {
-                create: jest.fn().mockResolvedValue(mockItem),
-                update: jest.fn().mockResolvedValue(mockItem),
-                delete: jest.fn().mockResolvedValue(mockItem),
+                create: jest.fn().mockResolvedValue(mockUserOwnedItem),
+                update: jest.fn().mockResolvedValue(mockUserOwnedItem),
+                delete: jest.fn().mockResolvedValue(mockUserOwnedItem),
                 deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
             },
             itemClassification: {
@@ -99,40 +122,61 @@ describe('ItemsGatewayService', () => {
     });
 
     // --- 1. CONSULTAS Y SEGURIDAD ---
-    describe('findOne & Recommendations', () => {
+    describe('finders', () => {
         it('findOne: debe lanzar ForbiddenException si el item está oculto', async () => {
-            (prisma.item.findUniqueOrThrow as jest.Mock).mockResolvedValue(mockItem);
+            (prisma.item.findUniqueOrThrow as jest.Mock).mockResolvedValue(mockUserOwnedItem);
             (prisma.userHiddenItem.findUnique as jest.Mock).mockResolvedValue({ id: 'hidden' });
-            await expect(service.findOne(MOCK_ITEM_ID, MOCK_USER_ID)).rejects.toThrow(ForbiddenException);
+            await expect(service.findOne(MOCK_ITEM_ID, MOCK_USER_ID)).rejects.toThrowError(ForbiddenException);
         });
 
-        it('findAllRecommended: debe filtrar por suscritos y ocultos', async () => {
+        it('findOne: debe lanzar NotFoundException si el item fue creado por otro usuario', async () => {
+            (prisma.item.findUniqueOrThrow as jest.Mock).mockResolvedValue(new NotFoundException());
+            await expect(service.findOne(MOCK_ITEM_ID, MOCK_USER_ID)).resolves.toThrow(NotFoundException);
+        });
+
+        it('findAllRecommended: debe filtrar por suscritos, ocultos y no propios', async () => {
             await service.findAllRecommended(MOCK_USER_ID);
-            expect(prisma.item.findMany).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    where: {
-                        subscribedBy: { none: { userId: MOCK_USER_ID } },
-                        hiddenBy: { none: { userId: MOCK_USER_ID } },
-                    },
-                }),
-            );
+            expect(prisma.item.findMany).toHaveBeenCalledWith({
+                where: {
+                    OR: [{ insertedById: null }, { insertedById: MOCK_USER_ID }],
+                    subscribedBy: { none: { userId: MOCK_USER_ID } },
+                    hiddenBy: { none: { userId: MOCK_USER_ID } },
+                },
+                include: {
+                    latestClassification: true,
+                },
+            });
+        });
+
+        it('findAllSuscribed: debe filtrar por ocultos y no propios', async () => {
+            await service.findAllSubscribed(MOCK_USER_ID);
+            expect(prisma.item.findMany).toHaveBeenCalledWith({
+                where: {
+                    OR: [{ insertedById: null }, { insertedById: MOCK_USER_ID }],
+                    subscribedBy: { some: { userId: MOCK_USER_ID } },
+                    hiddenBy: { none: { userId: MOCK_USER_ID } },
+                },
+                include: {
+                    latestClassification: true,
+                },
+            });
         });
     });
 
     // --- 2. CREACIÓN Y CLASIFICACIÓN ---
     describe('Creation & Classification', () => {
         it('create: debe clasificar y guardar un item individual', async () => {
-            const dto = { title: 'New Item' };
+            const dto: CreateUnclassifiedItemDto = { title: 'New Item' };
             // CORRECCIÓN: El mock debe incluir unclassifiedItem para evitar el error de 'title'
             (itemsClassificationService.classifyNewItem as jest.Mock).mockResolvedValue({
                 unclassifiedItem: dto,
                 itemField: Field.BUSSINESS_INTEL,
-                classification: Classification.ADOPT,
+                latestClassification: Classification.ADOPT,
                 itemSummary: 'Summary',
                 insightsValues: { citedFragmentIds: [] },
             });
 
-            await service.create(dto as any, MOCK_USER_ID);
+            await service.create(dto, MOCK_USER_ID);
             expect(mockPrismaTransaction.item.create).toHaveBeenCalled();
         });
 
@@ -274,10 +318,10 @@ describe('ItemsGatewayService', () => {
         it('removeBatch: debe separar items propios de ajenos', async () => {
             (prisma.item.findMany as jest.Mock).mockResolvedValue([
                 { id: '1', insertedById: MOCK_USER_ID },
-                { id: '2', insertedById: 'otro' },
+                { id: '2' },
             ]);
 
-            await service.removeBatch({ itemIds: ['1', '2'] }, MOCK_USER_ID);
+            await service.removeBatch({ itemIds: ['1', '2'] as unknown as UUID[] }, MOCK_USER_ID);
 
             expect(prisma.item.deleteMany).toHaveBeenCalledWith({
                 where: { id: { in: ['1'] } },
@@ -320,8 +364,8 @@ describe('ItemsGatewayService', () => {
         });
     });
 
-    describe('Cobertura Crítica: Ramas de Citas y Transacciones', () => {
-        it('Líneas 315-401: _saveNewItem debe cubrir el flujo completo con citas', async () => {
+    describe('Ramas de Citas y Transacciones', () => {
+        it('_saveNewItem debe cubrir el flujo completo con citas', async () => {
             const mockClassified = {
                 unclassifiedItem: { title: 'Test', summary: 'Desc' },
                 itemField: 'CLOUD_COMPUTING',
@@ -337,7 +381,7 @@ describe('ItemsGatewayService', () => {
             expect(mockPrismaTransaction.itemCitedFragment.create).toHaveBeenCalledTimes(2);
         });
 
-        it('Líneas 315-401: _saveNewItem debe saltar la creación de citas si no existen', async () => {
+        it('_saveNewItem debe saltar la creación de citas si no existen', async () => {
             const mockNoCitations = {
                 unclassifiedItem: { title: 'Test' },
                 insightsValues: { citedFragmentIds: [] }, // Fuerza el ELSE/salto de línea 385
@@ -348,7 +392,7 @@ describe('ItemsGatewayService', () => {
             expect(mockPrismaTransaction.itemCitedFragment.create).not.toHaveBeenCalled();
         });
 
-        it('Líneas 463-469: _saveReclassification debe cubrir eliminación y creación de citas', async () => {
+        it('_saveReclassification debe cubrir eliminación y creación de citas', async () => {
             const reclassInfo = {
                 item: { id: MOCK_ITEM_ID },
                 classification: 'HOLD',

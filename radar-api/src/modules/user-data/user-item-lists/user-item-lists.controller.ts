@@ -39,7 +39,7 @@ export class UserItemListsController {
      * @returns Una Promesa que resuelve con el objeto UserItemList.
      */
     @Get(':id')
-    async findOne(@Param('id', ParseUUIDPipe) id: UUID): Promise<UserItemList> {
+    async findOne(@Param('id', ParseUUIDPipe) id: UUID): Promise<UserItemList | null> {
         this.logger.log('Executed findOne');
         return await this.userItemListsService.findOne(id);
     }

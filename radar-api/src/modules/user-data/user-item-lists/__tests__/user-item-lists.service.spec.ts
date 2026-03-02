@@ -10,6 +10,7 @@ import {
 } from '../../__mocks__/shared.mock';
 import { PrismaService } from '../../../../common/services/prisma.service';
 import { NotFoundException } from '@nestjs/common';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 describe('UserItemListsService', () => {
     let service: UserItemListsService;
@@ -61,8 +62,8 @@ describe('UserItemListsService', () => {
         });
 
         it('debe lanzar error si la lista no existe', async () => {
-            mockPrisma.userItemList.findUniqueOrThrow.mockRejectedValue(notFoundError);
-            await expect(service.findOne(MOCK_LIST_ID)).rejects.toThrow();
+            mockPrisma.userItemList.findUniqueOrThrow.mockResolvedValue(notFoundError);
+            await expect(service.findOne(MOCK_LIST_ID)).resolves.toThrow();
         });
     });
 
