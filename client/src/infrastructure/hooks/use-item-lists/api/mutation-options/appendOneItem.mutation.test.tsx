@@ -1,4 +1,3 @@
-// useAppendOneItemMutationOptions.test.tsx
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -25,7 +24,10 @@ jest.mock('react-toastify', () => ({
 const mockedUserItemListRepository = jest.mocked(userItemListRepository);
 const mockedToast = jest.mocked(toast);
 
-// Crear wrapper con QueryClient
+// Helper: create a mutation context (required in v5)
+const mutationContext = { signal: new AbortController().signal } as any;
+
+// Create wrapper with QueryClient
 const createWrapper = () => {
     const queryClient = new QueryClient({
         defaultOptions: {
@@ -60,8 +62,8 @@ describe('useAppendOneItemMutationOptions', () => {
         ],
     };
 
-    const mockContext = { previousList: mockPreviousList };
-    const mockEmptyContext = { previousList: undefined };
+    const mockOnMutateResult = { previousList: mockPreviousList };
+    const mockEmptyOnMutateResult = { previousList: undefined };
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -89,10 +91,10 @@ describe('useAppendOneItemMutationOptions', () => {
                 wrapper: createWrapper(),
             });
 
-            const resultData = await result.current.mutationFn!({
-                listId: mockListId,
-                itemId: mockItemId
-            });
+            const resultData = await result.current.mutationFn!(
+                { listId: mockListId, itemId: mockItemId },
+                mutationContext
+            );
 
             expect(mockedUserItemListRepository.appendOneItem)
                 .toHaveBeenCalledWith(mockListId, mockItemId);
@@ -108,7 +110,10 @@ describe('useAppendOneItemMutationOptions', () => {
             });
 
             await expect(
-                result.current.mutationFn!({ listId: mockListId, itemId: mockItemId })
+                result.current.mutationFn!(
+                    { listId: mockListId, itemId: mockItemId },
+                    mutationContext
+                )
             ).rejects.toThrow('Repository error');
         });
     });
@@ -124,10 +129,10 @@ describe('useAppendOneItemMutationOptions', () => {
                 ),
             });
 
-            const onMutateResult = await result.current.onMutate!({
-                listId: mockListId,
-                itemId: mockItemId
-            });
+            const onMutateResult = await result.current.onMutate!(
+                { listId: mockListId, itemId: mockItemId },
+                mutationContext
+            );
 
             const updatedData = queryClient.getQueryData([userItemListsKey, mockListId]);
             expect(updatedData).toEqual({
@@ -150,10 +155,10 @@ describe('useAppendOneItemMutationOptions', () => {
                 ),
             });
 
-            const onMutateResult = await result.current.onMutate!({
-                listId: mockListId,
-                itemId: mockItemId
-            });
+            const onMutateResult = await result.current.onMutate!(
+                { listId: mockListId, itemId: mockItemId },
+                mutationContext
+            );
 
             const currentData = queryClient.getQueryData([userItemListsKey, mockListId]);
             expect(currentData).toBeUndefined();
@@ -176,7 +181,8 @@ describe('useAppendOneItemMutationOptions', () => {
             result.current.onError!(
                 mockError,
                 { listId: mockListId, itemId: mockItemId },
-                mockContext
+                mockOnMutateResult,
+                mutationContext
             );
 
             const currentData = queryClient.getQueryData([userItemListsKey, mockListId]);
@@ -187,7 +193,7 @@ describe('useAppendOneItemMutationOptions', () => {
             );
         });
 
-        it('should not restore data when context has undefined previousList', () => {
+        it('should not restore data when onMutateResult has undefined previousList', () => {
             const queryClient = new QueryClient();
 
             const { result } = renderHook(() => useAppendOneItemMutationOptions(), {
@@ -201,7 +207,8 @@ describe('useAppendOneItemMutationOptions', () => {
             result.current.onError!(
                 mockError,
                 { listId: mockListId, itemId: mockItemId },
-                mockEmptyContext
+                mockEmptyOnMutateResult,
+                mutationContext
             );
 
             expect(mockedToast.error).toHaveBeenCalled();
@@ -209,7 +216,7 @@ describe('useAppendOneItemMutationOptions', () => {
     });
 
     describe('onSuccess', () => {
-        it('should show success toast with context', () => {
+        it('should show success toast with onMutateResult', () => {
             const { result } = renderHook(() => useAppendOneItemMutationOptions(), {
                 wrapper: createWrapper(),
             });
@@ -217,7 +224,8 @@ describe('useAppendOneItemMutationOptions', () => {
             result.current.onSuccess!(
                 mockResult,
                 { listId: mockListId, itemId: mockItemId },
-                mockContext
+                mockOnMutateResult,
+                mutationContext
             );
 
             expect(mockedToast.success).toHaveBeenCalledWith(
@@ -225,7 +233,7 @@ describe('useAppendOneItemMutationOptions', () => {
             );
         });
 
-        it('should show success toast with empty context', () => {
+        it('should show success toast with empty onMutateResult', () => {
             const { result } = renderHook(() => useAppendOneItemMutationOptions(), {
                 wrapper: createWrapper(),
             });
@@ -233,7 +241,8 @@ describe('useAppendOneItemMutationOptions', () => {
             result.current.onSuccess!(
                 mockResult,
                 { listId: mockListId, itemId: mockItemId },
-                mockEmptyContext
+                mockEmptyOnMutateResult,
+                mutationContext
             );
 
             expect(mockedToast.success).toHaveBeenCalledWith(
@@ -257,7 +266,8 @@ describe('useAppendOneItemMutationOptions', () => {
                 mockResult,
                 null,
                 { listId: mockListId, itemId: mockItemId },
-                mockContext
+                mockOnMutateResult,
+                mutationContext
             );
 
             expect(invalidateQueriesSpy).toHaveBeenCalledWith({
@@ -281,7 +291,8 @@ describe('useAppendOneItemMutationOptions', () => {
                 undefined,
                 mockError,
                 { listId: mockListId, itemId: mockItemId },
-                mockEmptyContext
+                mockEmptyOnMutateResult,
+                mutationContext
             );
 
             expect(invalidateQueriesSpy).toHaveBeenCalledWith({
@@ -303,7 +314,10 @@ describe('useAppendOneItemMutationOptions', () => {
             });
 
             // Execute onMutate
-            const context = await result.current.onMutate!({ listId: mockListId, itemId: mockItemId });
+            const onMutateResult = await result.current.onMutate!(
+                { listId: mockListId, itemId: mockItemId },
+                mutationContext
+            );
 
             // Verify optimistic update
             const optimisticData = queryClient.getQueryData([userItemListsKey, mockListId]);
@@ -313,14 +327,18 @@ describe('useAppendOneItemMutationOptions', () => {
             });
 
             // Execute mutationFn
-            const mutationResult = await result.current.mutationFn!({ listId: mockListId, itemId: mockItemId });
+            const mutationResult = await result.current.mutationFn!(
+                { listId: mockListId, itemId: mockItemId },
+                mutationContext
+            );
             expect(mutationResult).toBe(mockResult);
 
             // Execute onSuccess
             result.current.onSuccess!(
                 mutationResult,
                 { listId: mockListId, itemId: mockItemId },
-                context!
+                onMutateResult!,
+                mutationContext
             );
 
             expect(mockedToast.success).toHaveBeenCalled();
@@ -330,7 +348,8 @@ describe('useAppendOneItemMutationOptions', () => {
                 mutationResult,
                 null,
                 { listId: mockListId, itemId: mockItemId },
-                context!
+                onMutateResult!,
+                mutationContext
             );
         });
 
@@ -347,7 +366,10 @@ describe('useAppendOneItemMutationOptions', () => {
             });
 
             // Execute onMutate
-            const context = await result.current.onMutate!({ listId: mockListId, itemId: mockItemId });
+            const onMutateResult = await result.current.onMutate!(
+                { listId: mockListId, itemId: mockItemId },
+                mutationContext
+            );
 
             // Verify optimistic update
             const optimisticData = queryClient.getQueryData([userItemListsKey, mockListId]);
@@ -358,14 +380,18 @@ describe('useAppendOneItemMutationOptions', () => {
 
             // Execute mutationFn (fails)
             await expect(
-                result.current.mutationFn!({ listId: mockListId, itemId: mockItemId })
+                result.current.mutationFn!(
+                    { listId: mockListId, itemId: mockItemId },
+                    mutationContext
+                )
             ).rejects.toThrow('Mutation failed');
 
             // Execute onError
             result.current.onError!(
                 mockError,
                 { listId: mockListId, itemId: mockItemId },
-                context!
+                onMutateResult!,
+                mutationContext
             );
 
             expect(mockedToast.error).toHaveBeenCalled();
@@ -379,7 +405,8 @@ describe('useAppendOneItemMutationOptions', () => {
                 undefined,
                 mockError,
                 { listId: mockListId, itemId: mockItemId },
-                context!
+                onMutateResult!,
+                mutationContext
             );
         });
     });

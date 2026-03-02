@@ -17,8 +17,8 @@ export const SurveyItemCard: React.FC<{
     selected: boolean
     onSelect: CallableFunction
     onUnselect: CallableFunction
-    onSubscribeOne: CallableFunction  // Cambiado de onSubscribe
-    onRemoveOne: CallableFunction     // Cambiado de onRemove
+    onSubscribeOne: CallableFunction
+    onRemoveOne: CallableFunction
     onViewDetails: CallableFunction
     isLoading: {
         subscribeOne: boolean

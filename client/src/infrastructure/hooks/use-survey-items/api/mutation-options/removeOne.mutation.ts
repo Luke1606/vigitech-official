@@ -15,12 +15,12 @@ export const useRemoveOneMutationOptions = () => {
 		onMutate: async (
 			itemId: UUID
 		) => {
-			await queryClient.cancelQueries({ 
-				queryKey: [surveyItemsKey, recommendedKey] 
+			await queryClient.cancelQueries({
+				queryKey: [surveyItemsKey, recommendedKey]
 			});
 
-			await queryClient.cancelQueries({ 
-				queryKey: [surveyItemsKey, recommendedKey] 
+			await queryClient.cancelQueries({
+				queryKey: [surveyItemsKey, subscribedKey]
 			});
 
 			const previousRecommendations: SurveyItem[] | undefined = queryClient

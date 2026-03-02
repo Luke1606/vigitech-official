@@ -1,6 +1,5 @@
 // src/infrastructure/domain/repositories/user-item-list/UserItemList.repository.test.ts
 
-// Mock dependencies at the top
 jest.mock('../../../config/env', () => ({
     getEnv: jest.fn(() => ({
         VITE_SERVER_BASE_URL: 'http://localhost:3000',
@@ -38,10 +37,8 @@ jest.mock('../../../utils/AxiosConfiguredInstance.util', () => ({
     AxiosConfiguredInstance: MockAxiosConfiguredInstance
 }));
 
-// Importar después de los mocks
 import { UserItemListRepository } from './UserItemList.repository';
 
-// Mock data con tipado correcto
 type UUID = `${string}-${string}-${string}-${string}-${string}`;
 
 const MOCK_BASE_URL = 'http://localhost:3000';
@@ -62,17 +59,14 @@ describe('UserItemListRepository', () => {
     let repository: UserItemListRepository;
 
     beforeEach(() => {
-        // Clear all mocks
         jest.clearAllMocks();
-
-        // Reset the repository instance
         repository = new UserItemListRepository();
     });
 
     describe('constructor', () => {
         it('should initialize with correct base URL', () => {
             expect(MockAxiosConfiguredInstance).toHaveBeenCalledWith(
-                `${MOCK_BASE_URL}/item-lists`
+                `${MOCK_BASE_URL}/user-data/item-lists` // <-- corregido
             );
         });
     });
@@ -85,7 +79,6 @@ describe('UserItemListRepository', () => {
             const result = await repository.findAll();
 
             expect(mockHttpInstance.get).toHaveBeenCalledWith('');
-            // El repositorio devuelve la respuesta completa de Axios, no solo data
             expect(result).toEqual({ data: mockResponse });
         });
 
@@ -104,7 +97,6 @@ describe('UserItemListRepository', () => {
             const result = await repository.findOne(MOCK_LIST_ID);
 
             expect(mockHttpInstance.get).toHaveBeenCalledWith(MOCK_LIST_ID);
-            // El repositorio devuelve la respuesta completa de Axios
             expect(result).toEqual({ data: mockUserItemList });
         });
 
@@ -125,7 +117,6 @@ describe('UserItemListRepository', () => {
             const result = await repository.createList(listName);
 
             expect(mockHttpInstance.post).toHaveBeenCalledWith('', { name: listName });
-            // El repositorio devuelve la respuesta completa de Axios
             expect(result).toEqual({ data: mockResponseData });
         });
     });
@@ -142,7 +133,6 @@ describe('UserItemListRepository', () => {
                 MOCK_LIST_ID,
                 { name: updatedName }
             );
-            // El repositorio devuelve la respuesta completa de Axios
             expect(result).toEqual({ data: mockResponseData });
         });
     });
@@ -154,7 +144,6 @@ describe('UserItemListRepository', () => {
             const result = await repository.removeList(MOCK_LIST_ID);
 
             expect(mockHttpInstance.delete).toHaveBeenCalledWith(MOCK_LIST_ID);
-            // El repositorio devuelve la respuesta completa de Axios
             expect(result).toEqual({ data: mockUserItemList });
         });
     });
@@ -169,11 +158,11 @@ describe('UserItemListRepository', () => {
 
             const result = await repository.appendOneItem(MOCK_LIST_ID, MOCK_ITEM_ID);
 
+            // Corregido: ruta "item/${listId}" y segundo argumento directo
             expect(mockHttpInstance.patch).toHaveBeenCalledWith(
-                MOCK_LIST_ID,
-                { listId: MOCK_LIST_ID, itemId: MOCK_ITEM_ID }
+                `item/${MOCK_LIST_ID}`,
+                MOCK_ITEM_ID
             );
-            // El repositorio devuelve la respuesta completa de Axios
             expect(result).toEqual({ data: updatedListData });
         });
     });
@@ -188,11 +177,11 @@ describe('UserItemListRepository', () => {
 
             const result = await repository.appendAllItems(MOCK_LIST_ID, MOCK_ITEM_IDS);
 
+            // Corregido: ruta "batch/${listId}" y segundo argumento directo (array)
             expect(mockHttpInstance.patch).toHaveBeenCalledWith(
-                MOCK_LIST_ID,
-                { listId: MOCK_LIST_ID, itemIds: MOCK_ITEM_IDS }
+                `batch/${MOCK_LIST_ID}`,
+                MOCK_ITEM_IDS
             );
-            // El repositorio devuelve la respuesta completa de Axios
             expect(result).toEqual({ data: updatedListData });
         });
     });
@@ -203,15 +192,16 @@ describe('UserItemListRepository', () => {
                 ...mockUserItemList,
                 items: []
             };
-            mockHttpInstance.patch.mockResolvedValue({ data: updatedListData });
+            // Usamos delete en lugar de patch
+            mockHttpInstance.delete.mockResolvedValue({ data: updatedListData });
 
             const result = await repository.removeOneItem(MOCK_LIST_ID, MOCK_ITEM_ID);
 
-            expect(mockHttpInstance.patch).toHaveBeenCalledWith(
-                MOCK_LIST_ID,
-                { listId: MOCK_LIST_ID, itemId: MOCK_ITEM_ID }
+            // Esperamos delete con ruta "item/${listId}" y opción data
+            expect(mockHttpInstance.delete).toHaveBeenCalledWith(
+                `item/${MOCK_LIST_ID}`,
+                { data: MOCK_ITEM_ID }
             );
-            // El repositorio devuelve la respuesta completa de Axios
             expect(result).toEqual({ data: updatedListData });
         });
     });
@@ -222,15 +212,16 @@ describe('UserItemListRepository', () => {
                 ...mockUserItemList,
                 items: []
             };
-            mockHttpInstance.patch.mockResolvedValue({ data: updatedListData });
+            // Usamos delete
+            mockHttpInstance.delete.mockResolvedValue({ data: updatedListData });
 
             const result = await repository.removeAllItems(MOCK_LIST_ID, MOCK_ITEM_IDS);
 
-            expect(mockHttpInstance.patch).toHaveBeenCalledWith(
-                MOCK_LIST_ID,
-                { listId: MOCK_LIST_ID, itemIds: MOCK_ITEM_IDS }
+            // Esperamos delete con ruta "batch/${listId}" y opción data
+            expect(mockHttpInstance.delete).toHaveBeenCalledWith(
+                `batch/${MOCK_LIST_ID}`,
+                { data: MOCK_ITEM_IDS }
             );
-            // El repositorio devuelve la respuesta completa de Axios
             expect(result).toEqual({ data: updatedListData });
         });
     });

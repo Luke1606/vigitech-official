@@ -65,17 +65,14 @@ describe('SurveyItemsRepository', () => {
     let repository: SurveyItemsRepository;
 
     beforeEach(() => {
-        // Clear all mocks
         jest.clearAllMocks();
-
-        // Reset the repository instance
         repository = new SurveyItemsRepository();
     });
 
     describe('constructor', () => {
         it('should initialize with correct base URL', () => {
             expect(MockAxiosConfiguredInstance).toHaveBeenCalledWith(
-                `${MOCK_BASE_URL}/survey-items/`
+                `${MOCK_BASE_URL}/tech-survey` // ✅ corrected base path
             );
         });
     });
@@ -86,7 +83,7 @@ describe('SurveyItemsRepository', () => {
 
             const result = await repository.findAllRecommended();
 
-            expect(mockHttpInstance.get).toHaveBeenCalledWith('recommended');
+            expect(mockHttpInstance.get).toHaveBeenCalledWith('survey-items/recommended'); // ✅ added prefix
             expect(result).toEqual({ data: mockSurveyItems });
         });
 
@@ -104,7 +101,7 @@ describe('SurveyItemsRepository', () => {
 
             const result = await repository.findAllSubscribed();
 
-            expect(mockHttpInstance.get).toHaveBeenCalledWith('subscribed');
+            expect(mockHttpInstance.get).toHaveBeenCalledWith('survey-items/subscribed'); // ✅ added prefix
             expect(result).toEqual({ data: mockSurveyItems });
         });
 
@@ -122,7 +119,7 @@ describe('SurveyItemsRepository', () => {
 
             const result = await repository.findOne(MOCK_ITEM_ID);
 
-            expect(mockHttpInstance.get).toHaveBeenCalledWith(MOCK_ITEM_ID);
+            expect(mockHttpInstance.get).toHaveBeenCalledWith(`survey-items/${MOCK_ITEM_ID}`); // ✅ added prefix
             expect(result).toEqual({ data: mockSurveyItem });
         });
 
@@ -140,7 +137,7 @@ describe('SurveyItemsRepository', () => {
 
             await repository.subscribeOne(MOCK_ITEM_ID);
 
-            expect(mockHttpInstance.patch).toHaveBeenCalledWith(`subscribe/${MOCK_ITEM_ID}`);
+            expect(mockHttpInstance.patch).toHaveBeenCalledWith(`survey-items/subscribe/${MOCK_ITEM_ID}`); // ✅ added prefix
         });
 
         it('should handle errors when subscribing to one item', async () => {
@@ -157,7 +154,7 @@ describe('SurveyItemsRepository', () => {
 
             await repository.unsubscribeOne(MOCK_ITEM_ID);
 
-            expect(mockHttpInstance.patch).toHaveBeenCalledWith(`unsubscribe/${MOCK_ITEM_ID}`);
+            expect(mockHttpInstance.patch).toHaveBeenCalledWith(`survey-items/unsubscribe/${MOCK_ITEM_ID}`); // ✅ added prefix
         });
 
         it('should handle errors when unsubscribing from one item', async () => {
@@ -174,7 +171,7 @@ describe('SurveyItemsRepository', () => {
 
             await repository.removeOne(MOCK_ITEM_ID);
 
-            expect(mockHttpInstance.delete).toHaveBeenCalledWith(MOCK_ITEM_ID);
+            expect(mockHttpInstance.delete).toHaveBeenCalledWith(`survey-items/${MOCK_ITEM_ID}`); // ✅ added prefix
         });
 
         it('should handle errors when removing one item', async () => {
@@ -191,7 +188,10 @@ describe('SurveyItemsRepository', () => {
 
             await repository.subscribeBatch(MOCK_ITEM_IDS);
 
-            expect(mockHttpInstance.patch).toHaveBeenCalledWith('batch', { data: MOCK_ITEM_IDS });
+            expect(mockHttpInstance.patch).toHaveBeenCalledWith(
+                'survey-items/subscribe/batch', // ✅ added prefix
+                { itemIds: MOCK_ITEM_IDS }      // ✅ correct body structure
+            );
         });
 
         it('should handle errors when batch subscribing', async () => {
@@ -208,7 +208,10 @@ describe('SurveyItemsRepository', () => {
 
             await repository.unsubscribeBatch(MOCK_ITEM_IDS);
 
-            expect(mockHttpInstance.patch).toHaveBeenCalledWith('batch', { data: MOCK_ITEM_IDS });
+            expect(mockHttpInstance.patch).toHaveBeenCalledWith(
+                'survey-items/unsubscribe/batch', // ✅ added prefix
+                { itemIds: MOCK_ITEM_IDS }        // ✅ correct body structure
+            );
         });
 
         it('should handle errors when batch unsubscribing', async () => {
@@ -225,7 +228,10 @@ describe('SurveyItemsRepository', () => {
 
             await repository.removeBatch(MOCK_ITEM_IDS);
 
-            expect(mockHttpInstance.delete).toHaveBeenCalledWith('batch', { data: { itemIds: MOCK_ITEM_IDS } });
+            expect(mockHttpInstance.delete).toHaveBeenCalledWith(
+                'survey-items/batch',                     // ✅ added prefix
+                { data: { itemIds: MOCK_ITEM_IDS } }      // ✅ correct body (matches actual)
+            );
         });
 
         it('should handle errors when batch removing', async () => {
@@ -236,10 +242,8 @@ describe('SurveyItemsRepository', () => {
         });
     });
 
-    // Prueba alternativa para el singleton - más simple y directa
     describe('singleton instance', () => {
         it('should export a singleton instance', () => {
-            // Verifica que la instancia exportada existe y tiene los métodos esperados
             expect(surveyItemsRepository).toBeDefined();
             expect(typeof surveyItemsRepository.findAllRecommended).toBe('function');
             expect(typeof surveyItemsRepository.findOne).toBe('function');
@@ -247,7 +251,6 @@ describe('SurveyItemsRepository', () => {
         });
 
         it('should be the same instance across imports', () => {
-            // Importa nuevamente para verificar que es la misma instancia
             const { surveyItemsRepository: sameInstance } = require('./SurveyItems.repository');
             expect(surveyItemsRepository).toBe(sameInstance);
         });

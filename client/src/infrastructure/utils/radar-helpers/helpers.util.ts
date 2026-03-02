@@ -53,7 +53,7 @@ export const generateBlipPositions = (
     const positions: Record<string, { x: number; y: number }> = {};
 
     for (const blip of blips) {
-        const pos = generateNonCollidingPosition(blip.radarRing, blip.radarQuadrant, placed);
+        const pos = generateNonCollidingPosition(blip.latestClassification.classification, blip.itemField, placed);
         placed.push(pos);
         positions[blip.id] = pos;
     }

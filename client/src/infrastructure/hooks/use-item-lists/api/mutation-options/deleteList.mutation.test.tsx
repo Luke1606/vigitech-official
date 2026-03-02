@@ -25,19 +25,12 @@ jest.mock('react-toastify', () => ({
 const mockedUserItemListRepository = jest.mocked(userItemListRepository);
 const mockedToast = jest.mocked(toast);
 
-// Crear wrapper con QueryClient
-const createWrapper = () => {
-    const queryClient = new QueryClient({
-        defaultOptions: {
-            queries: { retry: false },
-            mutations: { retry: false },
-        },
-    });
-
-    return ({ children }: { children: React.ReactNode }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-};
+// Helper to create a complete MutationFunctionContext
+const createMutationContext = (queryClient: QueryClient) => ({
+    signal: new AbortController().signal,
+    client: queryClient,
+    meta: undefined,
+});
 
 describe('useDeleteListMutationOptions', () => {
     const mockListId: UUID = '123e4567-e89b-12d3-a456-426614174000' as UUID;
@@ -64,16 +57,33 @@ describe('useDeleteListMutationOptions', () => {
         } as UserItemList,
     ];
 
-    const mockContext = { previousLists: mockPreviousLists };
-    const mockEmptyContext = { previousLists: undefined };
+    // This is the value returned by onMutate (used as third argument in error/success/settled)
+    const mockOnMutateResultWithPrevious = { previousLists: mockPreviousLists };
+    const mockOnMutateResultEmpty = { previousLists: undefined };
 
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
+    const createTestQueryClient = () => {
+        return new QueryClient({
+            defaultOptions: {
+                queries: { retry: false },
+                mutations: { retry: false },
+            },
+        });
+    };
+
+    const createWrapper = (queryClient: QueryClient) => {
+        return ({ children }: { children: React.ReactNode }) => (
+            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        );
+    };
+
     it('should return mutation options with correct structure', () => {
+        const queryClient = createTestQueryClient();
         const { result } = renderHook(() => useDeleteListMutationOptions(), {
-            wrapper: createWrapper(),
+            wrapper: createWrapper(queryClient),
         });
 
         const options = result.current;
@@ -87,18 +97,21 @@ describe('useDeleteListMutationOptions', () => {
 
     describe('mutationFn', () => {
         it('should call repository with correct parameters', async () => {
-            // Para delete, normalmente no hay retorno, pero si el tipo espera UserItemList, podemos mockear un valor
-            const mockResult = {} as UserItemList; // Objeto vacío o usar un tipo más específico si es necesario
+            const mockResult = { id: mockListId } as UserItemList;
             mockedUserItemListRepository.removeList.mockResolvedValue(mockResult);
 
+            const queryClient = createTestQueryClient();
             const { result } = renderHook(() => useDeleteListMutationOptions(), {
-                wrapper: createWrapper(),
+                wrapper: createWrapper(queryClient),
             });
 
-            const resultData = await result.current.mutationFn!(mockListId);
+            // mutationFn expects two arguments: variables and context
+            const resultData = await result.current.mutationFn!(
+                mockListId,
+                createMutationContext(queryClient)
+            );
 
-            expect(mockedUserItemListRepository.removeList)
-                .toHaveBeenCalledWith(mockListId);
+            expect(mockedUserItemListRepository.removeList).toHaveBeenCalledWith(mockListId);
             expect(resultData).toBe(mockResult);
         });
 
@@ -106,28 +119,31 @@ describe('useDeleteListMutationOptions', () => {
             const mockError = new Error('Repository error');
             mockedUserItemListRepository.removeList.mockRejectedValue(mockError);
 
+            const queryClient = createTestQueryClient();
             const { result } = renderHook(() => useDeleteListMutationOptions(), {
-                wrapper: createWrapper(),
+                wrapper: createWrapper(queryClient),
             });
 
             await expect(
-                result.current.mutationFn!(mockListId)
+                result.current.mutationFn!(mockListId, createMutationContext(queryClient))
             ).rejects.toThrow('Repository error');
         });
     });
 
     describe('onMutate', () => {
         it('should perform optimistic update when previous lists exist', async () => {
-            const queryClient = new QueryClient();
+            const queryClient = createTestQueryClient();
             queryClient.setQueryData([userItemListsKey], mockPreviousLists);
 
             const { result } = renderHook(() => useDeleteListMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
-            const onMutateResult = await result.current.onMutate!(mockListId);
+            // onMutate requires two arguments: variables and context
+            const onMutateResult = await result.current.onMutate!(
+                mockListId,
+                createMutationContext(queryClient)
+            );
 
             const updatedData = queryClient.getQueryData([userItemListsKey]);
             expect(updatedData).toEqual(mockFilteredLists);
@@ -135,40 +151,40 @@ describe('useDeleteListMutationOptions', () => {
         });
 
         it('should not update cache when no previous lists exist', async () => {
-            const queryClient = new QueryClient();
-            // No establecer datos previos
+            const queryClient = createTestQueryClient();
 
             const { result } = renderHook(() => useDeleteListMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
-            const onMutateResult = await result.current.onMutate!(mockListId);
+            const onMutateResult = await result.current.onMutate!(
+                mockListId,
+                createMutationContext(queryClient)
+            );
 
             const currentData = queryClient.getQueryData([userItemListsKey]);
             expect(currentData).toBeUndefined();
             expect(onMutateResult).toEqual({ previousLists: undefined });
         });
-
     });
 
     describe('onError', () => {
         it('should restore previous data and show error toast', () => {
-            const queryClient = new QueryClient();
+            const queryClient = createTestQueryClient();
 
             const { result } = renderHook(() => useDeleteListMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
             const mockError = new Error('Mutation failed');
 
+            // onError expects four arguments:
+            // error, variables, onMutateResult, context
             result.current.onError!(
                 mockError,
                 mockListId,
-                mockContext
+                mockOnMutateResultWithPrevious,
+                createMutationContext(queryClient)
             );
 
             const currentData = queryClient.getQueryData([userItemListsKey]);
@@ -179,13 +195,12 @@ describe('useDeleteListMutationOptions', () => {
             );
         });
 
-        it('should not restore data when context has undefined previousLists', () => {
-            const queryClient = new QueryClient();
+        it('should not restore data when onMutateResult has undefined previousLists', () => {
+            const queryClient = createTestQueryClient();
+            queryClient.setQueryData([userItemListsKey], mockPreviousLists);
 
             const { result } = renderHook(() => useDeleteListMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
             const mockError = new Error('Mutation failed');
@@ -193,31 +208,33 @@ describe('useDeleteListMutationOptions', () => {
             result.current.onError!(
                 mockError,
                 mockListId,
-                mockEmptyContext
+                mockOnMutateResultEmpty,
+                createMutationContext(queryClient)
             );
 
             expect(mockedToast.error).toHaveBeenCalled();
+            // Cache should remain unchanged (still mockPreviousLists)
         });
     });
 
     describe('onSuccess', () => {
         it('should invalidate queries and show success toast', () => {
-            const queryClient = new QueryClient();
+            const queryClient = createTestQueryClient();
             const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
             const { result } = renderHook(() => useDeleteListMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
-            // Si removeList retorna un UserItemList, usamos un mock
             const mockResult = { id: mockListId } as UserItemList;
 
+            // onSuccess expects four arguments:
+            // data, variables, onMutateResult, context
             result.current.onSuccess!(
                 mockResult,
                 mockListId,
-                mockContext
+                mockOnMutateResultWithPrevious,
+                createMutationContext(queryClient)
             );
 
             expect(invalidateQueriesSpy).toHaveBeenCalledWith({
@@ -228,14 +245,12 @@ describe('useDeleteListMutationOptions', () => {
             );
         });
 
-        it('should handle success with empty context', () => {
-            const queryClient = new QueryClient();
+        it('should handle success with empty onMutateResult', () => {
+            const queryClient = createTestQueryClient();
             const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
             const { result } = renderHook(() => useDeleteListMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
             const mockResult = { id: mockListId } as UserItemList;
@@ -243,7 +258,8 @@ describe('useDeleteListMutationOptions', () => {
             result.current.onSuccess!(
                 mockResult,
                 mockListId,
-                mockEmptyContext
+                mockOnMutateResultEmpty,
+                createMutationContext(queryClient)
             );
 
             expect(invalidateQueriesSpy).toHaveBeenCalledWith({
@@ -255,22 +271,23 @@ describe('useDeleteListMutationOptions', () => {
 
     describe('onSettled', () => {
         it('should invalidate queries for the lists', () => {
-            const queryClient = new QueryClient();
+            const queryClient = createTestQueryClient();
             const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
             const { result } = renderHook(() => useDeleteListMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
             const mockResult = { id: mockListId } as UserItemList;
 
+            // onSettled expects five arguments:
+            // data, error, variables, onMutateResult, context
             result.current.onSettled!(
                 mockResult,
                 null,
                 mockListId,
-                mockContext
+                mockOnMutateResultWithPrevious,
+                createMutationContext(queryClient)
             );
 
             expect(invalidateQueriesSpy).toHaveBeenCalledWith({
@@ -279,13 +296,11 @@ describe('useDeleteListMutationOptions', () => {
         });
 
         it('should invalidate queries for the lists on error', () => {
-            const queryClient = new QueryClient();
+            const queryClient = createTestQueryClient();
             const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
             const { result } = renderHook(() => useDeleteListMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
             const mockError = new Error('Mutation failed');
@@ -294,7 +309,8 @@ describe('useDeleteListMutationOptions', () => {
                 undefined,
                 mockError,
                 mockListId,
-                mockEmptyContext
+                mockOnMutateResultEmpty,
+                createMutationContext(queryClient)
             );
 
             expect(invalidateQueriesSpy).toHaveBeenCalledWith({
@@ -305,77 +321,84 @@ describe('useDeleteListMutationOptions', () => {
 
     describe('integration', () => {
         it('should complete full optimistic update flow successfully', async () => {
-            const queryClient = new QueryClient();
+            const queryClient = createTestQueryClient();
             queryClient.setQueryData([userItemListsKey], mockPreviousLists);
 
-            // Si removeList retorna un UserItemList, usamos un mock
             const mockResult = { id: mockListId } as UserItemList;
             mockedUserItemListRepository.removeList.mockResolvedValue(mockResult);
 
             const { result } = renderHook(() => useDeleteListMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
-            // Execute onMutate
-            const context = await result.current.onMutate!(mockListId);
+            // onMutate
+            const onMutateResult = await result.current.onMutate!(
+                mockListId,
+                createMutationContext(queryClient)
+            );
 
             // Verify optimistic update
             const optimisticData = queryClient.getQueryData([userItemListsKey]);
             expect(optimisticData).toEqual(mockFilteredLists);
 
-            // Execute mutationFn
-            const mutationResult = await result.current.mutationFn!(mockListId);
+            // mutationFn
+            const mutationResult = await result.current.mutationFn!(
+                mockListId,
+                createMutationContext(queryClient)
+            );
             expect(mutationResult).toBe(mockResult);
 
-            // Execute onSuccess
+            // onSuccess
             result.current.onSuccess!(
                 mutationResult,
                 mockListId,
-                context!
+                onMutateResult,
+                createMutationContext(queryClient)
             );
 
             expect(mockedToast.success).toHaveBeenCalled();
 
-            // Execute onSettled
+            // onSettled
             result.current.onSettled!(
                 mutationResult,
                 null,
                 mockListId,
-                context!
+                onMutateResult,
+                createMutationContext(queryClient)
             );
         });
 
         it('should handle full error flow with rollback', async () => {
-            const queryClient = new QueryClient();
+            const queryClient = createTestQueryClient();
             queryClient.setQueryData([userItemListsKey], mockPreviousLists);
             const mockError = new Error('Mutation failed');
             mockedUserItemListRepository.removeList.mockRejectedValue(mockError);
 
             const { result } = renderHook(() => useDeleteListMutationOptions(), {
-                wrapper: ({ children }) => (
-                    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-                ),
+                wrapper: createWrapper(queryClient),
             });
 
-            // Execute onMutate
-            const context = await result.current.onMutate!(mockListId);
+            // onMutate
+            const onMutateResult = await result.current.onMutate!(
+                mockListId,
+                createMutationContext(queryClient)
+            );
 
             // Verify optimistic update
             const optimisticData = queryClient.getQueryData([userItemListsKey]);
             expect(optimisticData).toEqual(mockFilteredLists);
 
-            // Execute mutationFn (fails)
+            // mutationFn (fails)
             await expect(
-                result.current.mutationFn!(mockListId)
+                result.current.mutationFn!(mockListId, createMutationContext(queryClient))
             ).rejects.toThrow('Mutation failed');
 
-            // Execute onError
+            // onError
             result.current.onError!(
                 mockError,
                 mockListId,
-                context!
+                onMutateResult,
+                createMutationContext(queryClient)
             );
 
             expect(mockedToast.error).toHaveBeenCalled();
@@ -384,12 +407,13 @@ describe('useDeleteListMutationOptions', () => {
             const rolledBackData = queryClient.getQueryData([userItemListsKey]);
             expect(rolledBackData).toEqual(mockPreviousLists);
 
-            // Execute onSettled
+            // onSettled
             result.current.onSettled!(
                 undefined,
                 mockError,
                 mockListId,
-                context!
+                onMutateResult,
+                createMutationContext(queryClient)
             );
         });
     });
