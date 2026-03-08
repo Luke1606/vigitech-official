@@ -1,5 +1,5 @@
 import type { UUID } from 'crypto';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, UserItemList } from '@prisma/client';
 import { PrismaService } from '@/common/services/prisma.service';
 import { CreateUserItemListDto } from './dto/create-user-item-list.dto';
@@ -52,17 +52,18 @@ export class UserItemListsService {
      * @returns Una Promesa que resuelve con el objeto UserItemList.
      * @throws NotFoundException Si la lista de elementos no se encuentra.
      */
-    async findOne(id: UUID): Promise<UserItemList | null> {
+    async findOne(ownerId: UUID, id: UUID): Promise<UserItemList | null> {
         this.logger.log('Executed findOne');
 
         try {
             return await this.prisma.userItemList.findUniqueOrThrow({
-                where: { id },
+                where: { id, ownerId },
                 include: listIncludeItems,
             });
-        } catch (error: any) {
+        } catch (error) {
             this.logger.error(error);
-            if (error.code === 'P2025') throw new NotFoundException('');
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025')
+                throw new NotFoundException('La lista especificada no existe.');
             return null;
         }
     }
@@ -75,11 +76,15 @@ export class UserItemListsService {
      */
     async createList(ownerId: UUID, data: CreateUserItemListDto): Promise<UserItemList> {
         this.logger.log('Executed createList');
+
+        if (data.name === '') throw new BadRequestException('El nombre no puede estar vacio');
+
         return this.prisma.userItemList.create({
             data: {
                 ownerId,
                 ...data,
             },
+            include: listIncludeItems,
         });
     }
 
@@ -92,6 +97,9 @@ export class UserItemListsService {
      */
     async updateList(ownerId: UUID, id: UUID, data: UpdateUserItemListDto): Promise<UserItemList> {
         this.logger.log('Executed updateList');
+
+        if (data.name && data.name === '') throw new BadRequestException('El nombre no puede estar vacio');
+
         return await this.prisma.userItemList.update({
             where: { id, ownerId },
             data,
@@ -107,6 +115,8 @@ export class UserItemListsService {
      */
     async removeList(ownerId: UUID, id: UUID): Promise<UserItemList> {
         this.logger.log('Executed removeList');
+        await this.findOne(ownerId, id);
+
         return await this.prisma.userItemList.delete({
             where: { id, ownerId },
         });
@@ -121,7 +131,11 @@ export class UserItemListsService {
      */
     async appendOneItem(ownerId: UUID, listId: UUID, itemId: UUID): Promise<UserItemList> {
         this.logger.log('Executed appendOneItem');
+        await this.findOne(ownerId, listId);
+
         await this.prisma.item.findUniqueOrThrow({ where: { id: itemId } });
+
+        await this._validateItemsEligibility(ownerId, [itemId]);
 
         return await this.prisma.userItemList.update({
             where: { id: listId, ownerId },
@@ -144,6 +158,8 @@ export class UserItemListsService {
      */
     async appendAllItems(ownerId: UUID, listId: UUID, itemIds: UUID[]): Promise<UserItemList> {
         this.logger.log('Executed appendAllItems');
+        await this.findOne(ownerId, listId);
+
         const items = await this.prisma.item.findMany({
             where: { id: { in: itemIds } },
         });
@@ -151,6 +167,8 @@ export class UserItemListsService {
         if (items.length !== itemIds.length) {
             throw new NotFoundException('Uno o más items (SurveyItem) no existen en la base de datos.');
         }
+
+        await this._validateItemsEligibility(ownerId, itemIds);
 
         return await this.prisma.userItemList.update({
             where: { id: listId, ownerId },
@@ -172,6 +190,11 @@ export class UserItemListsService {
      */
     async removeOneItem(ownerId: UUID, listId: UUID, itemId: UUID): Promise<UserItemList> {
         this.logger.log('Executed removeOneItem');
+
+        const isContained = await this._doesListContainItems(ownerId, listId, [itemId]);
+
+        if (!isContained) throw new BadRequestException('Se enviaron items no existentes en la lista.');
+
         return await this.prisma.userItemList.update({
             where: { id: listId, ownerId },
             data: {
@@ -192,6 +215,11 @@ export class UserItemListsService {
      */
     async removeAllItems(ownerId: UUID, listId: UUID, itemIds: UUID[]): Promise<UserItemList> {
         this.logger.log('Executed removeAllItems');
+
+        const allContained = await this._doesListContainItems(ownerId, listId, itemIds);
+
+        if (!allContained) throw new BadRequestException('Se enviaron items no existentes en la lista.');
+
         return await this.prisma.userItemList.update({
             where: { id: listId, ownerId },
             data: {
@@ -201,6 +229,31 @@ export class UserItemListsService {
             },
             include: listIncludeItems,
         });
+    }
+
+    private async _validateItemsEligibility(ownerId: UUID, itemIds: UUID[]): Promise<void> {
+        const subscriptions = await this.prisma.userSubscribedItem.count({
+            where: {
+                userId: ownerId,
+                itemId: { in: itemIds },
+            },
+        });
+
+        if (subscriptions !== itemIds.length) {
+            throw new BadRequestException('Solo puedes añadir a tus listas ítems a los que estés suscrito.');
+        }
+
+        // 2. Verificar que ninguno esté oculto
+        const hiddenCount = await this.prisma.userHiddenItem.count({
+            where: {
+                userId: ownerId,
+                itemId: { in: itemIds },
+            },
+        });
+
+        if (hiddenCount > 0) {
+            throw new BadRequestException('No puedes añadir ítems que tienes marcados como ocultos.');
+        }
     }
 
     /**
@@ -221,21 +274,17 @@ export class UserItemListsService {
      * Comprueba si un elemento específico está presente en una lista de elementos.
      * @param ownerId El UUID del propietario de la lista.
      * @param listId El UUID de la lista a comprobar.
-     * @param itemId El UUID del elemento a buscar.
+     * @param itemIds Los UUID de los elementos a buscar.
      * @returns Una Promesa que resuelve con un booleano, true si el elemento está en la lista, false en caso contrario.
      */
-    async isItemInList(ownerId: UUID, listId: UUID, itemId: UUID): Promise<boolean> {
-        this.logger.log('Executed isItemInList');
-        const count = await this.prisma.userItemList.count({
-            where: {
-                id: listId,
-                ownerId,
-                items: {
-                    some: { id: itemId },
-                },
-            },
-        });
+    private async _doesListContainItems(ownerId: UUID, listId: UUID, itemIds: UUID[]): Promise<boolean> {
+        this.logger.log('Executed doesListContainItems');
 
-        return count > 0;
+        const listItemIds = (await this.getListItems(ownerId, listId))?.items.map((item) => item.id);
+
+        if (!listItemIds || !itemIds.length) return false;
+
+        const itemMap = new Map(listItemIds.map((id) => [id, true]));
+        return itemIds.every((id) => itemMap.has(id));
     }
 }

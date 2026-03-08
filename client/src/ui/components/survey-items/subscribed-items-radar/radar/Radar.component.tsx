@@ -98,9 +98,14 @@ export const Radar: React.FC<{
         useEffect(() => {
             const { data } = query.subscribed;
             if (data) {
-                console.log("Datos crudos de la API:", data);
+                console.log("Datos crudos de la API:");
+                console.table(data);
+
                 const transformed = transformApiData(data);
-                console.log("Datos transformados:", transformed);
+
+                console.log("Datos transformados:");
+                console.table(transformed);
+
                 setNormalizedEntries(transformed);
             } else {
                 setNormalizedEntries([]);

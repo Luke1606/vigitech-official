@@ -4,7 +4,7 @@ import { UserSubscribedItem, Item } from '@prisma/client';
 import type { AuthenticatedRequest } from '@/shared/types/authenticated-request.type';
 import { ItemsGatewayService } from './gateway.service';
 import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-item.dto';
-import { IdBatchDto } from './dto/id-batch.dto';
+import { IdBatchDto } from '@/modules/shared/dto/id-batch.dto';
 
 @Controller('tech-survey/survey-items')
 export class ItemsGatewayController {
@@ -38,7 +38,7 @@ export class ItemsGatewayController {
         return await this.itemsService.findOne(id, userId);
     }
 
-    @Post('create/batch')
+    @Post('batch')
     async createBatch(@Body() data: CreateUnclassifiedItemDto[], @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed create');
         const userId: UUID = request.userId as UUID;
@@ -66,7 +66,7 @@ export class ItemsGatewayController {
         return await this.itemsService.removeBatch(data, userId);
     }
 
-    @Post('create')
+    @Post()
     async create(@Body() data: CreateUnclassifiedItemDto, @Req() request: AuthenticatedRequest): Promise<void> {
         this.logger.log('Executed create');
         const userId: UUID = request.userId as UUID;

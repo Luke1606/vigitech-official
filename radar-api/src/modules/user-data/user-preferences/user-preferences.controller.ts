@@ -1,5 +1,5 @@
 import type { UUID } from 'crypto';
-import { Get, Post, Body, Patch, Param, Logger, Controller, ParseUUIDPipe, Req } from '@nestjs/common';
+import { Get, Post, Body, Patch, Logger, Controller, Req } from '@nestjs/common';
 import type { AuthenticatedRequest } from '@/shared/types/authenticated-request.type';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { UserPreferencesService } from './user-preferences.service';
@@ -35,10 +35,10 @@ export class UserPreferencesController {
      * @returns Una Promesa que resuelve con el objeto UserPreferences creado o existente.
      */
     @Post()
-    createOrReturnToDefault(@Req() request: AuthenticatedRequest) {
-        this.logger.log('Executed createOrReturnToDefault');
+    createOrSetToDefault(@Req() request: AuthenticatedRequest) {
+        this.logger.log('Executed createOrSetToDefault');
         const userId: UUID = request.userId as UUID;
-        return this.userPreferencesService.createOrReturnToDefault(userId);
+        return this.userPreferencesService.createOrSetToDefault(userId);
     }
 
     /**
@@ -47,9 +47,10 @@ export class UserPreferencesController {
      * @param newPreferences El DTO con las nuevas preferencias.
      * @returns Una Promesa que resuelve con el objeto UserPreferences actualizado.
      */
-    @Patch(':id')
-    update(@Param('id', new ParseUUIDPipe()) id: UUID, @Body() newPreferences: UpdateUserPreferenceDto) {
+    @Patch()
+    update(@Body() newPreferences: UpdateUserPreferenceDto, @Req() request: AuthenticatedRequest) {
         this.logger.log('Executed update');
-        return this.userPreferencesService.update(newPreferences);
+        const userId: UUID = request.userId as UUID;
+        return this.userPreferencesService.update(userId, newPreferences);
     }
 }

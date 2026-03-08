@@ -40,7 +40,7 @@ export class UserItemListRepository implements UserItemListInterface {
     }
 
     async appendAllItems(listId: UUID, itemIds: UUID[]): Promise<UserItemList> {
-        return await this.axios.http.patch(`batch/${listId}`, itemIds);
+        return await this.axios.http.patch(`batch/${listId}`, { itemIds });
     }
 
     async removeOneItem(listId: UUID, itemId: UUID): Promise<UserItemList> {
@@ -51,7 +51,7 @@ export class UserItemListRepository implements UserItemListInterface {
 
     async removeAllItems(listId: UUID, itemIds: UUID[]): Promise<UserItemList> {
         return await this.axios.http.delete(`batch/${listId}`, {
-            data: itemIds
+            data: { itemIds }
         });
     }
 }

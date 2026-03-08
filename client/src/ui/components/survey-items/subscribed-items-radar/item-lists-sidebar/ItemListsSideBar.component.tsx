@@ -96,9 +96,13 @@ export const ItemListsSideBar: React.FC<{
         useEffect(() => {
             const { data } = surveyItemsAPI.subscribed;
             if (data) {
-                console.log("[ItemListsSideBar] Datos crudos de la API:", data);
+                console.log("[ItemListsSideBar] Datos crudos de la API:");
+                console.table(data)
+
                 const transformed = transformApiData(data);
-                console.log("[ItemListsSideBar] Datos transformados:", transformed);
+
+                console.log("[ItemListsSideBar] Datos transformados:");
+                console.table(transformed)
                 setNormalizedBlips(transformed);
             } else {
                 setNormalizedBlips([]);

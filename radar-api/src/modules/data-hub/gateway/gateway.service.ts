@@ -21,7 +21,7 @@ export class DataGatewayService {
      * @param endDate (Opcional) Fecha de fin.
      * @returns Un objeto `Prisma.Sql` que representa la cláusula WHERE.
      */
-    private buildDateWhereClause(startDate?: Date, endDate?: Date): Prisma.Sql {
+    private _buildDateWhereClause(startDate?: Date, endDate?: Date): Prisma.Sql {
         const conditions: Prisma.Sql[] = [];
 
         if (startDate) {
@@ -38,7 +38,7 @@ export class DataGatewayService {
      * Construye la cláusula WHERE para la consulta SQL raw, filtrando por fuentes y tipos de datos de `RawData`.
      * (Método original, no modificado)
      */
-    private buildRawDataWhereClause(sources?: RawDataSource[], dataTypes?: RawDataType[]): Prisma.Sql {
+    private _buildRawDataWhereClause(sources?: RawDataSource[], dataTypes?: RawDataType[]): Prisma.Sql {
         const conditions: Prisma.Sql[] = [];
 
         if (sources && sources.length > 0) {
@@ -74,8 +74,8 @@ export class DataGatewayService {
                 const embeddings = await this.aiAgentService.generateEmbeddings([query]);
                 const queryEmbedding = embeddings[0];
 
-                const rawDataConditions = this.buildRawDataWhereClause(sources, dataTypes);
-                const dateConditions = this.buildDateWhereClause(startDate, endDate);
+                const rawDataConditions = this._buildRawDataWhereClause(sources, dataTypes);
+                const dateConditions = this._buildDateWhereClause(startDate, endDate);
 
                 const whereClauses: Prisma.Sql[] = [];
                 if (rawDataConditions !== Prisma.empty) whereClauses.push(rawDataConditions);

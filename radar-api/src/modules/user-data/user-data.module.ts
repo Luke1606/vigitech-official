@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { UserItemListsModule } from './user-item-lists/user-item-lists.module';
 import { UserPreferencesModule } from './user-preferences/user-preferences.module';
+import { ReportsModule } from './reports/reports.module';
 
 /**
  * Módulo principal de `UserData`.
@@ -10,6 +11,6 @@ import { UserPreferencesModule } from './user-preferences/user-preferences.modul
  * @module UserData
  */
 @Module({
-    imports: [UserItemListsModule, UserPreferencesModule, UsersModule],
+    imports: [ReportsModule, UserItemListsModule, UserPreferencesModule, UsersModule],
 })
 export class UserDataModule {}

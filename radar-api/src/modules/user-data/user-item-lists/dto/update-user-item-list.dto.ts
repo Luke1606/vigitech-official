@@ -20,7 +20,7 @@ export class UpdateUserItemListDto extends PartialType(CreateUserItemListDto) {
     })
     @IsString()
     @IsOptional()
-    @IsEnum(NotificationChannelOption, {
+    @IsEnum(NotificationChannel, {
         message: `Las opciones de canales son: ${NotificationChannelOption.join()}`,
     })
     preferredNotificationChannel?: NotificationChannel;

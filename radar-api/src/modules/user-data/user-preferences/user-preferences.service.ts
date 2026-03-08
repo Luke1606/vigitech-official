@@ -1,6 +1,6 @@
 import { UUID } from 'crypto';
-import { Injectable, Logger } from '@nestjs/common';
-import { UserPreferences } from '@prisma/client';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Prisma, UserPreferences } from '@prisma/client';
 import { PrismaService } from '@/common/services/prisma.service';
 import { SurveyOrchestratorUserPreferences } from '@/shared/types/survey-orquestrator-user-preferences.type';
 import { CreateDefaultUserPreferenceDto } from './dto/create-default-user-preference.dto';
@@ -26,32 +26,49 @@ export class UserPreferencesService {
      */
     async findActualUserPreferences(userId: UUID): Promise<UserPreferences | null> {
         this.logger.log('Executed findActualUserPreferences');
-        return this.prisma.userPreferences.findFirst({
+
+        const preferences = await this.prisma.userPreferences.findUnique({
             where: { userId },
         });
+
+        if (preferences) return preferences;
+        else {
+            try {
+                const user = await this.prisma.user.findUniqueOrThrow({
+                    where: { id: userId },
+                });
+                if (!user) throw new NotFoundException('El usuario no existe.');
+
+                return await this.createOrSetToDefault(user.id as UUID);
+            } catch (error) {
+                this.logger.error(error);
+                // Esto no debería pasar nunca, ya que el guard se encarga de insertar el user en la primera petición.
+                // Obviamente siempre que clerk detecte que está correctamente autenticado.
+                // Osea que si llega a esta sentencia, significa que de alguna forma
+                // llegó hasta acá sin estar autenticado.
+                if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025')
+                    throw new NotFoundException('El usuario no existe.');
+                return null;
+            }
+        }
     }
 
     /**
      * Crea las preferencias predeterminadas para un usuario si no existen,
-     * o devuelve las preferencias existentes.
+     * o resetea las preferencias existentes.
      * @param userId El UUID del usuario.
-     * @returns Una Promesa que resuelve con el objeto UserPreferences creado o actualizado.
+     * @returns Una Promesa que resuelve con el objeto UserPreferences creado o reseteado.
      */
-    async createOrReturnToDefault(userId: UUID) {
-        this.logger.log('Executed createOrReturnToDefault');
+    async createOrSetToDefault(userId: UUID): Promise<UserPreferences> {
+        this.logger.log('Executed createOrSetToDefault');
         const defaultPreferences: CreateDefaultUserPreferenceDto = {
             userId,
         };
 
-        const preferences: UserPreferences | null = await this.findActualUserPreferences(userId);
-
         return await this.prisma.userPreferences.upsert({
-            where: { id: preferences?.id },
+            where: { userId },
             create: defaultPreferences,
-            update: {
-                id: preferences?.id as UUID,
-                ...defaultPreferences,
-            },
+            update: defaultPreferences,
         });
     }
 
@@ -60,13 +77,17 @@ export class UserPreferencesService {
      * @param newPreferences El DTO con las nuevas preferencias.
      * @returns Una Promesa que resuelve con el objeto UserPreferences actualizado.
      */
-    async update(newPreferences: UpdateUserPreferenceDto) {
+    async update(userId: UUID, newPreferences: UpdateUserPreferenceDto) {
         this.logger.log('Executed update');
-        return this.prisma.userPreferences.update({
-            where: {
-                id: newPreferences.id,
-            },
-            data: newPreferences,
+        const data: CreateDefaultUserPreferenceDto = {
+            userId,
+            ...newPreferences,
+        };
+
+        return await this.prisma.userPreferences.upsert({
+            where: { userId },
+            create: data,
+            update: data,
         });
     }
 

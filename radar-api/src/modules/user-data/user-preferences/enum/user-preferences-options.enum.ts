@@ -5,7 +5,7 @@ import { Language, Theme, Frequency } from '@prisma/client';
  * Incluye opciones como DIARIA, CADA_10_MINUTOS, CADA_30_MINUTOS, CADA_6_HORAS,
  * CADA_CUATRO_DIAS, CADA_DOS_DIAS, HORARIA y SEMANAL.
  */
-export const FrequencyValue = [
+export const FrequencyOption = [
     Frequency.DAILY,
     Frequency.EVERY_10_MINUTES,
     Frequency.EVERY_30_MINUTES,
@@ -20,10 +20,10 @@ export const FrequencyValue = [
  * Array de valores válidos para el tema de la interfaz de usuario.
  * Incluye opciones como DARK (oscuro), LIGHT (claro) y SYSTEM (según la configuración del sistema).
  */
-export const ThemeValue = [Theme.DARK, Theme.LIGHT, Theme.SYSTEM];
+export const ThemeOption = [Theme.DARK, Theme.LIGHT, Theme.SYSTEM];
 
 /**
  * Array de valores válidos para el idioma preferido del usuario.
  * Incluye opciones como EN (inglés) y ES (español).
  */
-export const LanguageValue = [Language.EN, Language.ES];
+export const LanguageOption = [Language.EN, Language.ES];

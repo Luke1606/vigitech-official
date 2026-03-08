@@ -2,6 +2,8 @@ import type { UUID } from 'crypto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { Frequency, NotificationChannel, Theme, Language } from '@prisma/client';
+import { NotificationChannelOption } from '@/common/enums/notification-channel-options.enum';
+import { FrequencyOption, LanguageOption, ThemeOption } from '../enum/user-preferences-options.enum';
 
 /**
  * DTO para la creación de preferencias de usuario predeterminadas.
@@ -12,7 +14,6 @@ import { Frequency, NotificationChannel, Theme, Language } from '@prisma/client'
 export class CreateDefaultUserPreferenceDto {
     /**
      * La referencia al ID del usuario al que pertenecen estas preferencias.
-     * @example "a1b2c3d4-e5f6-7890-1234-567890abcdef"
      */
     @ApiProperty({
         description: 'Referencia al ID del usuario',
@@ -24,22 +25,22 @@ export class CreateDefaultUserPreferenceDto {
 
     /**
      * Frecuencia con la que se realizará el análisis de los ítems que el usuario sigue.
-     * Por defecto es `Frequency.WEEKLY`.
-     * @example "WEEKLY"
+     * Por defecto es `Frequency.EVERY_6_HOURS`.
      */
     @ApiProperty({
         description: 'Frecuencia en la que realizar el análisis de los ítems a los que el usuario sigue',
         enum: Frequency,
-        example: Frequency.WEEKLY,
+        example: Frequency.EVERY_6_HOURS,
     })
     @IsOptional()
-    @IsEnum(Frequency)
-    analysisFrequency?: Frequency = Frequency.WEEKLY;
+    @IsEnum(Frequency, {
+        message: `Las opciones de frecuencia son: ${FrequencyOption.join()}`,
+    })
+    reClasificationFrequency?: Frequency = Frequency.EVERY_6_HOURS;
 
     /**
      * Frecuencia con la que se renovarán las recomendaciones de ítems para el usuario.
      * Por defecto es `Frequency.DAILY`.
-     * @example "DAILY"
      */
     @ApiProperty({
         description: 'Frecuencia en la que renovar las recomendaciones de ítems para el usuario',
@@ -47,13 +48,14 @@ export class CreateDefaultUserPreferenceDto {
         example: Frequency.DAILY,
     })
     @IsOptional()
-    @IsEnum(Frequency)
+    @IsEnum(Frequency, {
+        message: `Las opciones de frecuencia son: ${FrequencyOption.join()}`,
+    })
     recommendationsUpdateFrequency?: Frequency = Frequency.DAILY;
 
     /**
      * Tema preferido por el usuario para la interfaz.
      * Es opcional y por defecto es `Theme.SYSTEM`.
-     * @example "SYSTEM"
      */
     @ApiProperty({
         description: 'Tema preferido por el usuario para la interfaz',
@@ -61,13 +63,14 @@ export class CreateDefaultUserPreferenceDto {
         example: Theme.SYSTEM,
     })
     @IsOptional()
-    @IsEnum(Theme)
+    @IsEnum(Theme, {
+        message: `Las opciones de temas son: ${ThemeOption.join()}`,
+    })
     theme?: Theme = Theme.SYSTEM;
 
     /**
      * Idioma preferido por el usuario para la aplicación.
      * Es opcional y por defecto es `Language.ES` (Español).
-     * @example "ES"
      */
     @ApiProperty({
         description: 'Idioma preferido por el usuario para la aplicación',
@@ -75,13 +78,14 @@ export class CreateDefaultUserPreferenceDto {
         example: Language.ES,
     })
     @IsOptional()
-    @IsEnum(Language)
+    @IsEnum(Language, {
+        message: `Las opciones de lenguaje son: ${LanguageOption.join()}`,
+    })
     language?: Language = Language.ES;
 
     /**
      * Canal de notificaciones predeterminado preferido por el usuario.
      * Es opcional y por defecto es `NotificationChannel.IN_APP`.
-     * @example "IN_APP"
      */
     @ApiProperty({
         description: 'Canal de notificaciones predeterminado preferido por el usuario',
@@ -89,6 +93,8 @@ export class CreateDefaultUserPreferenceDto {
         example: NotificationChannel.IN_APP,
     })
     @IsOptional()
-    @IsEnum(NotificationChannel)
+    @IsEnum(NotificationChannel, {
+        message: `Las opciones de canales son: ${NotificationChannelOption.join()}`,
+    })
     defaultNotificationChannel?: NotificationChannel = NotificationChannel.IN_APP;
 }

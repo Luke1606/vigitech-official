@@ -1,5 +1,5 @@
 import type { UUID } from 'crypto';
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { UserSubscribedItem, Item, Prisma } from '@prisma/client';
 import { PrismaService } from '@/common/services/prisma.service';
 import { ItemsClassificationService } from '../items-classification/items-classification.service';
@@ -11,7 +11,7 @@ import { CreateUnclassifiedItemDto } from '../shared/dto/create-unclassified-ite
 import { ItemWithClassification } from '../shared/types/classified-item.type';
 import { InsightsWithCitations } from './types/insights-with-citations.type';
 import { ClassificationChange } from '../shared/types/classification-change.type';
-import { IdBatchDto } from './dto/id-batch.dto';
+import { IdBatchDto } from '../../shared/dto/id-batch.dto';
 
 @Injectable()
 export class ItemsGatewayService {
@@ -32,7 +32,7 @@ export class ItemsGatewayService {
     async findAllRecommended(userId: UUID): Promise<Item[]> {
         this.logger.log('Executed findAllRecommended');
 
-        return this.prisma.item.findMany({
+        return await this.prisma.item.findMany({
             where: {
                 hiddenBy: { none: { userId: userId } },
                 subscribedBy: { none: { userId: userId } },
@@ -52,10 +52,10 @@ export class ItemsGatewayService {
     async findAllSubscribed(userId: UUID): Promise<Item[]> {
         this.logger.log('Executed findAllSubscribed');
 
-        return this.prisma.item.findMany({
+        return await this.prisma.item.findMany({
             where: {
-                hiddenBy: { none: { userId: userId } },
-                subscribedBy: { some: { userId: userId } },
+                hiddenBy: { none: { userId } },
+                subscribedBy: { some: { userId } },
                 OR: [{ insertedById: null }, { insertedById: userId }],
             },
             include: {
@@ -163,8 +163,24 @@ export class ItemsGatewayService {
             });
 
             if (itemSuscription)
-                await this.prisma.userSubscribedItem.delete({
-                    where: { userId_itemId: { userId, itemId: id } },
+                await this.prisma.$transaction(async (tx) => {
+                    // 1. Eliminar suscripción
+                    await tx.userSubscribedItem.delete({
+                        where: { userId_itemId: { userId, itemId: id } },
+                    });
+
+                    // 2. Limpieza automática de listas (Desacoplado del servicio de listas)
+                    const userLists = await tx.userItemList.findMany({
+                        where: { ownerId: userId, items: { some: { id } } },
+                        select: { id: true },
+                    });
+
+                    for (const list of userLists) {
+                        await tx.userItemList.update({
+                            where: { id: list.id },
+                            data: { items: { disconnect: { id } } },
+                        });
+                    }
                 });
         } catch (error) {
             this.logger.error(error);
@@ -197,16 +213,32 @@ export class ItemsGatewayService {
 
             if ((item.insertedById as UUID) === userId) {
                 // Item created by user. Deleting permanently.
-                await this.prisma.item.delete({
-                    where: { id },
+                await this.prisma.$transaction(async (tx) => {
+                    await this.prisma.item.delete({
+                        where: { id, insertedById: userId },
+                    });
+
+                    // 2. Si estaba en alguna lista, se saca automáticamente
+                    const userLists = await tx.userItemList.findMany({
+                        where: { ownerId: userId, items: { some: { id } } },
+                        select: { id: true },
+                    });
+
+                    for (const list of userLists) {
+                        await tx.userItemList.update({
+                            where: { id: list.id },
+                            data: { items: { disconnect: { id: id } } },
+                        });
+                    }
                 });
             } else {
                 // Item is orphan. Hiding.
                 await this.hideOne(id, userId);
             }
-        } catch (error: any) {
+        } catch (error) {
             this.logger.error(error);
-            if (error.code === 'P2025') throw new NotFoundException('Item no encontrado');
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025')
+                throw new NotFoundException('Item no encontrado');
         }
     }
 
@@ -219,14 +251,36 @@ export class ItemsGatewayService {
     private async hideOne(id: UUID, userId: UUID): Promise<void> {
         this.logger.log('Executed hideOne of ${id} for ${userId}');
 
-        await this.prisma.userSubscribedItem.delete({
+        const itemSuscription = await this.prisma.userSubscribedItem.findUnique({
             where: { userId_itemId: { userId, itemId: id } },
         });
 
-        await this.prisma.userHiddenItem.upsert({
-            where: { userId_itemId: { userId, itemId: id } },
-            create: { userId, itemId: id },
-            update: {},
+        if (itemSuscription) {
+            await this.prisma.userSubscribedItem.delete({
+                where: { userId_itemId: { userId, itemId: id } },
+            });
+        }
+
+        await this.prisma.$transaction(async (tx) => {
+            // 1. Crear registro oculto
+            await tx.userHiddenItem.upsert({
+                where: { userId_itemId: { userId, itemId: id } },
+                create: { userId, itemId: id },
+                update: {},
+            });
+
+            // 2. Si estaba en alguna lista, se saca automáticamente
+            const userLists = await tx.userItemList.findMany({
+                where: { ownerId: userId, items: { some: { id } } },
+                select: { id: true },
+            });
+
+            for (const list of userLists) {
+                await tx.userItemList.update({
+                    where: { id: list.id },
+                    data: { items: { disconnect: { id: id } } },
+                });
+            }
         });
     }
 
@@ -244,18 +298,22 @@ export class ItemsGatewayService {
         const mode = insertedById ? 'MANUAL (User)' : 'AUTOMATIC (System)';
         this.logger.log(`Executed createBatch [${mode}] of ${data.length} items`);
 
+        if (!Array.isArray(data)) throw new BadRequestException('El payload debe ser un array.');
+
         if (data.length === 0) return;
 
         try {
             const classifiedItems: CreateNewItemClassification[] =
                 await this.itemsClassificationService.classifyNewBatch(data);
 
-            const savePromises = classifiedItems.map((classificationInfo) => {
-                return this._saveNewItem(classificationInfo, insertedById);
-            });
+            if (classifiedItems && classifiedItems.length > 0) {
+                const savePromises = classifiedItems.map((classificationInfo) => {
+                    return this._saveNewItem(classificationInfo, insertedById);
+                });
 
-            // Ejecutamos todas las promesas de guardado concurrentemente.
-            await Promise.all(savePromises);
+                // Ejecutamos todas las promesas de guardado concurrentemente.
+                await Promise.all(savePromises);
+            }
         } catch (error) {
             this.logger.error(error);
             throw new Error('Ha ocurrido un error durante la creación.');
@@ -443,11 +501,11 @@ export class ItemsGatewayService {
     async findAllItemTitles(): Promise<string[]> {
         this.logger.log('Executed findAllItemTitles for RAG negative filtering.');
 
-        const items = await this.prisma.item.findMany({
+        const items: { title: string }[] | undefined = await this.prisma.item.findMany({
             select: { title: true },
         });
 
-        return items.map((item: { title: string }) => item.title);
+        return items && items.length > 0 ? items.map((item: { title: string }) => item.title) : [];
     }
 
     /**

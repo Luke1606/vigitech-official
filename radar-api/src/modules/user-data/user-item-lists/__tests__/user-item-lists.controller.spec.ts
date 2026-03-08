@@ -11,6 +11,7 @@ import {
 } from '../../__mocks__/shared.mock';
 import { CreateUserItemListDto } from '../dto/create-user-item-list.dto';
 import { UpdateUserItemListDto } from '../dto/update-user-item-list.dto';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 describe('UserItemListsController', () => {
     let controller: UserItemListsController;
@@ -31,7 +32,7 @@ describe('UserItemListsController', () => {
 
     describe('findAll', () => {
         it('debe llamar a findAll del servicio con el userId', async () => {
-            mockUserItemListsService.findAll.mockResolvedValue([mockUserItemList]);
+            mockUserItemListsService.findAll.mockResolvedValue([mockUserItemList] as never);
             const result = await controller.findAll(mockAuthenticatedRequest);
             expect(result).toEqual([mockUserItemList]);
             expect(mockUserItemListsService.findAll).toHaveBeenCalledWith(MOCK_USER_ID);
@@ -40,16 +41,16 @@ describe('UserItemListsController', () => {
 
     describe('findOne', () => {
         it('debe llamar a findOne del servicio con el id de la lista', async () => {
-            mockUserItemListsService.findOne.mockResolvedValue(mockUserItemList);
-            const result = await controller.findOne(MOCK_LIST_ID);
+            mockUserItemListsService.findOne.mockResolvedValue(mockUserItemList as never);
+            const result = await controller.findOne(MOCK_LIST_ID, mockAuthenticatedRequest);
             expect(result).toEqual(mockUserItemList);
-            expect(mockUserItemListsService.findOne).toHaveBeenCalledWith(MOCK_LIST_ID);
+            expect(mockUserItemListsService.findOne).toHaveBeenCalledWith(MOCK_USER_ID, MOCK_LIST_ID);
         });
     });
 
     describe('createList', () => {
         it('debe llamar a createList del servicio con el DTO y userId', async () => {
-            mockUserItemListsService.createList.mockResolvedValue(mockUserItemList);
+            mockUserItemListsService.createList.mockResolvedValue(mockUserItemList as never);
             const createDto: CreateUserItemListDto = { name: 'Test List' };
 
             const result = await controller.createList(createDto, mockAuthenticatedRequest);
@@ -62,7 +63,7 @@ describe('UserItemListsController', () => {
     describe('updateList', () => {
         it('debe llamar a updateList del servicio', async () => {
             const updateDto: UpdateUserItemListDto = { name: 'Updated Title' };
-            mockUserItemListsService.updateList.mockResolvedValue(mockUserItemList);
+            mockUserItemListsService.updateList.mockResolvedValue(mockUserItemList as never);
 
             const result = await controller.updateList(MOCK_LIST_ID, updateDto, mockAuthenticatedRequest);
 
@@ -73,7 +74,7 @@ describe('UserItemListsController', () => {
 
     describe('removeList', () => {
         it('debe llamar a removeList del servicio', async () => {
-            mockUserItemListsService.removeList.mockResolvedValue(mockUserItemList);
+            mockUserItemListsService.removeList.mockResolvedValue(mockUserItemList as never);
 
             const result = await controller.removeList(MOCK_LIST_ID, mockAuthenticatedRequest);
 
@@ -85,7 +86,7 @@ describe('UserItemListsController', () => {
     describe('appendOneItem', () => {
         it('debe llamar a appendOneItem del servicio', async () => {
             const listWithItem = { ...mockUserItemList, items: [{ id: MOCK_ITEM_ID }] };
-            mockUserItemListsService.appendOneItem.mockResolvedValue(listWithItem);
+            mockUserItemListsService.appendOneItem.mockResolvedValue(listWithItem as never);
 
             const result = await controller.appendOneItem(MOCK_LIST_ID, MOCK_ITEM_ID, mockAuthenticatedRequest);
 
@@ -101,9 +102,9 @@ describe('UserItemListsController', () => {
     describe('appendAllItems', () => {
         it('debe llamar a appendAllItems (Batch) del servicio', async () => {
             const itemIds = [MOCK_ITEM_ID];
-            mockUserItemListsService.appendAllItems.mockResolvedValue(mockUserItemList);
+            mockUserItemListsService.appendAllItems.mockResolvedValue(mockUserItemList as never);
 
-            const result = await controller.appendAllItems(MOCK_LIST_ID, itemIds, mockAuthenticatedRequest);
+            const result = await controller.appendAllItems(MOCK_LIST_ID, { itemIds }, mockAuthenticatedRequest);
 
             expect(result).toEqual(mockUserItemList);
             expect(mockUserItemListsService.appendAllItems).toHaveBeenCalledWith(MOCK_USER_ID, MOCK_LIST_ID, itemIds);
@@ -112,7 +113,7 @@ describe('UserItemListsController', () => {
 
     describe('removeOneItem', () => {
         it('debe llamar a removeOneItem del servicio', async () => {
-            mockUserItemListsService.removeOneItem.mockResolvedValue(mockUserItemList);
+            mockUserItemListsService.removeOneItem.mockResolvedValue(mockUserItemList as never);
 
             const result = await controller.removeOneItem(MOCK_LIST_ID, MOCK_ITEM_ID, mockAuthenticatedRequest);
 
@@ -128,9 +129,9 @@ describe('UserItemListsController', () => {
     describe('removeAllItems', () => {
         it('debe llamar a removeAllItems (Batch) del servicio', async () => {
             const itemIds = [MOCK_ITEM_ID];
-            mockUserItemListsService.removeAllItems.mockResolvedValue(mockUserItemList);
+            mockUserItemListsService.removeAllItems.mockResolvedValue(mockUserItemList as never);
 
-            const result = await controller.removeAllItems(MOCK_LIST_ID, itemIds, mockAuthenticatedRequest);
+            const result = await controller.removeAllItems(MOCK_LIST_ID, { itemIds }, mockAuthenticatedRequest);
 
             expect(result).toEqual(mockUserItemList);
             expect(mockUserItemListsService.removeAllItems).toHaveBeenCalledWith(MOCK_USER_ID, MOCK_LIST_ID, itemIds);

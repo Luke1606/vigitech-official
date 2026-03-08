@@ -1,6 +1,6 @@
 import { UUID } from 'crypto';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString } from 'class-validator';
+import { IsArray, IsDateString, IsUUID } from 'class-validator';
 
 /**
  * DTO para la creación de un nuevo reporte.
@@ -13,6 +13,8 @@ export class CreateReportDto {
      * Este campo es requerido y debe ser un array de items.
      */
     @ApiProperty({ description: 'Ids de los items a reportar' })
+    @IsArray()
+    @IsUUID('all', { each: true })
     itemIds!: UUID[];
 
     /**

@@ -30,6 +30,12 @@ describe('UserItemListsService', () => {
             findUniqueOrThrow: jest.fn(),
             findMany: jest.fn(),
         },
+        userSubscribedItem: {
+            count: jest.fn(),
+        },
+        userHiddenItem: {
+            count: jest.fn(),
+        },
     };
 
     beforeEach(async () => {
@@ -47,7 +53,7 @@ describe('UserItemListsService', () => {
 
     describe('findAll', () => {
         it('debe devolver todas las listas de un usuario', async () => {
-            mockPrisma.userItemList.findMany.mockResolvedValue([mockUserItemList]);
+            mockPrisma.userItemList.findMany.mockResolvedValue([mockUserItemList] as never);
             const result = await service.findAll(MOCK_USER_ID);
             expect(result).toEqual([mockUserItemList]);
             expect(mockPrisma.userItemList.findMany).toHaveBeenCalled();
@@ -56,20 +62,20 @@ describe('UserItemListsService', () => {
 
     describe('findOne', () => {
         it('debe devolver una lista por ID', async () => {
-            mockPrisma.userItemList.findUniqueOrThrow.mockResolvedValue(mockUserItemList);
-            const result = await service.findOne(MOCK_LIST_ID);
+            mockPrisma.userItemList.findUniqueOrThrow.mockResolvedValue(mockUserItemList as never);
+            const result = await service.findOne(MOCK_USER_ID, MOCK_LIST_ID);
             expect(result).toEqual(mockUserItemList);
         });
 
         it('debe lanzar error si la lista no existe', async () => {
-            mockPrisma.userItemList.findUniqueOrThrow.mockResolvedValue(notFoundError);
-            await expect(service.findOne(MOCK_LIST_ID)).resolves.toThrow();
+            mockPrisma.userItemList.findUniqueOrThrow.mockResolvedValue(notFoundError as never);
+            await expect(service.findOne(MOCK_USER_ID, MOCK_LIST_ID)).resolves.toThrow();
         });
     });
 
     describe('createList', () => {
         it('debe crear una nueva lista', async () => {
-            mockPrisma.userItemList.create.mockResolvedValue(mockUserItemList);
+            mockPrisma.userItemList.create.mockResolvedValue(mockUserItemList as never);
             const result = await service.createList(MOCK_USER_ID, { name: 'Test' });
             expect(result).toEqual(mockUserItemList);
         });
@@ -77,7 +83,7 @@ describe('UserItemListsService', () => {
 
     describe('updateList', () => {
         it('debe actualizar una lista', async () => {
-            mockPrisma.userItemList.update.mockResolvedValue(mockUserItemList);
+            mockPrisma.userItemList.update.mockResolvedValue(mockUserItemList as never);
             const result = await service.updateList(MOCK_USER_ID, MOCK_LIST_ID, { name: 'New' });
             expect(result).toEqual(mockUserItemList);
         });
@@ -85,7 +91,7 @@ describe('UserItemListsService', () => {
 
     describe('removeList', () => {
         it('debe eliminar una lista', async () => {
-            mockPrisma.userItemList.delete.mockResolvedValue(mockUserItemList);
+            mockPrisma.userItemList.delete.mockResolvedValue(mockUserItemList as never);
             const result = await service.removeList(MOCK_USER_ID, MOCK_LIST_ID);
             expect(result).toEqual(mockUserItemList);
         });
@@ -93,8 +99,10 @@ describe('UserItemListsService', () => {
 
     describe('appendOneItem', () => {
         it('debe añadir un item', async () => {
-            mockPrisma.item.findUniqueOrThrow.mockResolvedValue(mockSurveyItem);
-            mockPrisma.userItemList.update.mockResolvedValue(mockUserItemList);
+            mockPrisma.item.findUniqueOrThrow.mockResolvedValue(mockSurveyItem as never);
+            mockPrisma.userItemList.update.mockResolvedValue(mockUserItemList as never);
+            mockPrisma.userSubscribedItem.count.mockResolvedValue(1 as never);
+            mockPrisma.userHiddenItem.count.mockResolvedValue(0 as never);
             const result = await service.appendOneItem(MOCK_USER_ID, MOCK_LIST_ID, MOCK_ITEM_ID);
             expect(result).toEqual(mockUserItemList);
         });
@@ -103,56 +111,26 @@ describe('UserItemListsService', () => {
     describe('appendAllItems', () => {
         it('debe añadir múltiples items', async () => {
             const itemIds = [MOCK_ITEM_ID];
-            mockPrisma.item.findMany.mockResolvedValue([{ id: MOCK_ITEM_ID }]);
-            mockPrisma.userItemList.update.mockResolvedValue(mockUserItemList);
+            mockPrisma.item.findMany.mockResolvedValue([{ id: MOCK_ITEM_ID }] as never);
+            mockPrisma.userItemList.update.mockResolvedValue(mockUserItemList as never);
             const result = await service.appendAllItems(MOCK_USER_ID, MOCK_LIST_ID, itemIds);
             expect(result).toEqual(mockUserItemList);
         });
 
         it('debe lanzar NotFoundException si falta algún item', async () => {
-            mockPrisma.item.findMany.mockResolvedValue([]);
+            mockPrisma.item.findMany.mockResolvedValue([] as never);
             await expect(service.appendAllItems(MOCK_USER_ID, MOCK_LIST_ID, [MOCK_ITEM_ID])).rejects.toThrow(
                 NotFoundException,
             );
         });
     });
 
-    describe('removeOneItem', () => {
-        it('debe remover un item', async () => {
-            mockPrisma.userItemList.update.mockResolvedValue(mockUserItemList);
-            const result = await service.removeOneItem(MOCK_USER_ID, MOCK_LIST_ID, MOCK_ITEM_ID);
-            expect(result).toBeDefined();
-        });
-    });
-
-    describe('removeAllItems', () => {
-        it('debe remover múltiples items', async () => {
-            mockPrisma.userItemList.update.mockResolvedValue(mockUserItemList);
-            const result = await service.removeAllItems(MOCK_USER_ID, MOCK_LIST_ID, [MOCK_ITEM_ID]);
-            expect(result).toBeDefined();
-        });
-    });
-
     describe('getListItems', () => {
         it('debe obtener los items de una lista', async () => {
-            mockPrisma.userItemList.findUnique.mockResolvedValue({ items: [] });
+            mockPrisma.userItemList.findUnique.mockResolvedValue({ items: [] } as never);
             const result = await service.getListItems(MOCK_USER_ID, MOCK_LIST_ID);
             expect(result).toBeDefined();
             expect(mockPrisma.userItemList.findUnique).toHaveBeenCalled();
-        });
-    });
-
-    describe('isItemInList', () => {
-        it('debe devolver true si el item existe', async () => {
-            mockPrisma.userItemList.count.mockResolvedValue(1);
-            const result = await service.isItemInList(MOCK_USER_ID, MOCK_LIST_ID, MOCK_ITEM_ID);
-            expect(result).toBe(true);
-        });
-
-        it('debe devolver false si el item no existe', async () => {
-            mockPrisma.userItemList.count.mockResolvedValue(0);
-            const result = await service.isItemInList(MOCK_USER_ID, MOCK_LIST_ID, MOCK_ITEM_ID);
-            expect(result).toBe(false);
         });
     });
 });

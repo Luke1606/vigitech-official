@@ -9,6 +9,7 @@ import {
     UserHiddenItem,
 } from '@prisma/client';
 import { AuthenticatedRequest } from '@/shared/types/authenticated-request.type';
+import { jest } from '@jest/globals';
 
 // ===========================================
 // 1. CONSTANTES Y DATOS BASE
@@ -103,7 +104,7 @@ export const mockUserItemListsService = {
 
 export const mockUserPreferencesService = {
     findActualUserPreferences: jest.fn(),
-    createOrReturnToDefault: jest.fn(),
+    createOrSetToDefault: jest.fn(),
     update: jest.fn(),
 };
 
@@ -116,6 +117,7 @@ type MockDelegate = {
     findMany: jest.Mock;
     findUniqueOrThrow?: jest.Mock;
     create: jest.Mock;
+    count: jest.Mock;
     findFirstOrThrow?: jest.Mock;
     createManyAndReturn?: jest.Mock;
     findUnique?: jest.Mock;
@@ -147,7 +149,7 @@ export const mockPrismaClient = {
         findUniqueOrThrow: jest.fn(),
     } as MockDelegate,
 
-    item: { // Add the item delegate to the mock
+    item: {
         findUniqueOrThrow: jest.fn(),
         findMany: jest.fn(),
     } as MockDelegate,
@@ -156,6 +158,7 @@ export const mockPrismaClient = {
         create: jest.fn(),
         findMany: jest.fn(),
         deleteMany: jest.fn(),
+        count: jest.fn(),
     } as MockDelegate,
 
     userHiddenItem: {

@@ -1,11 +1,11 @@
 import type { UUID } from 'crypto';
 import { Body, Controller, Delete, Get, Logger, Param, ParseUUIDPipe, Patch, Post, Req } from '@nestjs/common';
-
 import { UserItemList } from '@prisma/client';
 import type { AuthenticatedRequest } from '@/shared/types/authenticated-request.type';
 import { UserItemListsService } from './user-item-lists.service';
 import { CreateUserItemListDto } from './dto/create-user-item-list.dto';
 import { UpdateUserItemListDto } from './dto/update-user-item-list.dto';
+import { IdBatchDto } from '@/modules/shared/dto/id-batch.dto';
 
 /**
  * Controlador para la gestión de listas de elementos de usuario.
@@ -39,9 +39,85 @@ export class UserItemListsController {
      * @returns Una Promesa que resuelve con el objeto UserItemList.
      */
     @Get(':id')
-    async findOne(@Param('id', ParseUUIDPipe) id: UUID): Promise<UserItemList | null> {
+    async findOne(
+        @Param('id', new ParseUUIDPipe()) id: UUID,
+        @Req() request: AuthenticatedRequest,
+    ): Promise<UserItemList | null> {
         this.logger.log('Executed findOne');
-        return await this.userItemListsService.findOne(id);
+        const userId: UUID = request.userId as UUID;
+        return await this.userItemListsService.findOne(userId, id);
+    }
+
+    /**
+     * Añade múltiples elementos a una lista de elementos.
+     * @param id El UUID de la lista a la que se añadirán los elementos.
+     * @param data Un array de UUIDs de los elementos a añadir.
+     * @param request La solicitud autenticada que contiene el ID del usuario.
+     * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
+     */
+    @Patch('batch/:listId')
+    async appendAllItems(
+        @Param('listId', new ParseUUIDPipe()) id: UUID,
+        @Body() data: IdBatchDto,
+        @Req() request: AuthenticatedRequest,
+    ): Promise<UserItemList> {
+        this.logger.log('Executed appendAllItems');
+        const userId: UUID = request.userId as UUID;
+        return await this.userItemListsService.appendAllItems(userId, id, data.itemIds);
+    }
+
+    /**
+     * Añade un único elemento a una lista de elementos.
+     * @param listId El UUID de la lista a la que se añadirá el elemento.
+     * @param itemId El UUID del elemento a añadir.
+     * @param request La solicitud autenticada que contiene el ID del usuario.
+     * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
+     */
+    @Patch('item/:listId')
+    async appendOneItem(
+        @Param('listId', new ParseUUIDPipe()) listId: UUID,
+        @Body('itemId', new ParseUUIDPipe()) itemId: UUID,
+        @Req() request: AuthenticatedRequest,
+    ): Promise<UserItemList> {
+        this.logger.log('Executed appendOneItem');
+        const userId: UUID = request.userId as UUID;
+        return await this.userItemListsService.appendOneItem(userId, listId, itemId);
+    }
+
+    /**
+     * Elimina múltiples elementos de una lista de elementos.
+     * @param id El UUID de la lista de la que se eliminarán los elementos.
+     * @param data Un array de UUIDs de los elementos a eliminar.
+     * @param request La solicitud autenticada que contiene el ID del usuario.
+     * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
+     */
+    @Delete('batch/:listId')
+    async removeAllItems(
+        @Param('listId', new ParseUUIDPipe()) id: UUID,
+        @Body() data: IdBatchDto,
+        @Req() request: AuthenticatedRequest,
+    ): Promise<UserItemList> {
+        this.logger.log('Executed removeAllItems');
+        const userId: UUID = request.userId as UUID;
+        return await this.userItemListsService.removeAllItems(userId, id, data.itemIds);
+    }
+
+    /**
+     * Elimina un único elemento de una lista de elementos.
+     * @param listId El UUID de la lista de la que se eliminará el elemento.
+     * @param itemId El UUID del elemento a eliminar.
+     * @param request La solicitud autenticada que contiene el ID del usuario.
+     * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
+     */
+    @Delete('item/:listId')
+    async removeOneItem(
+        @Param('listId', new ParseUUIDPipe()) listId: UUID,
+        @Body('itemId', new ParseUUIDPipe()) itemId: UUID,
+        @Req() request: AuthenticatedRequest,
+    ): Promise<UserItemList> {
+        this.logger.log('Executed removeOneItem');
+        const userId: UUID = request.userId as UUID;
+        return await this.userItemListsService.removeOneItem(userId, listId, itemId);
     }
 
     /**
@@ -66,7 +142,7 @@ export class UserItemListsController {
      */
     @Patch(':id')
     async updateList(
-        @Param('id', ParseUUIDPipe) id: UUID,
+        @Param('id', new ParseUUIDPipe()) id: UUID,
         @Body() data: UpdateUserItemListDto,
         @Req() request: AuthenticatedRequest,
     ): Promise<UserItemList> {
@@ -83,83 +159,11 @@ export class UserItemListsController {
      */
     @Delete(':id')
     async removeList(
-        @Param('id', ParseUUIDPipe) id: UUID,
+        @Param('id', new ParseUUIDPipe()) id: UUID,
         @Req() request: AuthenticatedRequest,
     ): Promise<UserItemList> {
         this.logger.log('Executed removeList');
         const userId: UUID = request.userId as UUID;
         return await this.userItemListsService.removeList(userId, id);
-    }
-
-    /**
-     * Añade un único elemento a una lista de elementos.
-     * @param listId El UUID de la lista a la que se añadirá el elemento.
-     * @param itemId El UUID del elemento a añadir.
-     * @param request La solicitud autenticada que contiene el ID del usuario.
-     * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
-     */
-    @Patch('item/:listId')
-    async appendOneItem(
-        @Param('listId') listId: UUID,
-        @Body() itemId: UUID,
-        @Req() request: AuthenticatedRequest,
-    ): Promise<UserItemList> {
-        this.logger.log('Executed appendOneItem');
-        const userId: UUID = request.userId as UUID;
-        return await this.userItemListsService.appendOneItem(userId, listId, itemId);
-    }
-
-    /**
-     * Añade múltiples elementos a una lista de elementos.
-     * @param id El UUID de la lista a la que se añadirán los elementos.
-     * @param itemIds Un array de UUIDs de los elementos a añadir.
-     * @param request La solicitud autenticada que contiene el ID del usuario.
-     * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
-     */
-    @Patch('batch/:listId')
-    async appendAllItems(
-        @Param('listId') id: UUID,
-        @Body() itemIds: UUID[],
-        @Req() request: AuthenticatedRequest,
-    ): Promise<UserItemList> {
-        this.logger.log('Executed appendAllItems');
-        const userId: UUID = request.userId as UUID;
-        return await this.userItemListsService.appendAllItems(userId, id, itemIds);
-    }
-
-    /**
-     * Elimina un único elemento de una lista de elementos.
-     * @param listId El UUID de la lista de la que se eliminará el elemento.
-     * @param itemId El UUID del elemento a eliminar.
-     * @param request La solicitud autenticada que contiene el ID del usuario.
-     * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
-     */
-    @Delete('item/:listId')
-    async removeOneItem(
-        @Param('listId') listId: UUID,
-        @Body() itemId: UUID,
-        @Req() request: AuthenticatedRequest,
-    ): Promise<UserItemList> {
-        this.logger.log('Executed removeOneItem');
-        const userId: UUID = request.userId as UUID;
-        return await this.userItemListsService.removeOneItem(userId, listId, itemId);
-    }
-
-    /**
-     * Elimina múltiples elementos de una lista de elementos.
-     * @param id El UUID de la lista de la que se eliminarán los elementos.
-     * @param itemIds Un array de UUIDs de los elementos a eliminar.
-     * @param request La solicitud autenticada que contiene el ID del usuario.
-     * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
-     */
-    @Delete('batch/:listId')
-    async removeAllItems(
-        @Param('listId') id: UUID,
-        @Body() itemIds: UUID[],
-        @Req() request: AuthenticatedRequest,
-    ): Promise<UserItemList> {
-        this.logger.log('Executed removeAllItems');
-        const userId: UUID = request.userId as UUID;
-        return await this.userItemListsService.removeAllItems(userId, id, itemIds);
     }
 }

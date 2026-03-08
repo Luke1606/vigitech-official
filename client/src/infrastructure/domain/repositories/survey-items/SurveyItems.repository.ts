@@ -37,7 +37,7 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
         title: string,
     ): Promise<void> {
         return await this.axios.http
-            .post('survey-items/create', { title: title })
+            .post('survey-items', { title: title })
     }
 
     async subscribeOne(
@@ -67,7 +67,7 @@ export class SurveyItemsRepository implements SurveyItemsInterface {
         const data = titles.map(title => ({ title }));
 
         return await this.axios.http
-            .post('survey-items/create/batch', data)
+            .post('survey-items/batch', data)
     }
 
     async subscribeBatch(itemIds: UUID[]): Promise<void> {

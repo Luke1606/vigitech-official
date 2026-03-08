@@ -64,7 +64,7 @@ model UserPreferences {
   updatedAt                       DateTime            @updatedAt
 
   userId                          String              @unique
-  user                            User?               @relation(fields: [userId], references: [id])
+  user                            User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserSubscribedItem {
@@ -100,7 +100,7 @@ model UserItemList {
   updatedAt                    DateTime            @updatedAt
 
   ownerId                      String
-  owner                        User                @relation(fields: [ownerId], references: [id])
+  owner                        User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   items                        Item[]              @relation("ListItems")
 }
 
@@ -108,7 +108,7 @@ model Report {
   id        String   @id @default(uuid())
 
   creatorId       String
-  creator         User      @relation(fields: [creatorId], references: [id])
+  creator         User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   startDate       DateTime
   endDate         DateTime  @default(now())
@@ -197,7 +197,7 @@ model KnowledgeFragment {
 
   // Referencia a la fuente cruda
   sourceRawDataId         String
-  sourceRawData           RawData             @relation(fields: [sourceRawDataId], references: [id])
+  sourceRawData           RawData             @relation(fields: [sourceRawDataId], references: [id], onDelete: Cascade)
 
   // Citaciones de la clasificación que usaron este fragmento como evidencia
   citedBy                 ItemCitedFragment[]
@@ -229,7 +229,7 @@ model Item {
   // Relaciones de usuario
   lists                   UserItemList[]        @relation("ListItems")
   reports                 Report[]              @relation("ReportItems")
-  insertedBy              User?                 @relation(fields: [insertedById], references: [id])
+  insertedBy              User?                 @relation(fields: [insertedById], references: [id], onDelete: Cascade)
   insertedById            String?
   subscribedBy            UserSubscribedItem[]
   hiddenBy                UserHiddenItem[]
@@ -262,7 +262,7 @@ model ItemCitedFragment {
   
   // Relación con el Fragmento de Conocimiento
   fragmentId              String
-  fragment                KnowledgeFragment   @relation(fields: [fragmentId], references: [id])
+  fragment                KnowledgeFragment   @relation(fields: [fragmentId], references: [id], onDelete: Cascade)
 
   @@unique([itemId, fragmentId])
 }

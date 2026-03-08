@@ -9,7 +9,6 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { CreateUnclassifiedItemDto } from '../../shared/dto/create-unclassified-item.dto';
 
 const MOCK_USER_ID: UUID = 'user-id-123' as UUID;
-const MOCK_OTHER_USER_ID: UUID = 'user-id-987' as UUID;
 const MOCK_ITEM_ID: UUID = 'item-id-456' as UUID;
 const MOCK_CLASSIFICATION_ID: UUID = 'classification-id-789' as UUID;
 
@@ -22,27 +21,6 @@ const mockUserOwnedItem: Item = {
     updatedAt: new Date(),
     latestClassificationId: MOCK_CLASSIFICATION_ID,
     insertedById: MOCK_USER_ID,
-} as Item;
-
-const orphanItem: Item = {
-    id: MOCK_ITEM_ID,
-    title: 'Test Item',
-    summary: 'Summary',
-    itemField: Field.BUSSINESS_INTEL,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    latestClassificationId: MOCK_CLASSIFICATION_ID,
-} as Item;
-
-const otherUserItem: Item = {
-    id: MOCK_ITEM_ID,
-    title: 'Test Item',
-    summary: 'Summary',
-    itemField: Field.BUSSINESS_INTEL,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    latestClassificationId: MOCK_CLASSIFICATION_ID,
-    insertedById: MOCK_OTHER_USER_ID,
 } as Item;
 
 describe('ItemsGatewayService', () => {
@@ -138,9 +116,9 @@ describe('ItemsGatewayService', () => {
             await service.findAllRecommended(MOCK_USER_ID);
             expect(prisma.item.findMany).toHaveBeenCalledWith({
                 where: {
-                    OR: [{ insertedById: null }, { insertedById: MOCK_USER_ID }],
-                    subscribedBy: { none: { userId: MOCK_USER_ID } },
                     hiddenBy: { none: { userId: MOCK_USER_ID } },
+                    subscribedBy: { none: { userId: MOCK_USER_ID } },
+                    OR: [{ insertedById: null }, { insertedById: MOCK_USER_ID }],
                 },
                 include: {
                     latestClassification: true,
