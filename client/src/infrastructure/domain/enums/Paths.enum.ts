@@ -9,5 +9,8 @@ export enum PathOption {
     TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED = "/vigitech/technology-radar/recommendations-feed",
     TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR = "/vigitech/technology-radar/subscribed-items-radar",
     TECHNOLOGY_RADAR_ITEM_DETAILS = "/vigitech/technology-radar/item-details",
-    TECHNOLOGY_RADAR_USER_PREFERENCES = "/vigitech/technology-radar/preferences"
+    TECHNOLOGY_RADAR_USER_PREFERENCES = "/vigitech/technology-radar/preferences",
+    
+    NEWS_ANALYZER_PORTAL = "/vigitech/news-analyzer",
+    NEWS_ANALYZER_DASHBOARD = "/vigitech/news-analyzer/dashboard",
 }

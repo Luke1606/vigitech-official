@@ -8,12 +8,15 @@ import {
     TechnologyRadarHome,
     SubscribedItemsRadar,
     RecommendationsFeed,
-    ItemDetails
+    ItemDetails,
+    NewsAnalyzerHome,
+    NewsAnalyzerDashboard
 } from "../ui/pages";
 
 const vigitechGlobalPrefix: string = "vigitech";
 const portalGlobalPrefix: string = "portal/";
 const technologyRadarGlobalPrefix: string = "technology-radar/";
+const newsAnalyzerGlobalPrefix: string = "news-analyzer/";
 
 export const routes: RouteObject[] = [
     {
@@ -61,6 +64,14 @@ export const routes: RouteObject[] = [
                         element: <ItemDetails />
                     }
                 ]
+            },
+            {
+                path: newsAnalyzerGlobalPrefix,
+                element: <NewsAnalyzerHome />
+            },
+            {
+                path: `${newsAnalyzerGlobalPrefix}dashboard`,
+                element: <NewsAnalyzerDashboard />
             }
         ]
     },

@@ -23,6 +23,23 @@ import styles from './Header.styles';
 import { ServiceCard, type ServiceCardProps } from './service-card';
 import { Menu } from 'lucide-react';
 
+const ViewMap: Partial<Record<PathOption, 'portal' | 'technology-radar' | 'news-analyzer'>> = {
+    [PathOption.VIGITECH_PORTAL_HOME]: 'portal',
+    [PathOption.VIGITECH_PORTAL_FAQ]: 'portal',
+    [PathOption.VIGITECH_PORTAL_ABOUT]: 'portal',
+    [PathOption.VIGITECH_PORTAL_CTA]: 'portal',
+
+    [PathOption.TECHNOLOGY_RADAR_ITEM_DETAILS]: 'technology-radar',
+    [PathOption.TECHNOLOGY_RADAR_PORTAL]: 'technology-radar',
+    [PathOption.TECHNOLOGY_RADAR_RECOMMENDATIONS_FEED]: 'technology-radar',
+    [PathOption.TECHNOLOGY_RADAR_SUBSCRIBED_ITEMS_RADAR]: 'technology-radar',
+    [PathOption.TECHNOLOGY_RADAR_USER_PREFERENCES]: 'technology-radar',
+        
+    [PathOption.NEWS_ANALYZER_PORTAL]: 'news-analyzer',
+    [PathOption.NEWS_ANALYZER_DASHBOARD]: 'news-analyzer',
+}
+
+
 export const Header: React.FC = () => {
     const location = useLocation();
     const currentPath: PathOption = location.pathname as PathOption;
@@ -55,6 +72,15 @@ export const Header: React.FC = () => {
                 }
             },
             {
+                to: PathOption.NEWS_ANALYZER_PORTAL,
+                service: {
+                    imageSrc: '/vigitech_home_news.jpg',
+                    title: 'Analizador de Noticias',
+                    alt: 'News Analyzer Service Home',
+                    description: 'Analiza la confiabilidad de las noticias y detecta desinformación.'
+                }
+            },
+            {
                 to: '#' as PathOption,
                 service: {
                     imageSrc: '/vigitech_home_browser.jpg',
@@ -63,30 +89,16 @@ export const Header: React.FC = () => {
                     description: 'Encuentra información clave sobre todo tipo de tecnologías.'
                 }
             },
-            {
-                to: '#' as PathOption,
-                service: {
-                    imageSrc: '/vigitech_home_graphics.jpg',
-                    title: 'Gráficos Tecnológicos',
-                    alt: 'Graphics Service Home',
-                    description: 'Analiza las tendencias tecnológicas globales y su impacto mediante visualizaciones de datos.'
-                }
-            },
         ];
-
-    const isVigitechView = (
-        currentPath === PathOption.VIGITECH_PORTAL_HOME ||
-        currentPath === PathOption.VIGITECH_PORTAL_FAQ ||
-        currentPath === PathOption.VIGITECH_PORTAL_ABOUT ||
-        currentPath === PathOption.VIGITECH_PORTAL_CTA
-    );
 
     // Función para determinar si una ruta está activa (usando comparación exacta)
     const isActivePath = (path: PathOption) => currentPath === path;
 
+    const view = ViewMap[currentPath];
+    
     const MobileMenuContent = () => (
         <div className="flex flex-col gap-4 mt-6">
-            {isVigitechView ? (
+            {view === 'portal' && (
                 <>
                     <NavLink
                         to={PathOption.VIGITECH_PORTAL_HOME}
@@ -139,7 +151,9 @@ export const Header: React.FC = () => {
                         ACERCA DE
                     </NavLink>
                 </>
-            ) : (
+            )}
+
+            {view === 'technology-radar' && (
                 <>
                     {/* Home del Radar */}
                     <NavLink
@@ -176,6 +190,32 @@ export const Header: React.FC = () => {
                     </NavLink>
                 </>
             )}
+
+            {view === 'news-analyzer' && (
+                <>
+                    <NavLink
+                        to={PathOption.NEWS_ANALYZER_PORTAL}
+                        className={`px-4 py-3 rounded-lg font-medium transition duration-300 hover:bg-white hover:text-blue-600 ${isActivePath(PathOption.NEWS_ANALYZER_PORTAL)
+                            ? 'bg-white text-blue-600 ring-2 ring-blue-400 shadow-md'
+                            : 'text-white'
+                            }`}
+                        onClick={() => setSheetOpen(false)}
+                    >
+                        Inicio Noticias
+                    </NavLink>
+
+                    <NavLink
+                        to={PathOption.NEWS_ANALYZER_DASHBOARD}
+                        className={`px-4 py-3 rounded-lg font-medium transition duration-300 hover:bg-white hover:text-blue-600 ${isActivePath(PathOption.NEWS_ANALYZER_DASHBOARD)
+                            ? 'bg-white text-blue-600 ring-2 ring-blue-400 shadow-md'
+                            : 'text-white'
+                            }`}
+                        onClick={() => setSheetOpen(false)}
+                    >
+                        Dashboard
+                    </NavLink>
+                </>
+            )}
         </div>
     );
 
@@ -185,7 +225,7 @@ export const Header: React.FC = () => {
             {!isMobile && (
                 <NavigationMenu viewport={false}>
                     <NavigationMenuList className={styles.navigationMenuList}>
-                        {isVigitechView ? (
+                        {view === 'portal' && (
                             <>
                                 {/* HOME */}
                                 <NavigationMenuItem>
@@ -251,7 +291,9 @@ export const Header: React.FC = () => {
                                     </NavigationMenuLink>
                                 </NavigationMenuItem>
                             </>
-                        ) : (
+                        )}
+
+                        {view === 'technology-radar' && (
                             <>
                                 {/* Technology Radar layout */}
                                 <NavigationMenuItem>
@@ -306,6 +348,52 @@ export const Header: React.FC = () => {
                                 </NavigationMenuItem>
                             </>
                         )}
+
+                        {view === 'news-analyzer' && (
+                             <>
+                                {/* News Analyzer layout */}
+                                <NavigationMenuItem>
+                                    <NavigationMenuLink
+                                        asChild
+                                        className={styles.secundaryNavigationMenuLink}
+                                    >
+                                        <NavLink to={PathOption.VIGITECH_PORTAL_HOME}>VIGITECH</NavLink>
+                                    </NavigationMenuLink>
+                                </NavigationMenuItem>
+
+                                <NavigationMenuItem>
+                                    <NavigationMenuLink
+                                        asChild
+                                        className={`${styles.navigationMenuLink} 
+                                            ${currentPath === PathOption.NEWS_ANALYZER_PORTAL &&
+                                            styles.navigationMenuLinkFocused
+                                            }`}>
+                                        <NavLink to={PathOption.NEWS_ANALYZER_PORTAL}>Inicio</NavLink>
+                                    </NavigationMenuLink>
+                                </NavigationMenuItem>
+
+                                <NavigationMenuItem>
+                                    <NavigationMenuLink
+                                        asChild
+                                        className={`${styles.navigationMenuLink} 
+                                            ${currentPath === PathOption.NEWS_ANALYZER_DASHBOARD &&
+                                            styles.navigationMenuLinkFocused
+                                            }`}>
+                                        <NavLink to={PathOption.NEWS_ANALYZER_DASHBOARD}>Dashboard</NavLink>
+                                    </NavigationMenuLink>
+                                </NavigationMenuItem>
+
+                                <NavigationMenuItem>
+                                    <NavigationMenuLink
+                                        asChild
+                                        className={styles.navigationMenuLink}
+                                    >
+                                        <NotificationCenter />
+                                    </NavigationMenuLink>
+                                </NavigationMenuItem>
+                             </>
+                        )}
+
                         <SignedOut>
                             <NavigationMenuItem>
                                 <NavigationMenuLink
@@ -336,8 +424,8 @@ export const Header: React.FC = () => {
                 <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
                         {/* Services Button for Vigitech View - SIMPLIFIED */}
-                        {isVigitechView && (
-                            <Button
+                        {view === 'portal' && (
+                            <button
                                 className={styles.navigationMenuTrigger}
                                 onClick={() => {
                                     // En móvil, mostramos los servicios en el Sheet
@@ -345,11 +433,11 @@ export const Header: React.FC = () => {
                                 }}
                             >
                                 SERVICIOS
-                            </Button>
+                            </button>
                         )}
 
-                        {/* Vigitech Button for Radar View */}
-                        {!isVigitechView && (
+                        {/* Vigitech Button for Service Views */}
+                        {view !== 'portal' && (
                             <NavLink
                                 to={PathOption.VIGITECH_PORTAL_HOME}
                                 className={styles.secundaryNavigationMenuLink}
@@ -394,7 +482,7 @@ export const Header: React.FC = () => {
                                 </SheetDescription>
                                 <div className="mt-8">
                                     <h3 className="text-lg font-bold text-white mb-6 px-4 text-center">
-                                        {isVigitechView ? 'Vigitech Portal' : 'Radar Tecnológico'}
+                                        {view === 'portal' ? 'Vigitech Portal' : view === 'technology-radar' ? 'Radar Tecnológico' : 'News Analyzer'}
                                     </h3>
                                     <MobileMenuContent />
                                 </div>
