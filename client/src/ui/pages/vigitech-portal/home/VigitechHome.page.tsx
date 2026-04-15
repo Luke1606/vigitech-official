@@ -58,19 +58,41 @@ export const PortalHome: React.FC = () => {
               ayudándote a mantenerte a la vanguardia en estrategia y adopción.
             </p>
             <NavLink to={PathOption.TECHNOLOGY_RADAR_PORTAL} className="bg-linear-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xl transition duration-300">
-              Accede al Radar
+              Explora el Radar
             </NavLink>
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-12 mb-24 items-center md:flex-row-reverse ">
           <img
+            src="/vigitech_home_news.jpg"
+            alt="News Analyzer"
+            className="w-full rounded-xl shadow-lg"
+            data-aos="fade-right"
+            data-aos-duration="1500"
+          />
+          <div
+            data-aos="fade-left"
+            data-aos-duration="1500"
+          >
+            <h3 className="text-3xl font-semibold mb-4">Analizador de Noticias</h3>
+            <p className="text-lg text-gray-700 mb-6">
+              Evalúa el contexto y la fiabilidad del ecosistema informativo con herramientas avanzadas de triangulación y detección de IA. 
+              Ya seas periodista o ciudadano, obtén alertas tempranas sobre narrativas coordinadas y datos precisos para discernir la verdad en entornos digitales saturados.
+            </p>
+            <NavLink to={PathOption.NEWS_ANALYZER_PORTAL} className="bg-linear-to-br from-fuchsia-400 via-violet-500 to-cyan-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xl transition duration-300">
+              Explora noticias
+            </NavLink>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <img
             src="/vigitech_home_browser.jpg"
             alt="Technology Browser"
             className="w-full rounded-xl shadow-lg"
             data-aos="fade-right"
             data-aos-duration="1500"
-
           />
           <div
             data-aos="fade-left"
@@ -85,31 +107,6 @@ export const PortalHome: React.FC = () => {
             </p>
             <button className="bg-linear-to-br from-indigo-500 via-purple-600 to-sky-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xxl transition duration-300">
               Busca Tecnologías
-            </button>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <img
-            src="/vigitech_home_graphics.jpg"
-            alt="Technology Graphics"
-            className="w-full rounded-xl shadow-lg"
-            data-aos="fade-right"
-            data-aos-duration="1500"
-          />
-          <div
-            data-aos="fade-left"
-            data-aos-duration="1500"
-          >
-            <h3 className="text-3xl font-semibold mb-4">Gráficos Tecnológicos</h3>
-            <p className="text-lg text-gray-700 mb-6">
-              Visualiza las tendencias tecnológicas globales,
-              las tasas de adopción y el impacto tecnológico mediante gráficos y paneles interactivos.
-              Nuestro motor de visualización transforma datos en bruto en ideas claras,
-              para que puedas tomar decisiones informadas en cada etapa.
-            </p>
-            <button className="bg-gradient-to-br from-purple-500 via-fuchsia-500 to-cyan-400 text-white font-semibold px-6 py-3 rounded-lg shadow-xl hover:scale-105 hover:shadow-violet-900 hover:shadow-xl transition duration-300">
-              Explora visualizaciones
             </button>
           </div>
         </div>
