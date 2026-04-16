@@ -11,7 +11,7 @@ interface AnalysisMetrics {
 }
 
 interface AnalysisResult {
-  score: number;
+  fidelityScore: number;
   verdict: string;
   redFlags: string[];
   agendas: string[];
@@ -90,13 +90,13 @@ export const NewsAnalyzerDashboard: React.FC = () => {
           messages: [
             { 
               role: "system", 
-              content: `Actúa como un Analista de Inteligencia Forense. 
+              content: `Actúa como un Analista de Inteligencia Forense y Detector de Guerra Mediática. 
               Analiza la noticia basándote en el contexto. Detecta operaciones de influencia y sesgos.
-              Responde ESTRICTAMENTE con un JSON válido. No incluyas texto explicativo fuera del JSON.` 
+              Responde ESTRICTAMENTE con un JSON válido (en fidelityScore, usa un número entre 0 y 100 basado en el pesaje y resultado de las otras métricas). No incluyas texto explicativo fuera del JSON.` 
             },
             { 
               role: "user", 
-              content: `Analiza esta NOTICIA con este CONTEXTO:\n\nNOTICIA:\n${fullNewsText}\n\nCONTEXTO:\n${contextForAI}\n\nResponde en este formato JSON:\n{ "score": 0-100, "verdict": "", "redFlags": [], "agendas": [], "recommendation": "", "metrics": { "identificacionAgendas": 0.1, "triangulacionFuentes": 0.1, "cargaCognitiva": 0.1, "manipulacionNarrativa": 0.1, "anomaliasTecnicas": 0.1, "amplificacionCoordinada": 0.1 } }` 
+              content: `Analiza esta NOTICIA con este CONTEXTO:\n\nNOTICIA:\n${fullNewsText}\n\nCONTEXTO:\n${contextForAI}\n\nResponde en este formato JSON:\n{ "fidelityScore": 0-100, "verdict": "", "redFlags": [], "agendas": [], "recommendation": "", "metrics": { "identificacionAgendas": 0.1, "triangulacionFuentes": 0.1, "cargaCognitiva": 0.1, "manipulacionNarrativa": 0.1, "anomaliasTecnicas": 0.1, "amplificacionCoordinada": 0.1 } }` 
             }
           ],
           temperature: 0.1
@@ -117,7 +117,7 @@ export const NewsAnalyzerDashboard: React.FC = () => {
 
       // Blindaje de datos: Aseguramos que todas las propiedades existan
       const normalizedAnalysis: AnalysisResult = {
-        score: parsedData.score ?? 50,
+        fidelityScore: parsedData.fidelityScore ?? 50,
         verdict: parsedData.verdict ?? "Análisis parcial",
         redFlags: Array.isArray(parsedData.redFlags) ? parsedData.redFlags : [],
         agendas: Array.isArray(parsedData.agendas) ? parsedData.agendas : [],
@@ -213,8 +213,8 @@ export const NewsAnalyzerDashboard: React.FC = () => {
 };
 
 const DashboardCard: React.FC<{ result: AnalysisResult }> = ({ result }) => {
-  const isDanger = result.score < 40;
-  const isWarning = result.score >= 40 && result.score < 70;
+  const isDanger = result.fidelityScore < 40;
+  const isWarning = result.fidelityScore >= 40 && result.fidelityScore < 70;
   const scoreColor = isDanger ? "text-red-600" : isWarning ? "text-amber-500" : "text-emerald-500";
   const bgScore = isDanger ? "bg-red-50/50" : isWarning ? "bg-amber-50/50" : "bg-emerald-50/50";
 
@@ -226,7 +226,7 @@ const DashboardCard: React.FC<{ result: AnalysisResult }> = ({ result }) => {
           <header className="mb-10 text-center lg:text-left">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-2">Índice de Veracidad</h3>
             <div className={`text-7xl font-black tracking-tighter ${scoreColor}`}>
-              {result.score}
+              {result.fidelityScore}
               <span className="text-2xl opacity-20 ml-1">/100</span>
             </div>
             <p className={`text-xs font-black mt-3 uppercase tracking-widest ${scoreColor} bg-white inline-block px-4 py-1 rounded-full shadow-sm`}>
