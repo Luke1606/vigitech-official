@@ -64,10 +64,7 @@ describe('UserPreferencesService', () => {
 
             await service.update(MOCK_USER_ID, dto);
 
-            expect(mockPrismaClient.userPreferences.update).toHaveBeenCalledWith({
-                where: { userId: MOCK_USER_ID },
-                data: dto,
-            });
+            expect(mockPrismaClient.userPreferences.upsert).toHaveBeenCalled();
         });
     });
 

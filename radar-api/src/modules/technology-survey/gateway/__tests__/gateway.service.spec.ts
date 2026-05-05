@@ -32,25 +32,25 @@ describe('ItemsGatewayService', () => {
     beforeEach(async () => {
         mockPrismaTransaction = {
             item: {
-                create: jest.fn().mockResolvedValue(mockUserOwnedItem),
-                update: jest.fn().mockResolvedValue(mockUserOwnedItem),
-                delete: jest.fn().mockResolvedValue(mockUserOwnedItem),
-                deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+                create: jest.fn().mockResolvedValue(mockUserOwnedItem as never),
+                update: jest.fn().mockResolvedValue(mockUserOwnedItem as never),
+                delete: jest.fn().mockResolvedValue(mockUserOwnedItem as never),
+                deleteMany: jest.fn().mockResolvedValue({ count: 1 } as never),
             },
             itemClassification: {
-                create: jest.fn().mockResolvedValue({ id: MOCK_CLASSIFICATION_ID }),
+                create: jest.fn().mockResolvedValue({ id: MOCK_CLASSIFICATION_ID } as never),
             },
             userSubscribedItem: {
-                upsert: jest.fn().mockResolvedValue({}),
-                deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+                upsert: jest.fn().mockResolvedValue({} as never),
+                deleteMany: jest.fn().mockResolvedValue({ count: 1 } as never),
             },
             userHiddenItem: {
-                createMany: jest.fn().mockResolvedValue({ count: 1 }),
-                create: jest.fn().mockResolvedValue({}),
+                createMany: jest.fn().mockResolvedValue({ count: 1 } as never),
+                create: jest.fn().mockResolvedValue({} as never),
             },
             itemCitedFragment: {
-                create: jest.fn().mockResolvedValue({}),
-                deleteMany: jest.fn().mockResolvedValue({}),
+                create: jest.fn().mockResolvedValue({} as never),
+                deleteMany: jest.fn().mockResolvedValue({} as never),
             },
         };
 
@@ -65,22 +65,23 @@ describe('ItemsGatewayService', () => {
                             findUniqueOrThrow: jest.fn(),
                             update: jest.fn(),
                             delete: jest.fn(),
-                            deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+                            deleteMany: jest.fn().mockResolvedValue({ count: 1 } as never),
                         },
                         userHiddenItem: {
                             findUnique: jest.fn(),
                             create: jest.fn(),
-                            createMany: jest.fn().mockResolvedValue({ count: 1 }),
+                            createMany: jest.fn().mockResolvedValue({ count: 1 } as never),
                         },
                         userSubscribedItem: {
                             upsert: jest.fn(),
-                            deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+                            deleteMany: jest.fn().mockResolvedValue({ count: 1 } as never),
                             createMany: jest.fn(),
                         },
                         itemCitedFragment: {
                             deleteMany: jest.fn(),
                         },
-                        $transaction: jest.fn((callback) => callback(mockPrismaTransaction)),
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+                        $transaction: jest.fn((callback) => (callback as Function)(mockPrismaTransaction)),
                     },
                 },
                 {
@@ -102,13 +103,13 @@ describe('ItemsGatewayService', () => {
     // --- 1. CONSULTAS Y SEGURIDAD ---
     describe('finders', () => {
         it('findOne: debe lanzar ForbiddenException si el item está oculto', async () => {
-            (prisma.item.findUniqueOrThrow as jest.Mock).mockResolvedValue(mockUserOwnedItem);
-            (prisma.userHiddenItem.findUnique as jest.Mock).mockResolvedValue({ id: 'hidden' });
+            (prisma.item.findUniqueOrThrow as jest.Mock).mockResolvedValue(mockUserOwnedItem as never);
+            (prisma.userHiddenItem.findUnique as jest.Mock).mockResolvedValue({ id: 'hidden' } as never);
             await expect(service.findOne(MOCK_ITEM_ID, MOCK_USER_ID)).rejects.toThrowError(ForbiddenException);
         });
 
         it('findOne: debe lanzar NotFoundException si el item fue creado por otro usuario', async () => {
-            (prisma.item.findUniqueOrThrow as jest.Mock).mockResolvedValue(new NotFoundException());
+            (prisma.item.findUniqueOrThrow as jest.Mock).mockResolvedValue(new NotFoundException() as never);
             await expect(service.findOne(MOCK_ITEM_ID, MOCK_USER_ID)).resolves.toThrow(NotFoundException);
         });
 
@@ -152,7 +153,7 @@ describe('ItemsGatewayService', () => {
                 latestClassification: Classification.ADOPT,
                 itemSummary: 'Summary',
                 insightsValues: { citedFragmentIds: [] },
-            });
+            } as never);
 
             await service.create(dto, MOCK_USER_ID);
             expect(mockPrismaTransaction.item.create).toHaveBeenCalled();
@@ -166,7 +167,7 @@ describe('ItemsGatewayService', () => {
                     insightsValues: { citedFragmentIds: ['f1'] },
                     classification: Classification.ADOPT,
                 },
-            ]);
+            ] as never);
 
             await service.createBatch(dto as any, MOCK_USER_ID);
             expect(mockPrismaTransaction.item.create).toHaveBeenCalled();
@@ -191,7 +192,7 @@ describe('ItemsGatewayService', () => {
                     itemSummary: 'Summary 2',
                     insightsValues: { citedFragmentIds: [] }, // Caso sin citas
                 },
-            ]);
+            ] as never);
 
             await service.createBatch(dtos as any, MOCK_USER_ID);
 
@@ -238,19 +239,19 @@ describe('ItemsGatewayService', () => {
             (itemsClassificationService.classifyNewBatch as jest.Mock).mockResolvedValue([
                 {
                     unclassifiedItem: dtos[0],
-                    itemField: Field.CLOUD_COMPUTING,
+                    itemField: Field.LANGUAGES_AND_FRAMEWORKS,
                     classification: Classification.ADOPT,
                     itemSummary: 'Summary 1',
                     insightsValues: { citedFragmentIds: ['frag-1'] }, // Con citas
                 },
                 {
                     unclassifiedItem: dtos[1],
-                    itemField: Field.ARTIFICIAL_INTEL,
-                    classification: Classification.TRIAL,
+                    itemField: Field.SCIENTIFIC_STAGE,
+                    classification: Classification.TEST,
                     itemSummary: 'Summary 2',
                     insightsValues: { citedFragmentIds: [] }, // Sin citas (Rama Else)
                 },
-            ]);
+            ] as never);
 
             await service.createBatch(dtos as any, MOCK_USER_ID);
 
@@ -297,7 +298,7 @@ describe('ItemsGatewayService', () => {
             (prisma.item.findMany as jest.Mock).mockResolvedValue([
                 { id: '1', insertedById: MOCK_USER_ID },
                 { id: '2' },
-            ]);
+            ] as never);
 
             await service.removeBatch({ itemIds: ['1', '2'] as unknown as UUID[] }, MOCK_USER_ID);
 
@@ -315,7 +316,7 @@ describe('ItemsGatewayService', () => {
             jest.spyOn(service, 'findAllSubscribed').mockResolvedValue([itemBase as any]);
             (itemsClassificationService.classifyExistentBatch as jest.Mock).mockResolvedValue([
                 { item: itemBase, classification: Classification.ADOPT, insightsValues: {} },
-            ]);
+            ] as never);
 
             const result = await service.reclassifySubscribedItems(MOCK_USER_ID);
             expect(result[0].newClassification).toBe(Classification.ADOPT);
