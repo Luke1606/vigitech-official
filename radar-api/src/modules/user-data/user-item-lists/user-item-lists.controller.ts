@@ -6,12 +6,9 @@ import { UserItemListsService } from './user-item-lists.service';
 import { CreateUserItemListDto } from './dto/create-user-item-list.dto';
 import { UpdateUserItemListDto } from './dto/update-user-item-list.dto';
 import { IdBatchDto } from '@/modules/shared/dto/id-batch.dto';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 
-/**
- * Controlador para la gestión de listas de elementos de usuario.
- * Proporciona endpoints para operaciones CRUD en las listas de elementos
- * y para añadir/eliminar elementos de estas listas.
- */
+@ApiTags('user-data')
 @Controller('user-data/item-lists')
 export class UserItemListsController {
     private readonly logger: Logger;
@@ -27,6 +24,9 @@ export class UserItemListsController {
      * @returns Una Promesa que resuelve con un array de objetos UserItemList.
      */
     @Get()
+    @ApiOperation({ summary: 'Recupera todas las listas de ítems del usuario autenticado.' })
+    @ApiResponse({ status: 200, description: 'Listas de ítems recuperadas correctamente.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
     async findAll(@Req() request: AuthenticatedRequest): Promise<UserItemList[]> {
         this.logger.log('Executed findAll');
         const userId: UUID = request.userId as UUID;
@@ -39,6 +39,11 @@ export class UserItemListsController {
      * @returns Una Promesa que resuelve con el objeto UserItemList.
      */
     @Get(':id')
+    @ApiOperation({ summary: 'Recupera una lista específica de ítems por UUID del usuario autenticado.' })
+    @ApiResponse({ status: 200, description: 'Lista de ítems recuperada correctamente.' })
+    @ApiResponse({ status: 404, description: 'Lista de ítems no encontrada.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
+    @ApiParam({ name: 'id', description: 'UUID de la lista a recuperar.' })
     async findOne(
         @Param('id', new ParseUUIDPipe()) id: UUID,
         @Req() request: AuthenticatedRequest,
@@ -56,6 +61,11 @@ export class UserItemListsController {
      * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
      */
     @Patch('batch/:listId')
+    @ApiOperation({ summary: 'Añade varios ítems a una lista de usuario existente.' })
+    @ApiResponse({ status: 200, description: 'Ítems añadidos correctamente a la lista.' })
+    @ApiResponse({ status: 400, description: 'IDs de ítems inválidos o no elegibles.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
+    @ApiParam({ name: 'listId', description: 'UUID de la lista de destino.' })
     async appendAllItems(
         @Param('listId', new ParseUUIDPipe()) id: UUID,
         @Body() data: IdBatchDto,
@@ -74,6 +84,11 @@ export class UserItemListsController {
      * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
      */
     @Patch('item/:listId')
+    @ApiOperation({ summary: 'Añade un único ítem a una lista de usuario.' })
+    @ApiResponse({ status: 200, description: 'Ítem añadido correctamente a la lista.' })
+    @ApiResponse({ status: 400, description: 'ID de ítem inválido o no elegible.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
+    @ApiParam({ name: 'listId', description: 'UUID de la lista de destino.' })
     async appendOneItem(
         @Param('listId', new ParseUUIDPipe()) listId: UUID,
         @Body('itemId', new ParseUUIDPipe()) itemId: UUID,
@@ -92,6 +107,11 @@ export class UserItemListsController {
      * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
      */
     @Delete('batch/:listId')
+    @ApiOperation({ summary: 'Elimina varios ítems de una lista de usuario.' })
+    @ApiResponse({ status: 200, description: 'Ítems eliminados correctamente de la lista.' })
+    @ApiResponse({ status: 400, description: 'IDs de ítems inválidos o no existentes en la lista.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
+    @ApiParam({ name: 'listId', description: 'UUID de la lista de origen.' })
     async removeAllItems(
         @Param('listId', new ParseUUIDPipe()) id: UUID,
         @Body() data: IdBatchDto,
@@ -110,6 +130,11 @@ export class UserItemListsController {
      * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
      */
     @Delete('item/:listId')
+    @ApiOperation({ summary: 'Elimina un único ítem de una lista de usuario.' })
+    @ApiResponse({ status: 200, description: 'Ítem eliminado correctamente de la lista.' })
+    @ApiResponse({ status: 400, description: 'ID de ítem inválido o no existente en la lista.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
+    @ApiParam({ name: 'listId', description: 'UUID de la lista de origen.' })
     async removeOneItem(
         @Param('listId', new ParseUUIDPipe()) listId: UUID,
         @Body('itemId', new ParseUUIDPipe()) itemId: UUID,
@@ -127,6 +152,10 @@ export class UserItemListsController {
      * @returns Una Promesa que resuelve con el objeto UserItemList creado.
      */
     @Post()
+    @ApiOperation({ summary: 'Crea una nueva lista de ítems para el usuario autenticado.' })
+    @ApiResponse({ status: 201, description: 'Lista creada correctamente.' })
+    @ApiResponse({ status: 400, description: 'Datos de la lista inválidos.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
     async createList(@Body() data: CreateUserItemListDto, @Req() request: AuthenticatedRequest): Promise<UserItemList> {
         this.logger.log('Executed createList');
         const userId: UUID = request.userId as UUID;
@@ -141,6 +170,12 @@ export class UserItemListsController {
      * @returns Una Promesa que resuelve con el objeto UserItemList actualizado.
      */
     @Patch(':id')
+    @ApiOperation({ summary: 'Actualiza los datos de una lista de ítems existente.' })
+    @ApiResponse({ status: 200, description: 'Lista actualizada correctamente.' })
+    @ApiResponse({ status: 400, description: 'Datos de actualización inválidos.' })
+    @ApiResponse({ status: 404, description: 'Lista no encontrada.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
+    @ApiParam({ name: 'id', description: 'UUID de la lista a actualizar.' })
     async updateList(
         @Param('id', new ParseUUIDPipe()) id: UUID,
         @Body() data: UpdateUserItemListDto,
@@ -158,6 +193,11 @@ export class UserItemListsController {
      * @returns Una Promesa que resuelve con el objeto UserItemList eliminado.
      */
     @Delete(':id')
+    @ApiOperation({ summary: 'Elimina una lista de ítems del usuario autenticado.' })
+    @ApiResponse({ status: 200, description: 'Lista eliminada correctamente.' })
+    @ApiResponse({ status: 404, description: 'Lista no encontrada.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
+    @ApiParam({ name: 'id', description: 'UUID de la lista a eliminar.' })
     async removeList(
         @Param('id', new ParseUUIDPipe()) id: UUID,
         @Req() request: AuthenticatedRequest,

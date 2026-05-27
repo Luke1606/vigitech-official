@@ -29,12 +29,12 @@ export class OrchestrationService {
      * @returns Promesa que resuelve con un array de todos los ítems de la encuesta.
      */
     async runGlobalRecommendationJob(userId: UUID): Promise<Item[]> {
-        this.logger.log('--- MANUAL TRIGGER: Starting Global Recommendation Identification (Discover New Items) ---');
+        this.logger.log('Executed runGlobalRecommendationJob (Discover New Items)');
 
         // 1. Identificar y crear nuevos ítems (con su clasificación inicial)
         await this.itemsDiscoveryService.discoverNewItems();
 
-        this.logger.log('--- MANUAL TRIGGER: Global Recommendation Identification Finished. Fetching all items. ---');
+        this.logger.log('Global Recommendation Identification Finished. Fetching all items.');
 
         // 2. Devolver la lista completa de ítems (nuevos y anteriores)
         // ASUNCIÓN: ItemsGatewayService debe exponer un método findAllItems
@@ -53,7 +53,7 @@ export class OrchestrationService {
      * @returns Promesa que resuelve con un array de ClassificationChange.
      */
     async runAllReclassifications(): Promise<ClassificationChange[]> {
-        this.logger.log('--- MANUAL TRIGGER: Starting All Users Reclassification ---');
+        this.logger.log('Executed runAllReclassifications');
 
         const allUserPreferences: SurveyOrchestratorUserPreferences[] =
             await this.userPreferencesService.findAllPreferences();
@@ -74,7 +74,7 @@ export class OrchestrationService {
         });
 
         await Promise.all(reclassificationPromises);
-        this.logger.log('--- MANUAL TRIGGER: All Reclassification Processes Finished ---');
+        this.logger.log('All Reclassification Processes Finished ---');
 
         // Lógica para desduplicar y devolver solo los cambios de clasificación
         const uniqueChangesMap = new Map<UUID, ClassificationChange>();
