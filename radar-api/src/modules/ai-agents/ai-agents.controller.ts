@@ -4,10 +4,6 @@ import { AiAgentsService } from './ai-agents.service';
 import { GenerateEmbeddingsDto } from './dto/generate-embeddings.dto';
 import { GenerateResponseDto } from './dto/generate-response.dto';
 
-/**
- * Controlador para la interacción con los agentes de IA.
- * Expone endpoints para generar respuestas de texto y embeddings.
- */
 @ApiTags('ai-agents')
 @Controller('ai-agents')
 export class AiAgentsController {

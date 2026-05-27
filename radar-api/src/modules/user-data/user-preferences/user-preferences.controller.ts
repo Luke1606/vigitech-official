@@ -3,11 +3,9 @@ import { Get, Post, Body, Patch, Logger, Controller, Req } from '@nestjs/common'
 import type { AuthenticatedRequest } from '@/shared/types/authenticated-request.type';
 import { UpdateUserPreferenceDto } from './dto/update-user-preference.dto';
 import { UserPreferencesService } from './user-preferences.service';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-/**
- * Controlador para la gestión de las preferencias de usuario.
- * Proporciona endpoints para crear, obtener y actualizar las preferencias de un usuario.
- */
+@ApiTags('user-data')
 @Controller('user-data/preferences')
 export class UserPreferencesController {
     private readonly logger: Logger;
@@ -23,6 +21,9 @@ export class UserPreferencesController {
      * @returns Una Promesa que resuelve con el objeto UserPreferences o null si no se encuentran.
      */
     @Get()
+    @ApiOperation({ summary: 'Obtiene las preferencias actuales del usuario autenticado.' })
+    @ApiResponse({ status: 200, description: 'Preferencias recuperadas correctamente.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
     findActualUserPreferences(@Req() request: AuthenticatedRequest) {
         this.logger.log('Executed findActualUserPreferences');
         const userId: UUID = request.userId as UUID;
@@ -35,6 +36,9 @@ export class UserPreferencesController {
      * @returns Una Promesa que resuelve con el objeto UserPreferences creado o existente.
      */
     @Post()
+    @ApiOperation({ summary: 'Crea o restablece las preferencias del usuario a valores predeterminados.' })
+    @ApiResponse({ status: 200, description: 'Preferencias creadas o restablecidas correctamente.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
     createOrSetToDefault(@Req() request: AuthenticatedRequest) {
         this.logger.log('Executed createOrSetToDefault');
         const userId: UUID = request.userId as UUID;
@@ -48,6 +52,10 @@ export class UserPreferencesController {
      * @returns Una Promesa que resuelve con el objeto UserPreferences actualizado.
      */
     @Patch()
+    @ApiOperation({ summary: 'Actualiza las preferencias del usuario autenticado.' })
+    @ApiResponse({ status: 200, description: 'Preferencias actualizadas correctamente.' })
+    @ApiResponse({ status: 400, description: 'Preferencias inválidas.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
     update(@Body() newPreferences: UpdateUserPreferenceDto, @Req() request: AuthenticatedRequest) {
         this.logger.log('Executed update');
         const userId: UUID = request.userId as UUID;

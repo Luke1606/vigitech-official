@@ -4,7 +4,9 @@ import type { Response } from 'express';
 import type { AuthenticatedRequest } from '@/shared/types/authenticated-request.type';
 import { Public } from '../../auth/decorators/public.decorator';
 import { OrchestrationService } from './orchestration.service';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('tech-survey')
 @Controller('tech-survey/orchestration')
 export class OrchestrationController {
     private readonly logger = new Logger(OrchestrationController.name);
@@ -16,8 +18,11 @@ export class OrchestrationController {
      * Retorna: La lista completa de todas las recomendaciones (nuevas y anteriores).
      */
     @Post('run-global-recommendations')
+    @ApiOperation({ summary: 'Inicia la detección global de nuevas recomendaciones de ítems.' })
+    @ApiResponse({ status: 200, description: 'El proceso de recomendaciones globales finalizó correctamente.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
     async runGlobalRecommendations(@Req() request: AuthenticatedRequest, @Res() res: Response): Promise<void> {
-        this.logger.log('Manual trigger received for global recommendations (Task 1).');
+        this.logger.log('Manual trigger received for global recommendations.');
 
         const userId: UUID = request.userId as UUID;
 
@@ -44,8 +49,11 @@ export class OrchestrationController {
      */
     @Public()
     @Post('run-all-reclassifications')
+    @ApiOperation({ summary: 'Ejecuta la reclasificación masiva de todos los ítems suscritos.' })
+    @ApiResponse({ status: 200, description: 'El proceso de reclasificación masiva finalizó correctamente.' })
+    @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
     async runAllReclassifications(@Res() res: Response): Promise<void> {
-        this.logger.log('Manual trigger received for all reclassifications (Task 2).');
+        this.logger.log('Manual trigger received for all reclassifications.');
 
         try {
             // El servicio ahora devuelve la lista de cambios
