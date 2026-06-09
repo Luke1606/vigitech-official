@@ -176,7 +176,7 @@ describe('useRemoveBatchMutationOptions', () => {
             expect(restoredRecommended).toEqual([item1, item2]);
             expect(restoredSubscribed).toEqual([item1]);
 
-            expect(toast.error).toHaveBeenCalledWith('Error al eliminar los elementos.');
+            expect(toast.error).toHaveBeenCalledWith('Error al eliminar los elementos. Compruebe su conexión o inténtelo de nuevo.');
         });
 
         test('should handle case where context is undefined (no optimistic update)', () => {
@@ -188,7 +188,7 @@ describe('useRemoveBatchMutationOptions', () => {
             const recommended = queryClient.getQueryData([surveyItemsKey, recommendedKey]);
             expect(recommended).toBeUndefined();
 
-            expect(toast.error).toHaveBeenCalledWith('Error al eliminar los elementos.');
+            expect(toast.error).toHaveBeenCalledWith('Error al eliminar los elementos. Compruebe su conexión o inténtelo de nuevo.');
         });
 
         test('should rollback only the list that has previous data', async () => {

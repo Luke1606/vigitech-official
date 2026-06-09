@@ -51,7 +51,7 @@ export const useRemoveBatchMutationOptions = (
 					context.previousSubscribed
 				);
 			}
-			toast.error('Error al eliminar los elementos.');
+			toast.error('Error al eliminar los elementos. Compruebe su conexión o inténtelo de nuevo.');
 		},
 
 		onSuccess: (_, variables) => {

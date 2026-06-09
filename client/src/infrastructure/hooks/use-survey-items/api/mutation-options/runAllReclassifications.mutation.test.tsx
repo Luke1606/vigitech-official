@@ -178,7 +178,7 @@ describe('useRunAllReclassificationsMutationOptions', () => {
             });
 
             expect(toast.error).toHaveBeenCalledWith(
-                'Error al reclasificar los elementos. Inténtelo de nuevo o compruebe su conexión.'
+                'Error al reclasificar los elementos. Compruebe su conexión o inténtelo de nuevo.'
             );
             expect(toast.success).not.toHaveBeenCalled();
             expect(toast.info).not.toHaveBeenCalled();

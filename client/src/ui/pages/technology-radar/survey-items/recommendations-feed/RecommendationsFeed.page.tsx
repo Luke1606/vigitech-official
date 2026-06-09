@@ -164,8 +164,8 @@ export const RecommendationsFeed: React.FC = () => {
                     <div className="flex items-center gap-x-5">
                         <p className="text-md text-destructive font-semibold">
                             {isRecommendedError
-                                ? 'Error al cargar las recomendaciones'
-                                : 'No hay recomendaciones disponibles'}
+                                ? 'Error al cargar las recomendaciones.'
+                                : 'No hay recomendaciones disponibles.'}
                         </p>
                         <Button
                             className="bg-blue-600 hover:bg-blue-800 transition-colors duration-300 flex items-center gap-2"
@@ -217,7 +217,7 @@ export const RecommendationsFeed: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4 gap-3">
                     <div className="flex-1">
                         <p className="text-sm text-yellow-800">
-                            No se pudieron cargar las recomendaciones de la API.
+                            No se pudieron cargar las recomendaciones de la API. Compruebe su conexión o inténtelo de nuevo.
                         </p>
                     </div>
                     <div className="flex items-center gap-2">

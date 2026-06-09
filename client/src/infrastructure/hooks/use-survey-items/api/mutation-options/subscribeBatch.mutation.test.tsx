@@ -266,7 +266,7 @@ describe('useSubscribeBatchMutationOptions', () => {
             expect(restoredRecommended).toEqual([item1, item2]);
             expect(restoredSubscribed).toEqual([item2]);
 
-            expect(toast.error).toHaveBeenCalledWith('Error al suscribirse a los elementos seleccionados.');
+            expect(toast.error).toHaveBeenCalledWith('Error al suscribirse a los elementos seleccionados. Compruebe su conexión o inténtelo de nuevo.');
         });
 
         test('should handle case where context is undefined (no optimistic update)', () => {

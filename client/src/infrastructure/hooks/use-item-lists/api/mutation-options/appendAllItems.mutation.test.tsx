@@ -213,7 +213,7 @@ describe('useAppendAllItemsMutationOptions', () => {
             expect(restoredLists).toEqual(mockLists);
 
             expect(mockedToast.error).toHaveBeenCalledWith(
-                'Error al añadir los elementos a la lista.'
+                'Error al añadir los elementos a la lista. Compruebe su conexión o inténtelo de nuevo.'
             );
         });
 

@@ -168,7 +168,7 @@ describe('RecommendationsFeed', () => {
             recommended: { data: [], isPending: false, isError: true, refetch: mockRefetch },
         });
         renderComponent();
-        expect(screen.getByText(/Error al cargar las recomendaciones/i)).toBeInTheDocument();
+        expect(screen.getByText(/Error al cargar las recomendaciones./i)).toBeInTheDocument();
 
         // In error state, the button still says "Obtener nuevas recomendaciones"
         const retryButton = screen.getByRole('button', { name: /Obtener nuevas recomendaciones/i });

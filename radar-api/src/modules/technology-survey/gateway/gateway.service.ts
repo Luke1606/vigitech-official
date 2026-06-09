@@ -123,7 +123,9 @@ export class ItemsGatewayService {
             await this._saveNewItem(classificationInfo, insertedById);
         } catch (error) {
             this.logger.error(error);
-            throw new Error('Ha ocurrido un error durante la creación');
+            throw new Error(
+                'Ha ocurrido un error durante la creación. Verifique su conexión a internet o espere un poco y vuelva a intentarlo.',
+            );
         }
     }
 
@@ -316,7 +318,9 @@ export class ItemsGatewayService {
             }
         } catch (error) {
             this.logger.error(error);
-            throw new Error('Ha ocurrido un error durante la creación.');
+            throw new Error(
+                'Ha ocurrido un error durante la creación. Verifique su conexión a internet o espere un poco y vuelva a intentarlo.',
+            );
         }
     }
 

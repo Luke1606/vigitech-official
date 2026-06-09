@@ -100,7 +100,7 @@ export const SubscribedItemsRadar = () => {
             <Alert variant="destructive">
                 <InfoIcon className="h-4 w-4" />
                 <AlertDescription>
-                    Ocurrió un error al cargar los elementos suscritos: {getSubscribed.error.message}
+                    Ocurrió un error al cargar los elementos suscritos: {getSubscribed.error.message}.
                 </AlertDescription>
             </Alert>
         );

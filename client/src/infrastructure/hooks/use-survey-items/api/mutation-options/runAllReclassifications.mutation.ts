@@ -10,7 +10,7 @@ export const useRunAllReclassificationsMutationOptions = () => {
         mutationFn: () => surveyItemsRepository.runAllReclassifications(),
 
         onError: (_variables) => {
-            toast.error(`Error al reclasificar los elementos. Inténtelo de nuevo o compruebe su conexión.`);
+            toast.error(`Error al reclasificar los elementos. Compruebe su conexión o inténtelo de nuevo.`);
         },
 
         onSuccess: (data) => {

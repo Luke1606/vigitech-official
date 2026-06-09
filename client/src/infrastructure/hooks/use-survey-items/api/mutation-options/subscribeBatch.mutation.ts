@@ -59,7 +59,7 @@ export const useSubscribeBatchMutationOptions = (
 					context.previousSubscribed
 				);
 			}
-			toast.error('Error al suscribirse a los elementos seleccionados.');
+			toast.error('Error al suscribirse a los elementos seleccionados. Compruebe su conexión o inténtelo de nuevo.');
 		},
 
 		onSuccess: (_, variables) => {
